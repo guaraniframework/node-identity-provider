@@ -1,0 +1,99 @@
+{
+  "name": "@guarani/identity-provider",
+  "version": "1.0.0",
+  "description": "OAuth 2.0, OpenID Connect, User-Managed Access 2.0 and SCIM 2.0 Authorization Server and Identity Provider.",
+  "license": "MIT",
+  "homepage": "https://github.com/guaraniframework/node-identity-provider#readme",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "pnpm exec tsc -p tsconfig.build.json",
+    "prepare": "pnpm exec husky",
+    "test": "pnpm exec jest",
+    "release": "pnpm run build && pnpm pack --pack-destination release && pnpm publish --access public",
+    "postpublish": "rm -rf dist release"
+  },
+  "bugs": {
+    "url": "https://github.com/guaraniframework/node-identity-provider/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/guaraniframework/node-identity-provider.git"
+  },
+  "author": {
+    "name": "Revensky",
+    "url": "https://github.com/revensky"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "keywords": [
+    "oauth",
+    "oauth2",
+    "authorization",
+    "authz",
+    "oidc",
+    "openid",
+    "connect",
+    "authentication",
+    "authn",
+    "uma",
+    "uma2",
+    "scim",
+    "identity",
+    "provider"
+  ],
+  "dependencies": {
+    "@guarani/di": "^1.0.2",
+    "@guarani/jose": "^1.0.0",
+    "@guarani/primitives": "^1.1.0",
+    "reflect-metadata": "^0.2.2"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.2",
+    "@commitlint/config-conventional": "^21.2.2",
+    "@eslint/js": "^10.0.1",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^26.2.0",
+    "@types/supertest": "^7.2.1",
+    "commitizen": "^4.3.2",
+    "cookie-parser": "^1.4.7",
+    "cz-conventional-changelog": "^3.3.0",
+    "eslint": "^10.9.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-import-x": "^4.17.1",
+    "eslint-plugin-jest": "^29.16.1",
+    "eslint-plugin-prettier": "^5.5.6",
+    "eslint-plugin-simple-import-sort": "^14.0.0",
+    "express": "^5.2.1",
+    "globals": "^17.11.0",
+    "husky": "^9.1.7",
+    "jest": "^30.4.2",
+    "jest-environment-node": "^30.4.1",
+    "jest-extended": "^7.0.0",
+    "jest-util": "^30.4.1",
+    "jsonc-eslint-parser": "^3.3.0",
+    "lint-staged": "^17.3.0",
+    "neostandard": "^0.13.0",
+    "prettier": "^3.9.6",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.12",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.67.0"
+  },
+  "peerDependencies": {
+    "express": "^5.2.1"
+  },
+  "peerDependenciesMeta": {
+    "express": {
+      "optional": true
+    }
+  }
+}
