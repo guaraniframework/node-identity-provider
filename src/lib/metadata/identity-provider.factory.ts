@@ -10,6 +10,7 @@ import { isNonEmptyString } from '@guarani/primitives';
 
 import { ConsoleLogger } from '../logger/console.logger';
 import { Logger } from '../logger/logger';
+import { IdentityProvider } from '../providers/identity-provider';
 import { CONTAINER } from './container.token';
 
 type IdentityProviderEntry<T> = Constructor<T> | Factory<T> | T;
@@ -35,6 +36,7 @@ export class IdentityProviderFactory {
    * Adds the provided Logger to the Identity Provider.
    *
    * @param logger Logger to be added.
+   * @throws {TypeError} The provided Logger is invalid.
    * @returns Identity Provider Factory.
    */
   public addLogger(logger: IdentityProviderEntry<Logger>): IdentityProviderFactory {
@@ -60,6 +62,24 @@ export class IdentityProviderFactory {
     this.addContainerEntry(token, entry);
 
     return this;
+  }
+
+  /**
+   * Creates a new instance of the provided Identity Provider.
+   *
+   * @param provider Identity Provider Constructor.
+   * @throws {TypeError} The provided Identity Provider is invalid.
+   * @returns Instance of Identity Provider.
+   */
+  public create(provider?: Constructor<IdentityProvider>): IdentityProvider {
+    if (typeof provider !== 'undefined' && !this._inherits(provider?.prototype, IdentityProvider)) {
+      throw new TypeError('The provided Identity Provider is invalid.');
+    }
+
+    this.addContainerEntry(IdentityProvider, provider!);
+    this.addContainerEntry(DependencyInjectionContainer, this.container);
+
+    return this.container.resolve(IdentityProvider);
   }
 
   /**

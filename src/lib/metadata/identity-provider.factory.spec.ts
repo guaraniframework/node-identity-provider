@@ -1,12 +1,17 @@
 import { Buffer } from 'buffer';
 import { URL } from 'url';
 
-import { getContainer, InjectableToken } from '@guarani/di';
+import { DependencyInjectionContainer, getContainer, Injectable, InjectableToken } from '@guarani/di';
 
+import { Endpoint } from '../endpoints/endpoint';
 import { ConsoleLogger } from '../logger/console.logger';
 import { Logger } from '../logger/logger';
+import { IdentityProvider } from '../providers/identity-provider';
 import { CONTAINER } from './container.token';
 import { IdentityProviderFactory } from './identity-provider.factory';
+
+@Injectable()
+class TestIdentityProvider extends IdentityProvider {}
 
 const tokens: InjectableToken<any>[] = ['LOGGER', Symbol('LOGGER'), Logger];
 
@@ -15,8 +20,26 @@ const loggers: any[] = [ConsoleLogger, new ConsoleLogger(), () => new ConsoleLog
 
 const invalidTokens: any[] = [undefined, null, true, 1, 1.2, 1n, '', Buffer.alloc(1), () => 1, {}, []];
 
+const invalidProviders: any[] = [
+  null,
+  true,
+  1,
+  1.2,
+  1n,
+  'a',
+  Symbol('a'),
+  Buffer,
+  Buffer.alloc(1),
+  () => 1,
+  {},
+  [],
+  IdentityProvider,
+  new IdentityProvider(new ConsoleLogger(), []),
+];
+
 describe('Identity Provider Factory', () => {
   let factory!: IdentityProviderFactory;
+  const container = getContainer(CONTAINER);
 
   beforeEach(() => {
     factory = new IdentityProviderFactory();
@@ -33,8 +56,8 @@ describe('Identity Provider Factory', () => {
 
       expect(() => (factory = new IdentityProviderFactory())).not.toThrow();
 
-      expect(factory['container']).toBe(getContainer(CONTAINER));
-      expect(factory['container'].isRegistered(Logger)).toBeTrue();
+      expect(factory['container']).toBe(container);
+      expect(container.isRegistered(Logger)).toBeTrue();
     });
   });
 
@@ -48,12 +71,12 @@ describe('Identity Provider Factory', () => {
 
     it.each(tokens)('should add the provided Class Entry to the provided Token.', (token) => {
       expect(() => factory['addContainerEntry'](token, ConsoleLogger)).not.toThrow();
-      expect(factory['container'].isRegistered(token)).toBeTrue();
+      expect(container.isRegistered(token)).toBeTrue();
     });
 
     it.each(tokens)('should add the provided Factory Entry to the provided Token.', (token) => {
       expect(() => factory['addContainerEntry'](token, () => new ConsoleLogger())).not.toThrow();
-      expect(factory['container'].isRegistered(token)).toBeTrue();
+      expect(container.isRegistered(token)).toBeTrue();
     });
 
     it.each(tokens.slice(0, -1))(
@@ -68,7 +91,7 @@ describe('Identity Provider Factory', () => {
 
     it('should add the provided Token to itself.', () => {
       expect(() => factory['addContainerEntry'](ConsoleLogger)).not.toThrow();
-      expect(factory['container'].isRegistered(ConsoleLogger)).toBeTrue();
+      expect(container.isRegistered(ConsoleLogger)).toBeTrue();
     });
 
     it('should throw when the provided Object Entry does not inherit from the provided Token.', () => {
@@ -80,7 +103,7 @@ describe('Identity Provider Factory', () => {
 
     it.each(tokens)('should add the provided Object Entry to the provided Token.', (token) => {
       expect(() => factory['addContainerEntry'](token, new ConsoleLogger())).not.toThrow();
-      expect(factory['container'].isRegistered(token)).toBeTrue();
+      expect(container.isRegistered(token)).toBeTrue();
     });
   });
 
@@ -90,7 +113,7 @@ describe('Identity Provider Factory', () => {
     });
 
     it.each(loggers)('should add a Logger to the Identity Provider Factory.', (logger) => {
-      const containerDeleteSpy = jest.spyOn(factory['container'], 'delete');
+      const containerDeleteSpy = jest.spyOn(container, 'delete');
       const addContainerEntrySpy = jest.spyOn(factory, 'addContainerEntry' as any);
 
       expect(() => factory.addLogger(logger)).not.toThrow();
@@ -106,7 +129,7 @@ describe('Identity Provider Factory', () => {
     });
 
     it('should add the provided Token to the Identity Provider Factory.', () => {
-      const containerDeleteSpy = jest.spyOn(factory['container'], 'delete');
+      const containerDeleteSpy = jest.spyOn(container, 'delete');
       const addContainerEntrySpy = jest.spyOn(factory, 'addContainerEntry' as any);
 
       expect(() => factory.add(Buffer)).not.toThrow();
@@ -116,7 +139,7 @@ describe('Identity Provider Factory', () => {
     });
 
     it.each(tokens)('should add the provided Token and Entry to the Identity Provider Factory.', (token) => {
-      const containerDeleteSpy = jest.spyOn(factory['container'], 'delete');
+      const containerDeleteSpy = jest.spyOn(container, 'delete');
       const addContainerEntrySpy = jest.spyOn(factory, 'addContainerEntry' as any);
 
       const logger = new ConsoleLogger();
@@ -125,6 +148,43 @@ describe('Identity Provider Factory', () => {
 
       expect(containerDeleteSpy).toHaveBeenCalledExactlyOnceWith(token);
       expect(addContainerEntrySpy).toHaveBeenCalledExactlyOnceWith(token, logger);
+    });
+  });
+
+  describe('create()', () => {
+    it.each(invalidProviders)('should throw when the provided Identity Provider is invalid.', (provider) => {
+      expect(() => factory.create(provider)).toThrowWithMessage(
+        TypeError,
+        'The provided Identity Provider is invalid.',
+      );
+    });
+
+    it('should return an instance of the Identity Provider.', () => {
+      let provider!: IdentityProvider;
+      const addContainerEntrySpy = jest.spyOn(factory, 'addContainerEntry' as any);
+
+      container.bind(Endpoint).toValue(Reflect.construct(Endpoint, []));
+
+      expect(() => (provider = factory.create())).not.toThrow();
+
+      expect(provider).toBeInstanceOf(IdentityProvider);
+
+      expect(addContainerEntrySpy).toHaveBeenNthCalledWith(1, IdentityProvider, undefined);
+      expect(addContainerEntrySpy).toHaveBeenNthCalledWith(2, DependencyInjectionContainer, container);
+    });
+
+    it('should return an instance of the provided Identity Provider.', () => {
+      let provider!: IdentityProvider;
+      const addContainerEntrySpy = jest.spyOn(factory, 'addContainerEntry' as any);
+
+      container.bind(Endpoint).toValue(Reflect.construct(Endpoint, []));
+
+      expect(() => (provider = factory.create(TestIdentityProvider))).not.toThrow();
+
+      expect(provider).toBeInstanceOf(IdentityProvider);
+
+      expect(addContainerEntrySpy).toHaveBeenNthCalledWith(1, IdentityProvider, TestIdentityProvider);
+      expect(addContainerEntrySpy).toHaveBeenNthCalledWith(2, DependencyInjectionContainer, container);
     });
   });
 });
