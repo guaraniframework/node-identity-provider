@@ -7,16 +7,63 @@ import { Endpoint } from '../endpoints/endpoint';
 import { ConsoleLogger } from '../logger/console.logger';
 import { Logger } from '../logger/logger';
 import { IdentityProvider } from '../providers/identity-provider';
+import { Settings } from '../settings/settings';
+import { SETTINGS } from '../settings/settings.token';
 import { CONTAINER } from './container.token';
 import { IdentityProviderFactory } from './identity-provider.factory';
 
 @Injectable()
 class TestIdentityProvider extends IdentityProvider {}
 
+const invalidIssuers: any[] = [
+  undefined,
+  null,
+  true,
+  1,
+  1.2,
+  1n,
+  '',
+  Symbol('a'),
+  Buffer,
+  Buffer.alloc(1),
+  () => 1,
+  {},
+  [],
+  'a',
+];
+
 const tokens: InjectableToken<any>[] = ['LOGGER', Symbol('LOGGER'), Logger];
 
 const invalidLoggers: any[] = [null, true, 1, 1.2, 1n, 'a', Symbol('a'), Buffer, Buffer.alloc(1), {}, []];
 const loggers: any[] = [ConsoleLogger, new ConsoleLogger(), () => new ConsoleLogger()];
+
+const invalidScopes: any[] = [
+  undefined,
+  null,
+  true,
+  1,
+  1.2,
+  1n,
+  'a',
+  Symbol('a'),
+  Buffer,
+  Buffer.alloc(1),
+  () => 1,
+  {},
+  [],
+  [undefined],
+  [null],
+  [true],
+  [1],
+  [1.2],
+  [1n],
+  [Symbol('a')],
+  [Buffer],
+  [Buffer.alloc(1)],
+  [() => 1],
+  [{}],
+  [[]],
+];
 
 const invalidTokens: any[] = [undefined, null, true, 1, 1.2, 1n, '', Buffer.alloc(1), () => 1, {}, []];
 
@@ -42,7 +89,7 @@ describe('Identity Provider Factory', () => {
   const container = getContainer(CONTAINER);
 
   beforeEach(() => {
-    factory = new IdentityProviderFactory();
+    factory = new IdentityProviderFactory('http://idp.example.com');
   });
 
   afterEach(() => {
@@ -51,12 +98,22 @@ describe('Identity Provider Factory', () => {
   });
 
   describe('constructor', () => {
+    it.each(invalidIssuers)('should throw when the provided Issuer is invalid.', (issuer) => {
+      expect(() => new IdentityProviderFactory(issuer)).toThrowWithMessage(
+        TypeError,
+        'The provided Issuer URL is invalid.',
+      );
+    });
+
     it('should return an Identity Provider Factory.', () => {
       let factory!: IdentityProviderFactory;
+      const settings: Settings = { issuer: new URL('http://idp.example.com'), scopes: new Set() };
 
-      expect(() => (factory = new IdentityProviderFactory())).not.toThrow();
+      expect(() => (factory = new IdentityProviderFactory('http://idp.example.com'))).not.toThrow();
 
+      expect(factory['settings']).toStrictEqual(settings);
       expect(factory['container']).toBe(container);
+
       expect(container.isRegistered(Logger)).toBeTrue();
     });
   });
@@ -123,6 +180,17 @@ describe('Identity Provider Factory', () => {
     });
   });
 
+  describe('addScopes()', () => {
+    it.each(invalidScopes)('should throw when the provided Scopes is invalid.', (scopes) => {
+      expect(() => factory.addScopes(scopes)).toThrowWithMessage(TypeError, 'The provided Scopes is invalid.');
+    });
+
+    it('should add the provided Scopes to the Identity Provider Factory.', () => {
+      expect(() => factory.addScopes(['foo', 'bar', 'baz'])).not.toThrow();
+      expect(factory['settings'].scopes).toStrictEqual(new Set(['foo', 'bar', 'baz']));
+    });
+  });
+
   describe('add()', () => {
     it.each(invalidTokens)('should throw when the provided Token is invalid.', (token) => {
       expect(() => factory.add(token, 'foo')).toThrowWithMessage(TypeError, 'The provided Token is invalid.');
@@ -169,8 +237,9 @@ describe('Identity Provider Factory', () => {
 
       expect(provider).toBeInstanceOf(IdentityProvider);
 
-      expect(addContainerEntrySpy).toHaveBeenNthCalledWith(1, IdentityProvider, undefined);
-      expect(addContainerEntrySpy).toHaveBeenNthCalledWith(2, DependencyInjectionContainer, container);
+      expect(addContainerEntrySpy).toHaveBeenNthCalledWith(1, SETTINGS, factory['settings']);
+      expect(addContainerEntrySpy).toHaveBeenNthCalledWith(2, IdentityProvider, undefined);
+      expect(addContainerEntrySpy).toHaveBeenNthCalledWith(3, DependencyInjectionContainer, container);
     });
 
     it('should return an instance of the provided Identity Provider.', () => {
@@ -183,8 +252,9 @@ describe('Identity Provider Factory', () => {
 
       expect(provider).toBeInstanceOf(IdentityProvider);
 
-      expect(addContainerEntrySpy).toHaveBeenNthCalledWith(1, IdentityProvider, TestIdentityProvider);
-      expect(addContainerEntrySpy).toHaveBeenNthCalledWith(2, DependencyInjectionContainer, container);
+      expect(addContainerEntrySpy).toHaveBeenNthCalledWith(1, SETTINGS, factory['settings']);
+      expect(addContainerEntrySpy).toHaveBeenNthCalledWith(2, IdentityProvider, TestIdentityProvider);
+      expect(addContainerEntrySpy).toHaveBeenNthCalledWith(3, DependencyInjectionContainer, container);
     });
   });
 });
