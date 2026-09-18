@@ -1,3 +1,5 @@
+import { URL } from 'url';
+
 import {
   AbstractConstructor,
   Constructor,
@@ -11,6 +13,8 @@ import { isNonEmptyString } from '@guarani/primitives';
 import { ConsoleLogger } from '../logger/console.logger';
 import { Logger } from '../logger/logger';
 import { IdentityProvider } from '../providers/identity-provider';
+import { Settings } from '../settings/settings';
+import { SETTINGS } from '../settings/settings.token';
 import { CONTAINER } from './container.token';
 
 type IdentityProviderEntry<T> = Constructor<T> | Factory<T> | T;
@@ -25,10 +29,24 @@ export class IdentityProviderFactory {
   private readonly container: DependencyInjectionContainer;
 
   /**
-   * Instantiates a new Identity Provider Factory.
+   * Identity Provider Settings.
    */
-  public constructor() {
+  private readonly settings: Settings;
+
+  /**
+   * Instantiates a new Identity Provider Factory.
+   *
+   * @param issuer Identity Provider Issuer URL.
+   * @throws {TypeError} The provided Issuer URL is invalid.
+   */
+  public constructor(issuer: string) {
+    if (!isNonEmptyString(issuer) || !URL.canParse(issuer)) {
+      throw new TypeError('The provided Issuer URL is invalid.');
+    }
+
+    this.settings = { issuer: new URL(issuer), scopes: new Set<string>() };
     this.container = getContainer(CONTAINER);
+
     this._setDefaults();
   }
 
@@ -42,6 +60,21 @@ export class IdentityProviderFactory {
   public addLogger(logger: IdentityProviderEntry<Logger>): IdentityProviderFactory {
     this.container.delete(Logger);
     this.addContainerEntry(Logger, logger);
+    return this;
+  }
+
+  /**
+   * Adds the provided Scopes to the Identity Provider.
+   * @param scopes Scopes to be added.
+   * @throws {TypeError} The provided Scopes is invalid.
+   * @returns Identity Provider Factory.
+   */
+  public addScopes(scopes: string[]): IdentityProviderFactory {
+    if (!Array.isArray(scopes) || scopes.length === 0 || scopes.some((scope) => !isNonEmptyString(scope))) {
+      throw new TypeError('The provided Scopes is invalid.');
+    }
+
+    scopes.forEach((scope) => this.settings.scopes.add(scope));
     return this;
   }
 
@@ -76,6 +109,7 @@ export class IdentityProviderFactory {
       throw new TypeError('The provided Identity Provider is invalid.');
     }
 
+    this.addContainerEntry(SETTINGS, this.settings);
     this.addContainerEntry(IdentityProvider, provider!);
     this.addContainerEntry(DependencyInjectionContainer, this.container);
 
