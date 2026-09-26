@@ -3,14 +3,15 @@ import { URL } from 'url';
 
 import { DependencyInjectionContainer, getContainer, Injectable, InjectableToken } from '@guarani/di';
 
+import { DataAccess } from '../data-access/data-access';
+import { SQLiteDataAccess } from '../data-access/sqlite/sqlite.data-access';
 import { Endpoint } from '../endpoints/endpoint';
 import { ConsoleLogger } from '../logger/console.logger';
 import { Logger } from '../logger/logger';
 import { IdentityProvider } from '../providers/identity-provider';
-import { Settings } from '../settings/settings';
-import { SETTINGS } from '../settings/settings.token';
 import { CONTAINER } from './container.token';
 import { IdentityProviderFactory } from './identity-provider.factory';
+import { IdentityProviderOptions } from './identity-provider.options';
 
 @Injectable()
 class TestIdentityProvider extends IdentityProvider {}
@@ -37,33 +38,8 @@ const tokens: InjectableToken<any>[] = ['LOGGER', Symbol('LOGGER'), Logger];
 const invalidLoggers: any[] = [null, true, 1, 1.2, 1n, 'a', Symbol('a'), Buffer, Buffer.alloc(1), {}, []];
 const loggers: any[] = [ConsoleLogger, new ConsoleLogger(), () => new ConsoleLogger()];
 
-const invalidScopes: any[] = [
-  undefined,
-  null,
-  true,
-  1,
-  1.2,
-  1n,
-  'a',
-  Symbol('a'),
-  Buffer,
-  Buffer.alloc(1),
-  () => 1,
-  {},
-  [],
-  [undefined],
-  [null],
-  [true],
-  [1],
-  [1.2],
-  [1n],
-  [Symbol('a')],
-  [Buffer],
-  [Buffer.alloc(1)],
-  [() => 1],
-  [{}],
-  [[]],
-];
+const invalidDataAccesses: any[] = [null, true, 1, 1.2, 1n, 'a', Symbol('a'), Buffer, Buffer.alloc(1), {}, []];
+const dataAccesses: any[] = [SQLiteDataAccess, SQLiteDataAccess.prototype, () => SQLiteDataAccess.prototype];
 
 const invalidTokens: any[] = [undefined, null, true, 1, 1.2, 1n, '', Buffer.alloc(1), () => 1, {}, []];
 
@@ -88,8 +64,14 @@ describe('Identity Provider Factory', () => {
   let factory!: IdentityProviderFactory;
   const container = getContainer(CONTAINER);
 
+  let containerDeleteSpy: jest.SpyInstance<void, [token: InjectableToken<unknown>], any>;
+  let addContainerEntrySpy: jest.SpyInstance<any, unknown[], any>;
+
   beforeEach(() => {
     factory = new IdentityProviderFactory('http://idp.example.com');
+
+    containerDeleteSpy = jest.spyOn(container, 'delete');
+    addContainerEntrySpy = jest.spyOn(factory, 'addContainerEntry' as any);
   });
 
   afterEach(() => {
@@ -107,14 +89,11 @@ describe('Identity Provider Factory', () => {
 
     it('should return an Identity Provider Factory.', () => {
       let factory!: IdentityProviderFactory;
-      const settings: Settings = { issuer: new URL('http://idp.example.com'), scopes: new Set() };
 
       expect(() => (factory = new IdentityProviderFactory('http://idp.example.com'))).not.toThrow();
 
-      expect(factory['settings']).toStrictEqual(settings);
       expect(factory['container']).toBe(container);
-
-      expect(container.isRegistered(Logger)).toBeTrue();
+      expect(factory['options']).toStrictEqual({} as IdentityProviderOptions);
     });
   });
 
@@ -164,15 +143,24 @@ describe('Identity Provider Factory', () => {
     });
   });
 
+  describe('configure()', () => {
+    it('should allow the Application to configure the Identity Provider Options.', () => {
+      expect(factory['options']).toStrictEqual({} as IdentityProviderOptions);
+
+      expect(() => factory.configure((options) => (options.issuer = new URL('https://idp.example.com')))).not.toThrow();
+
+      expect(factory['options']).toStrictEqual({
+        issuer: new URL('https://idp.example.com'),
+      } as IdentityProviderOptions);
+    });
+  });
+
   describe('addLogger()', () => {
     it.each(invalidLoggers)('should throw when the provided Logger is invalid.', (logger) => {
       expect(() => factory.addLogger(logger)).toThrow();
     });
 
     it.each(loggers)('should add a Logger to the Identity Provider Factory.', (logger) => {
-      const containerDeleteSpy = jest.spyOn(container, 'delete');
-      const addContainerEntrySpy = jest.spyOn(factory, 'addContainerEntry' as any);
-
       expect(() => factory.addLogger(logger)).not.toThrow();
 
       expect(containerDeleteSpy).toHaveBeenCalledExactlyOnceWith(Logger);
@@ -180,14 +168,16 @@ describe('Identity Provider Factory', () => {
     });
   });
 
-  describe('addScopes()', () => {
-    it.each(invalidScopes)('should throw when the provided Scopes is invalid.', (scopes) => {
-      expect(() => factory.addScopes(scopes)).toThrowWithMessage(TypeError, 'The provided Scopes is invalid.');
+  describe('addDataAccess()', () => {
+    it.each(invalidDataAccesses)('should throw when the provided Data Access is invalid.', (dataAccess) => {
+      expect(() => factory.addDataAccess(dataAccess)).toThrow();
     });
 
-    it('should add the provided Scopes to the Identity Provider Factory.', () => {
-      expect(() => factory.addScopes(['foo', 'bar', 'baz'])).not.toThrow();
-      expect(factory['settings'].scopes).toStrictEqual(new Set(['foo', 'bar', 'baz']));
+    it.each(dataAccesses)('should add a Data Access to the Identity Provider Factory.', (dataAccess) => {
+      expect(() => factory.addDataAccess(dataAccess)).not.toThrow();
+
+      expect(containerDeleteSpy).toHaveBeenCalledExactlyOnceWith(DataAccess);
+      expect(addContainerEntrySpy).toHaveBeenCalledExactlyOnceWith(DataAccess, dataAccess);
     });
   });
 
@@ -197,9 +187,6 @@ describe('Identity Provider Factory', () => {
     });
 
     it('should add the provided Token to the Identity Provider Factory.', () => {
-      const containerDeleteSpy = jest.spyOn(container, 'delete');
-      const addContainerEntrySpy = jest.spyOn(factory, 'addContainerEntry' as any);
-
       expect(() => factory.add(Buffer)).not.toThrow();
 
       expect(containerDeleteSpy).toHaveBeenCalledExactlyOnceWith(Buffer);
@@ -207,9 +194,6 @@ describe('Identity Provider Factory', () => {
     });
 
     it.each(tokens)('should add the provided Token and Entry to the Identity Provider Factory.', (token) => {
-      const containerDeleteSpy = jest.spyOn(container, 'delete');
-      const addContainerEntrySpy = jest.spyOn(factory, 'addContainerEntry' as any);
-
       const logger = new ConsoleLogger();
 
       expect(() => factory.add(token, logger)).not.toThrow();
@@ -229,7 +213,6 @@ describe('Identity Provider Factory', () => {
 
     it('should return an instance of the Identity Provider.', () => {
       let provider!: IdentityProvider;
-      const addContainerEntrySpy = jest.spyOn(factory, 'addContainerEntry' as any);
 
       container.bind(Endpoint).toValue(Reflect.construct(Endpoint, []));
 
@@ -237,14 +220,12 @@ describe('Identity Provider Factory', () => {
 
       expect(provider).toBeInstanceOf(IdentityProvider);
 
-      expect(addContainerEntrySpy).toHaveBeenNthCalledWith(1, SETTINGS, factory['settings']);
-      expect(addContainerEntrySpy).toHaveBeenNthCalledWith(2, IdentityProvider, undefined);
-      expect(addContainerEntrySpy).toHaveBeenNthCalledWith(3, DependencyInjectionContainer, container);
+      expect(addContainerEntrySpy).toHaveBeenCalledWith(IdentityProvider, undefined);
+      expect(addContainerEntrySpy).toHaveBeenCalledWith(DependencyInjectionContainer, container);
     });
 
     it('should return an instance of the provided Identity Provider.', () => {
       let provider!: IdentityProvider;
-      const addContainerEntrySpy = jest.spyOn(factory, 'addContainerEntry' as any);
 
       container.bind(Endpoint).toValue(Reflect.construct(Endpoint, []));
 
@@ -252,9 +233,8 @@ describe('Identity Provider Factory', () => {
 
       expect(provider).toBeInstanceOf(IdentityProvider);
 
-      expect(addContainerEntrySpy).toHaveBeenNthCalledWith(1, SETTINGS, factory['settings']);
-      expect(addContainerEntrySpy).toHaveBeenNthCalledWith(2, IdentityProvider, TestIdentityProvider);
-      expect(addContainerEntrySpy).toHaveBeenNthCalledWith(3, DependencyInjectionContainer, container);
+      expect(addContainerEntrySpy).toHaveBeenCalledWith(IdentityProvider, TestIdentityProvider);
+      expect(addContainerEntrySpy).toHaveBeenCalledWith(DependencyInjectionContainer, container);
     });
   });
 });

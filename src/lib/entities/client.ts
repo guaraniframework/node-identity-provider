@@ -2,6 +2,15 @@ import { Buffer } from 'buffer';
 import { timingSafeEqual } from 'crypto';
 import { URL } from 'url';
 
+import {
+  ContentEncryptionAlgorithm,
+  DigitalSignatureAlgorithm,
+  JsonWebKeySetParameters,
+  KeyManagementAlgorithm,
+} from '@guarani/jose';
+
+import { ResponseTypeName } from '../response-types/response-type-name.type';
+import { SubjectTypeName } from '../subject-types/subject-type-name.type';
 import { ApplicationType } from '../types/application-type.type';
 import { ClientType } from '../types/client-type.type';
 import { ClientSecret } from './client-secret';
@@ -41,6 +50,11 @@ export abstract class Client implements NodeJS.Dict<unknown> {
   public redirectUris!: URL[];
 
   /**
+   * Response Types of the Client.
+   */
+  public responseTypes!: ResponseTypeName[];
+
+  /**
    * Client Scopes.
    */
   public scopes!: string[];
@@ -69,6 +83,41 @@ export abstract class Client implements NodeJS.Dict<unknown> {
    * URI of the Client's Terms of Services page.
    */
   public tosUri!: URL | null;
+
+  /**
+   * JSON Web Key Set URL of the Client.
+   */
+  public jwksUri!: URL | null;
+
+  /**
+   * JSON Web Key Set object containing the JSON Web Keys of the Client.
+   */
+  public jwks!: JsonWebKeySetParameters | null;
+
+  /**
+   * Subject Type for responses to the Client.
+   */
+  public subjectType!: SubjectTypeName;
+
+  /**
+   * Https Url used to calculate the Pseudonymous Identifiers for the Client.
+   */
+  public sectorIdentifierUri!: URL | null;
+
+  /**
+   * JSON Web Signature Algorithm used to sign the ID Token issued to the Client.
+   */
+  public idTokenSignedResponseAlgorithm!: Exclude<DigitalSignatureAlgorithm, 'none'>;
+
+  /**
+   * JSON Web Encryption Key Wrap Algorithm used to encrypt the ID Token issued to the Client.
+   */
+  public idTokenEncryptedResponseKeyWrap!: KeyManagementAlgorithm | null;
+
+  /**
+   * JSON Web Encryption Content Encryption Algorithm used to encrypt the ID Token issued to the Client.
+   */
+  public idTokenEncryptedResponseContentEncryption!: ContentEncryptionAlgorithm | null;
 
   /**
    * Unique Identifier of the Client's Software.

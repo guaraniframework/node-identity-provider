@@ -26,7 +26,7 @@ describe('Scope Handler', () => {
   const container = getContainer(CONTAINER);
 
   const loggerMock = jest.mocked(Logger.prototype);
-  const settingsMock: Partial<Settings> = { scopes: new Set(['foo', 'bar', 'baz', 'qux']) };
+  const settingsMock: Partial<Settings> = { scopes: ['foo', 'bar', 'baz', 'qux'] };
 
   const client: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), {
     id: 'client_id',

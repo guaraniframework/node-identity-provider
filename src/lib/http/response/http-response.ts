@@ -334,6 +334,37 @@ export class HttpResponse {
     return this;
   }
 
+  /**
+   * Defines the provided HTML String as the Body of the Response.
+   *
+   * @param html HTML String to be used as the Body of the Response.
+   * @throws {TypeError} The provided Data is invalid.
+   * @returns Http Response.
+   */
+  public html(html: string): HttpResponse {
+    this.#logger.debug(`[${this.constructor.name}] Called html()`, 'ed4f9fe2-e1a9-4617-a7b3-d3638526f82f', { html });
+
+    if (!isNonEmptyString(html)) {
+      const error = new TypeError('The provided HTML is invalid.');
+
+      this.#logger.error(
+        `[${this.constructor.name}] The provided HTML is invalid`,
+        'e4b73ff5-f126-4765-87a1-4bc9ba4aa7ac',
+        { html },
+        error,
+      );
+
+      throw error;
+    }
+
+    this.setHeader('content-type', 'text/html; charset=UTF-8');
+    this.#body = Buffer.from(html, 'utf8');
+
+    this.#logger.debug(`[${this.constructor.name}] Completed html()`, '0fa8ae9d-6e48-4dde-877a-5d631c6c38b6', { html });
+
+    return this;
+  }
+
   private isValidJsonData(data: unknown): boolean {
     if (data === null || typeof data === 'boolean' || typeof data === 'number' || typeof data === 'string') {
       return true;
