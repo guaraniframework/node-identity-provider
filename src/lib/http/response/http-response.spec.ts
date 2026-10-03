@@ -148,6 +148,22 @@ const invalidJsonData: any[] = [
   [() => 1],
 ];
 
+const invalidHtmls: any[] = [
+  undefined,
+  null,
+  true,
+  1,
+  1.2,
+  1n,
+  Symbol('a'),
+  Buffer,
+  Buffer.alloc(1),
+  () => 1,
+  {},
+  [],
+  '',
+];
+
 describe('Http Response', () => {
   let response!: HttpResponse;
   const container = getContainer(CONTAINER);
@@ -325,6 +341,29 @@ describe('Http Response', () => {
 
       expect(response.headers['content-type']).toBe('application/json');
       expect(response.body).toStrictEqual(Buffer.from(jsonStringify(data), 'utf8'));
+    });
+  });
+
+  describe('html()', () => {
+    it.each(invalidHtmls)('should throw when the provided HTML is invalid.', (html) => {
+      const error = new TypeError('The provided HTML is invalid.');
+      expect(() => response.html(html)).toThrowWithMessage(TypeError, error.message);
+
+      expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
+        '[HttpResponse] The provided HTML is invalid',
+        'e4b73ff5-f126-4765-87a1-4bc9ba4aa7ac',
+        { html },
+        error,
+      );
+    });
+
+    it('should set the provided HTML as the HTML Body of the Http Response.', () => {
+      const html = '<html></html>';
+
+      expect(() => response.html(html)).not.toThrow();
+
+      expect(response.headers['content-type']).toBe('text/html; charset=UTF-8');
+      expect(response.body).toStrictEqual(Buffer.from(html, 'utf8'));
     });
   });
 });

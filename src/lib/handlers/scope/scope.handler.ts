@@ -37,7 +37,7 @@ export class ScopeHandler {
     );
 
     scopes.forEach((scope) => {
-      if (!this.settings.scopes.has(scope)) {
+      if (!this.settings.scopes.includes(scope)) {
         const error = new InvalidScopeError(`Unsupported Scope "${scope}".`);
 
         this.logger.error(

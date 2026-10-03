@@ -1,4 +1,4 @@
 /**
  * Supported Endpoint Names.
  */
-export type EndpointName = string;
+export type EndpointName = 'authorization' | 'interaction';

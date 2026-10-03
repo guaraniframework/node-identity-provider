@@ -53,7 +53,7 @@
     "resolvePackageJsonExports": false,
     "resolvePackageJsonImports": false,
     "rewriteRelativeImportExtensions": true,
-    "rootDir": "./src",
+    "rootDir": ".",
     "skipDefaultLibCheck": false,
     "skipLibCheck": true,
     "strict": true,
