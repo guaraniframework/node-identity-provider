@@ -34,6 +34,7 @@ export { Logger } from './lib/logger/logger';
 // #endregion
 
 // #region Metadata
+export { IdentityProviderFactory } from './lib/metadata/factory/identity-provider.factory';
 export { CONTAINER } from './lib/metadata/tokens';
 // #endregion
 
@@ -44,6 +45,10 @@ export { type ErrorRequest } from './lib/requests/error-request';
 // #region Responses
 export { ErrorResponse } from './lib/responses/error/error-response';
 export { type ErrorResponseParameters } from './lib/responses/error/error-response.parameters';
+// #endregion
+
+// #region Settings
+export { Settings } from './lib/settings/settings';
 // #endregion
 
 // #region Template Engine
