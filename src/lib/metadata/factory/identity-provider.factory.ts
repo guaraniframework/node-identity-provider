@@ -1,0 +1,113 @@
+import {
+  AbstractConstructor,
+  Constructor,
+  DependencyInjectionContainer,
+  Factory,
+  getContainer,
+  InjectableToken,
+} from '@guarani/di';
+import { isNonEmptyString } from '@guarani/primitives';
+
+import { CONTAINER } from '../tokens';
+import { IdentityProviderFactoryEntry } from './identity-provider-factory.entry';
+
+/**
+ * Factory class used to configure and instantiate an Identity Provider.
+ */
+export class IdentityProviderFactory {
+  /**
+   * Dependency Injection Container of the Identity Provider.
+   */
+  private readonly container: DependencyInjectionContainer;
+
+  /**
+   * Instantiates a new Identity Provider Factory.
+   */
+  public constructor() {
+    this.container = getContainer(CONTAINER);
+    this.container.bind(DependencyInjectionContainer).toValue(this.container);
+
+    this.addDefaultEntries();
+  }
+
+  /**
+   * Adds the provided Entry under the provided Token to the Identity Provider.
+   *
+   * @param token Token of the Entry.
+   * @param entry Entry to be added.
+   * @throws {TypeError} One of the provided arguments is invalid.
+   * @returns Identity Provider Factory.
+   */
+  public add<T>(token: InjectableToken<T>, entry?: IdentityProviderFactoryEntry<T>): IdentityProviderFactory {
+    this.container.delete(token);
+    this.addContainerEntry(token, entry);
+    return this;
+  }
+
+  /**
+   * Adds the provided Entry under the provided Token to the Identity Provider.
+   *
+   * @param token Token of the Entry.
+   * @param entry Entry to be added.
+   * @throws {TypeError} One of the provided arguments is invalid.
+   */
+  private addContainerEntry<T>(token: InjectableToken<T>, entry?: IdentityProviderFactoryEntry<T>): void {
+    if (!isNonEmptyString(token) && typeof token !== 'symbol' && !this._isClass(token)) {
+      throw new TypeError('The provided Token is invalid.');
+    }
+
+    const binding = this.container.bind(token);
+
+    switch (true) {
+      case this._isClass<T>(entry):
+        if (this._isClass(token) && (token === entry || !this._inherits(entry.prototype, token))) {
+          throw new TypeError(`The class "${entry.name}" does not inherit from the Token "${token.name}".`);
+        }
+
+        binding.toClass(entry).asSingleton();
+        break;
+
+      case this._isFactory<T>(entry):
+        binding.toFactory(entry);
+        break;
+
+      case typeof entry === 'undefined':
+        if (!this._isClass(token)) {
+          throw new TypeError(`The Token "${String(token)}" is not a valid class.`);
+        }
+
+        binding.toSelf().asSingleton();
+        break;
+
+      default:
+        if (this._isClass(token) && !this._inherits(entry, token)) {
+          throw new TypeError(
+            `The object "${entry?.constructor?.name}" does not inherit from the Token "${token.name}".`,
+          );
+        }
+
+        binding.toValue(entry);
+        break;
+    }
+  }
+
+  /**
+   * Adds the Default Entries for the necessary dependencies of the Identity Provider
+   * where an out-of-the-box implementation is provided.
+   */
+  private addDefaultEntries(): void {}
+
+  // #region Helper Methods
+  private _isClass<T>(data: unknown): data is AbstractConstructor<T> | Constructor<T> {
+    return typeof data === 'function' && 'prototype' in data;
+  }
+
+  private _isFactory<T>(data: unknown): data is Factory<T> {
+    return typeof data === 'function' && !('prototype' in data);
+  }
+
+  private _inherits<T>(entry: T, token: AbstractConstructor<T> | Constructor<T>): boolean {
+    return entry === token || entry instanceof token;
+  }
+  // #endregion
+}
