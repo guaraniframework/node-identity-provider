@@ -3,6 +3,7 @@ import { OutgoingHttpHeaders } from 'http';
 
 import { getContainer } from '@guarani/di';
 
+import { HttpResponseStatus } from '../http/response/http-response-status.enum';
 import { Logger } from '../logger/logger';
 import { CONTAINER } from '../metadata/tokens';
 import { ErrorResponse } from '../responses/error/error-response';
@@ -180,7 +181,7 @@ describe('Identity Provider Error', () => {
       expect(identityProviderError.fatal).toBeFalse();
       expect(identityProviderError.headers).toStrictEqual<OutgoingHttpHeaders>({});
       expect(identityProviderError.message).toEqual('Identity Provider Error.');
-      expect(identityProviderError.status).toEqual(400);
+      expect(identityProviderError.status).toEqual(HttpResponseStatus.BadRequest);
       expect(identityProviderError.uri).toBeUndefined();
     });
 
@@ -202,7 +203,7 @@ describe('Identity Provider Error', () => {
       expect(identityProviderError.fatal).toBeTrue();
       expect(identityProviderError.headers).toStrictEqual<OutgoingHttpHeaders>({});
       expect(identityProviderError.message).toEqual('Identity Provider Error.');
-      expect(identityProviderError.status).toEqual(400);
+      expect(identityProviderError.status).toEqual(HttpResponseStatus.BadRequest);
       expect(identityProviderError.uri).toBeUndefined();
     });
   });
@@ -291,8 +292,8 @@ describe('Identity Provider Error', () => {
     it('should add the provided Http Status to the Identity Provider Error.', () => {
       const identityProviderError = new IdentityProviderError('identity_provider_error', 'Identity Provider Error.');
 
-      expect(() => identityProviderError.setHttpStatus(418)).not.toThrow();
-      expect(identityProviderError.status).toEqual(418);
+      expect(() => identityProviderError.setHttpStatus(HttpResponseStatus.ImATeapot)).not.toThrow();
+      expect(identityProviderError.status).toEqual(HttpResponseStatus.ImATeapot);
     });
   });
 

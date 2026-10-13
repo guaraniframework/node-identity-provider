@@ -3,6 +3,7 @@ import { OutgoingHttpHeader, OutgoingHttpHeaders } from 'http';
 import { getContainer } from '@guarani/di';
 import { isNonEmptyString, isPlainObject } from '@guarani/primitives';
 
+import { HttpResponseStatus } from '../http/response/http-response-status.enum';
 import { Logger } from '../logger/logger';
 import { CONTAINER } from '../metadata/tokens';
 import { ErrorResponse } from '../responses/error/error-response';
@@ -46,7 +47,7 @@ export class IdentityProviderError extends Error {
   /**
    * Http Response Status Code.
    */
-  #status: number = 400;
+  #status: number = HttpResponseStatus.BadRequest;
 
   /**
    * Error Page URI.
