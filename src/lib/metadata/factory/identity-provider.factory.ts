@@ -11,6 +11,8 @@ import { isNonEmptyString } from '@guarani/primitives';
 import { HttpRouter } from '../../http/router/http-router';
 import { ConsoleLogger } from '../../logger/console/console.logger';
 import { Logger } from '../../logger/logger';
+import { TemplateEngine } from '../../template-engine/template-engine';
+import { TemplateStringTemplateEngine } from '../../template-engine/template-string/template-string.template-engine';
 import { CONTAINER } from '../tokens';
 import { IdentityProviderFactoryEntry } from './identity-provider-factory.entry';
 
@@ -43,6 +45,19 @@ export class IdentityProviderFactory {
   public addLogger(logger: IdentityProviderFactoryEntry<Logger>): IdentityProviderFactory {
     this.container.delete(Logger);
     this.addContainerEntry(Logger, logger);
+    return this;
+  }
+
+  /**
+   * Adds the provided Template Engine to the Identity Provider.
+   *
+   * @param logger Template Engine to be added.
+   * @throws {TypeError} The provided Template Engine is invalid.
+   * @returns Identity Provider Factory.
+   */
+  public addTemplateEngine(logger: IdentityProviderFactoryEntry<TemplateEngine>): IdentityProviderFactory {
+    this.container.delete(TemplateEngine);
+    this.addContainerEntry(TemplateEngine, logger);
     return this;
   }
 
@@ -114,6 +129,7 @@ export class IdentityProviderFactory {
   private addDefaultEntries(): void {
     this.container.bind(HttpRouter).toSelf().asSingleton();
     this.container.bind(Logger).toClass(ConsoleLogger).asSingleton();
+    this.container.bind(TemplateEngine).toClass(TemplateStringTemplateEngine).asSingleton();
   }
 
   // #region Helper Methods

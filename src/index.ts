@@ -38,3 +38,8 @@ export { CONTAINER } from './lib/metadata/tokens';
 export { ErrorResponse } from './lib/responses/error/error-response';
 export { type ErrorResponseParameters } from './lib/responses/error/error-response.parameters';
 // #endregion
+
+// #region Template Engine
+export { TemplateEngine } from './lib/template-engine/template-engine';
+export { TemplateStringTemplateEngine } from './lib/template-engine/template-string/template-string.template-engine';
+// #endregion

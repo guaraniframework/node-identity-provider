@@ -6,6 +6,8 @@ import { DependencyInjectionContainer, getContainer, Injectable, InjectableToken
 import { HttpRouter } from '../../http/router/http-router';
 import { ConsoleLogger } from '../../logger/console/console.logger';
 import { Logger } from '../../logger/logger';
+import { TemplateEngine } from '../../template-engine/template-engine';
+import { TemplateStringTemplateEngine } from '../../template-engine/template-string/template-string.template-engine';
 import { CONTAINER } from '../tokens';
 import { IdentityProviderFactory } from './identity-provider.factory';
 import { IdentityProviderFactoryEntry } from './identity-provider-factory.entry';
@@ -16,6 +18,12 @@ const loggerEntries: IdentityProviderFactoryEntry<Logger>[] = [
   ConsoleLogger,
   () => Object.create(ConsoleLogger.prototype),
   Object.create(ConsoleLogger.prototype),
+];
+
+const templateEngineEntries: IdentityProviderFactoryEntry<TemplateEngine>[] = [
+  TemplateStringTemplateEngine,
+  () => Object.create(TemplateStringTemplateEngine.prototype),
+  Object.create(TemplateStringTemplateEngine.prototype),
 ];
 
 describe('Identity Provider Factory', () => {
@@ -41,11 +49,12 @@ describe('Identity Provider Factory', () => {
 
       expect(factory['container']).toBe(container);
 
-      expect(factory['container']['registry']['bindings'].size).toEqual(3);
+      expect(factory['container']['registry']['bindings'].size).toEqual(4);
 
       expect(factory['container'].resolve(DependencyInjectionContainer)).toBe(container);
       expect(factory['container'].resolve(HttpRouter)).toBeInstanceOf(HttpRouter);
       expect(factory['container'].resolve(Logger)).toBeInstanceOf(ConsoleLogger);
+      expect(factory['container'].resolve(TemplateEngine)).toBeInstanceOf(TemplateStringTemplateEngine);
     });
   });
 
@@ -112,6 +121,16 @@ describe('Identity Provider Factory', () => {
       expect(() => factory.addLogger(logger)).not.toThrow();
       expect(factory['container'].resolve(Logger)).toBeInstanceOf(Logger);
     });
+  });
+
+  describe('addTemplateEngine()', () => {
+    it.each(templateEngineEntries)(
+      'should add the provided Template Engine to the Identity Provider Factory.',
+      (templateEngine) => {
+        expect(() => factory.addTemplateEngine(templateEngine)).not.toThrow();
+        expect(factory['container'].resolve(TemplateEngine)).toBeInstanceOf(TemplateEngine);
+      },
+    );
   });
 
   describe('add()', () => {
