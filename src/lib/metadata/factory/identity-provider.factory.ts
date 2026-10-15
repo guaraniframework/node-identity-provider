@@ -8,6 +8,7 @@ import {
 } from '@guarani/di';
 import { isNonEmptyString } from '@guarani/primitives';
 
+import { HttpRouter } from '../../http/router/http-router';
 import { ConsoleLogger } from '../../logger/console/console.logger';
 import { Logger } from '../../logger/logger';
 import { CONTAINER } from '../tokens';
@@ -111,6 +112,7 @@ export class IdentityProviderFactory {
    * where an out-of-the-box implementation is provided.
    */
   private addDefaultEntries(): void {
+    this.container.bind(HttpRouter).toSelf().asSingleton();
     this.container.bind(Logger).toClass(ConsoleLogger).asSingleton();
   }
 

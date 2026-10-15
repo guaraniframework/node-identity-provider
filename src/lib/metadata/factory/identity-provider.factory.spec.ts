@@ -3,6 +3,7 @@ import { URL } from 'url';
 
 import { DependencyInjectionContainer, getContainer, Injectable, InjectableToken } from '@guarani/di';
 
+import { HttpRouter } from '../../http/router/http-router';
 import { ConsoleLogger } from '../../logger/console/console.logger';
 import { Logger } from '../../logger/logger';
 import { CONTAINER } from '../tokens';
@@ -40,9 +41,10 @@ describe('Identity Provider Factory', () => {
 
       expect(factory['container']).toBe(container);
 
-      expect(factory['container']['registry']['bindings'].size).toEqual(2);
+      expect(factory['container']['registry']['bindings'].size).toEqual(3);
 
       expect(factory['container'].resolve(DependencyInjectionContainer)).toBe(container);
+      expect(factory['container'].resolve(HttpRouter)).toBeInstanceOf(HttpRouter);
       expect(factory['container'].resolve(Logger)).toBeInstanceOf(ConsoleLogger);
     });
   });

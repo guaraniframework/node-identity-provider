@@ -2,6 +2,10 @@ if (Reflect == null || !('getMetadata' in Reflect)) {
   throw new Error('@guarani/identity-provider requires a Reflect Metadata polyfill.');
 }
 
+// #region Endpoints
+export { type EndpointName } from './lib/endpoints/endpoint-name.type';
+// #endregion
+
 // #region Errors
 export { ErrorCode } from './lib/errors/error-code.enum';
 export { IdentityProviderError } from './lib/errors/identity-provider.error';
@@ -16,6 +20,7 @@ export { type HttpRequestParameters } from './lib/http/request/http-request.para
 export { HttpRequestMethod } from './lib/http/request/http-request-method.enum';
 export { HttpResponse } from './lib/http/response/http-response';
 export { HttpResponseStatus } from './lib/http/response/http-response-status.enum';
+export { HttpRouter } from './lib/http/router/http-router';
 // #endregion
 
 // #region Logger
