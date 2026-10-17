@@ -1,4 +1,4 @@
 /**
  * Supported Endpoints.
  */
-export type EndpointName = string;
+export type EndpointName = 'error';

@@ -1,13 +1,19 @@
 import { Buffer } from 'buffer';
 import { URL } from 'url';
 
-import { DependencyInjectionContainer, getContainer, Injectable, InjectableToken } from '@guarani/di';
+import { DependencyInjectionContainer, Factory, getContainer, Injectable, InjectableToken } from '@guarani/di';
 
+import { ErrorEndpoint } from '../../endpoints/error/error.endpoint';
+import { IdentityProvider } from '../../http/identity-provider';
 import { HttpRouter } from '../../http/router/http-router';
+import { IdentityServer } from '../../http/servers/identity-server';
+import { NodeIdentityServer } from '../../http/servers/node/node.identity-server';
 import { ConsoleLogger } from '../../logger/console/console.logger';
 import { Logger } from '../../logger/logger';
+import { Settings } from '../../settings/settings';
 import { TemplateEngine } from '../../template-engine/template-engine';
 import { TemplateStringTemplateEngine } from '../../template-engine/template-string/template-string.template-engine';
+import { ErrorRequestValidator } from '../../validators/error/error-request.validator';
 import { CONTAINER } from '../tokens';
 import { IdentityProviderFactory } from './identity-provider.factory';
 import { IdentityProviderFactoryEntry } from './identity-provider-factory.entry';
@@ -20,10 +26,31 @@ const loggerEntries: IdentityProviderFactoryEntry<Logger>[] = [
   Object.create(ConsoleLogger.prototype),
 ];
 
+const settingsEntries: (Settings | Factory<Settings>)[] = [
+  () => Object.create(Settings.prototype),
+  Object.create(Settings.prototype),
+];
+
 const templateEngineEntries: IdentityProviderFactoryEntry<TemplateEngine>[] = [
   TemplateStringTemplateEngine,
   () => Object.create(TemplateStringTemplateEngine.prototype),
   Object.create(TemplateStringTemplateEngine.prototype),
+];
+
+const invalidIdentityServers: any[] = [
+  null,
+  true,
+  1,
+  1.2,
+  1n,
+  'a',
+  Symbol('a'),
+  Buffer.alloc(1),
+  () => 1,
+  {},
+  [],
+  Buffer,
+  IdentityServer,
 ];
 
 describe('Identity Provider Factory', () => {
@@ -123,6 +150,20 @@ describe('Identity Provider Factory', () => {
     });
   });
 
+  describe('addSettings()', () => {
+    it('should throw when the provided Settings Entry is the Settings constructor.', () => {
+      expect(() => factory.addSettings(Settings as any)).toThrowWithMessage(
+        TypeError,
+        'The Settings Entry must be an object or a factory.',
+      );
+    });
+
+    it.each(settingsEntries)('should add the provided Settings to the Identity Provider Factory.', (settings) => {
+      expect(() => factory.addSettings(settings)).not.toThrow();
+      expect(factory['container'].resolve(Settings)).toBeInstanceOf(Settings);
+    });
+  });
+
   describe('addTemplateEngine()', () => {
     it.each(templateEngineEntries)(
       'should add the provided Template Engine to the Identity Provider Factory.',
@@ -139,6 +180,46 @@ describe('Identity Provider Factory', () => {
 
       expect(containerDeleteSpy).toHaveBeenCalledExactlyOnceWith(Buffer);
       expect(addContainerEntrySpy).toHaveBeenCalledExactlyOnceWith(Buffer, Buffer.alloc(0));
+    });
+  });
+
+  describe('create()', () => {
+    it.each(invalidIdentityServers)('should throw when the provided Identity Server Entry is invalid.', (server) => {
+      expect(() => factory.create(server)).toThrowWithMessage(
+        TypeError,
+        'The provided Identity Server Entry is invalid.',
+      );
+    });
+
+    it('should return an instance of the Identity Provider.', () => {
+      let provider!: IdentityProvider;
+
+      expect(() => (provider = factory.create())).not.toThrow();
+
+      expect(provider).toBeInstanceOf(IdentityProvider);
+
+      expect(factory['container'].isRegistered(Settings)).toBeFalse();
+      expect(factory['container'].isRegistered(ErrorEndpoint)).toBeTrue();
+      expect(factory['container'].isRegistered(ErrorRequestValidator)).toBeTrue();
+
+      expect(factory['container']['registry'].get(IdentityProvider).provider.useClass).toBe(IdentityProvider);
+    });
+
+    it('should return an instance of the provided Identity Server.', () => {
+      let server!: NodeIdentityServer;
+
+      factory.addSettings(Object.create(Settings.prototype));
+
+      expect(() => (server = factory.create(NodeIdentityServer))).not.toThrow();
+
+      expect(server).toBeInstanceOf(IdentityServer);
+
+      expect(factory['container'].isRegistered(IdentityProvider)).toBeTrue();
+      expect(factory['container'].isRegistered(Settings)).toBeTrue();
+      expect(factory['container'].isRegistered(ErrorEndpoint)).toBeTrue();
+      expect(factory['container'].isRegistered(ErrorRequestValidator)).toBeTrue();
+
+      expect(factory['container']['registry'].get(IdentityServer).provider.useClass).toBe(NodeIdentityServer);
     });
   });
 });
