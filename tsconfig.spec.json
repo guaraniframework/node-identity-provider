@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["**/*.spec.ts", "src/lib/jest-extended.d.ts"]
+}
