@@ -4,9 +4,18 @@ import { URL } from 'url';
 import { DependencyInjectionContainer, getContainer, Injectable } from '@guarani/di';
 
 import { CONTAINER } from '../constants';
+import { ConsoleLogger } from '../loggers/console/console.logger';
+import { Logger } from '../loggers/logger';
 import { IdentityProviderFactory } from './identity-provider.factory';
+import { IdentityProviderFactoryEntry } from './identity-provider-factory.entry';
 
 const invalidTokens: any[] = [undefined, null, true, 1, 1.2, 1n, Buffer.alloc(1), () => {}, {}, []];
+
+const loggerEntries: IdentityProviderFactoryEntry<Logger>[] = [
+  ConsoleLogger,
+  () => Object.create(ConsoleLogger.prototype),
+  Object.create(ConsoleLogger.prototype),
+];
 
 describe('Identity Provider Factory', () => {
   let factory: IdentityProviderFactory;
@@ -32,8 +41,11 @@ describe('Identity Provider Factory', () => {
       const container = getContainer(CONTAINER);
 
       expect(factory['container']).toBe(container);
-      expect(container['registry']['bindings'].size).toEqual(1);
+
+      expect(container['registry']['bindings'].size).toEqual(2);
+
       expect(container.resolve(DependencyInjectionContainer)).toBe(container);
+      expect(container.resolve(Logger)).toBeInstanceOf(ConsoleLogger);
     });
   });
 
@@ -92,6 +104,13 @@ describe('Identity Provider Factory', () => {
       const buffer = Buffer.alloc(0);
       expect(() => factory['addContainerEntry'](Buffer, buffer)).not.toThrow();
       expect(container.resolve(Buffer)).toBe(buffer);
+    });
+  });
+
+  describe('addLogger()', () => {
+    it.each(loggerEntries)('should add the provided Logger to the Identity Provider Factory.', (logger) => {
+      expect(() => factory.addLogger(logger)).not.toThrow();
+      expect(factory['container'].resolve(Logger)).toBeInstanceOf(Logger);
     });
   });
 

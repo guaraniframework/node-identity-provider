@@ -9,6 +9,8 @@ import {
 import { isNonEmptyString } from '@guarani/primitives';
 
 import { CONTAINER } from '../constants';
+import { ConsoleLogger } from '../loggers/console/console.logger';
+import { Logger } from '../loggers/logger';
 import { IdentityProviderFactoryEntry } from './identity-provider-factory.entry';
 
 /**
@@ -28,6 +30,19 @@ export class IdentityProviderFactory {
     this.container.bind(DependencyInjectionContainer).toValue(this.container);
 
     this.addDefaultEntries();
+  }
+
+  /**
+   * Adds the provided Logger to the Identity Provider.
+   *
+   * @param logger Logger to be added.
+   * @throws {TypeError} The provided Logger is invalid.
+   * @returns Identity Provider Factory.
+   */
+  public addLogger(logger: IdentityProviderFactoryEntry<Logger>): IdentityProviderFactory {
+    this.container.delete(Logger);
+    this.addContainerEntry(Logger, logger);
+    return this;
   }
 
   /**
@@ -95,7 +110,9 @@ export class IdentityProviderFactory {
    * Adds the Default Entries for the necessary dependencies of the Identity Provider
    * where an out-of-the-box implementation is provided.
    */
-  private addDefaultEntries(): void {}
+  private addDefaultEntries(): void {
+    this.container.bind(Logger).toClass(ConsoleLogger).asSingleton();
+  }
 
   // #region Helper Methods
   private _isClass<T>(data: unknown): data is AbstractConstructor<T> | Constructor<T> {
