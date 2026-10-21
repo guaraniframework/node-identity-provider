@@ -11,6 +11,7 @@ import { isNonEmptyString } from '@guarani/primitives';
 import { CONTAINER } from '../constants';
 import { ConsoleLogger } from '../loggers/console/console.logger';
 import { Logger } from '../loggers/logger';
+import { Settings } from '../settings/settings';
 import { IdentityProviderFactoryEntry } from './identity-provider-factory.entry';
 
 /**
@@ -42,6 +43,23 @@ export class IdentityProviderFactory {
   public addLogger(logger: IdentityProviderFactoryEntry<Logger>): IdentityProviderFactory {
     this.container.delete(Logger);
     this.addContainerEntry(Logger, logger);
+    return this;
+  }
+
+  /**
+   * Adds the provided Settings to the Identity Provider.
+   *
+   * @param settings Settings to be added.
+   * @throws {TypeError} The provided Settings is invalid.
+   * @returns Identity Provider Factory.
+   */
+  public addSettings(settings: Settings | Factory<Settings>): IdentityProviderFactory {
+    if (this._isClass(settings)) {
+      throw new TypeError('The Settings Entry must be an object or a factory.');
+    }
+
+    this.container.delete(Settings);
+    this.addContainerEntry(Settings, settings);
     return this;
   }
 

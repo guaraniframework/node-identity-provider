@@ -7,3 +7,4 @@ export { IdentityProviderFactory } from './lib/factory/identity-provider.factory
 export { ConsoleLogger } from './lib/loggers/console/console.logger';
 export { Logger } from './lib/loggers/logger';
 export { LoggerLevel } from './lib/loggers/logger-level.enum';
+export { Settings } from './lib/settings/settings';

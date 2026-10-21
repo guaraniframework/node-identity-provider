@@ -1,11 +1,12 @@
 import { Buffer } from 'buffer';
 import { URL } from 'url';
 
-import { DependencyInjectionContainer, getContainer, Injectable } from '@guarani/di';
+import { DependencyInjectionContainer, Factory, getContainer, Injectable } from '@guarani/di';
 
 import { CONTAINER } from '../constants';
 import { ConsoleLogger } from '../loggers/console/console.logger';
 import { Logger } from '../loggers/logger';
+import { Settings } from '../settings/settings';
 import { IdentityProviderFactory } from './identity-provider.factory';
 import { IdentityProviderFactoryEntry } from './identity-provider-factory.entry';
 
@@ -15,6 +16,11 @@ const loggerEntries: IdentityProviderFactoryEntry<Logger>[] = [
   ConsoleLogger,
   () => Object.create(ConsoleLogger.prototype),
   Object.create(ConsoleLogger.prototype),
+];
+
+const settingsEntries: (Settings | Factory<Settings>)[] = [
+  () => Object.create(Settings.prototype),
+  Object.create(Settings.prototype),
 ];
 
 describe('Identity Provider Factory', () => {
@@ -111,6 +117,20 @@ describe('Identity Provider Factory', () => {
     it.each(loggerEntries)('should add the provided Logger to the Identity Provider Factory.', (logger) => {
       expect(() => factory.addLogger(logger)).not.toThrow();
       expect(factory['container'].resolve(Logger)).toBeInstanceOf(Logger);
+    });
+  });
+
+  describe('addSettings()', () => {
+    it('should throw when the provided Settings Entry is the Settings constructor.', () => {
+      expect(() => factory.addSettings(Settings as any)).toThrowWithMessage(
+        TypeError,
+        'The Settings Entry must be an object or a factory.',
+      );
+    });
+
+    it.each(settingsEntries)('should add the provided Settings to the Identity Provider Factory.', (settings) => {
+      expect(() => factory.addSettings(settings)).not.toThrow();
+      expect(factory['container'].resolve(Settings)).toBeInstanceOf(Settings);
     });
   });
 
