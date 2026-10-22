@@ -43,7 +43,7 @@ describe('Console Logger', () => {
 
       expect(() => (logger = new ConsoleLogger())).not.toThrow();
 
-      expect(logger['loggerLevel']).toEqual(LoggerLevel.TRACE);
+      expect(logger['loggerLevel']).toBe(LoggerLevel.TRACE);
 
       expect(consoleSpies['warn']).toHaveBeenCalledExactlyOnceWith(
         '[Warn] [2026-08-12T03:00:00.000Z] [ConsoleLogger] Using the default Console Logger. This is only recommended for development environments.',
@@ -57,7 +57,7 @@ describe('Console Logger', () => {
 
       expect(() => (logger = new ConsoleLogger(LoggerLevel.WARN))).not.toThrow();
 
-      expect(logger['loggerLevel']).toEqual(LoggerLevel.WARN);
+      expect(logger['loggerLevel']).toBe(LoggerLevel.WARN);
 
       expect(consoleSpies['warn']).toHaveBeenCalledExactlyOnceWith(
         '[Warn] [2026-08-12T03:00:00.000Z] [ConsoleLogger] Using the default Console Logger. This is only recommended for development environments.',

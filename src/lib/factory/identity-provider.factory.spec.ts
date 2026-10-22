@@ -50,7 +50,7 @@ describe('Identity Provider Factory', () => {
 
       expect(factory['container']).toBe(container);
 
-      expect(container['registry']['bindings'].size).toEqual(2);
+      expect(container['registry']['bindings'].size).toBe(2);
 
       expect(container.resolve(DependencyInjectionContainer)).toBe(container);
       expect(container.resolve(Logger)).toBeInstanceOf(ConsoleLogger);
