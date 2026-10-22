@@ -3,6 +3,8 @@ if (Reflect == null || !('getMetadata' in Reflect)) {
 }
 
 export { CONTAINER } from './lib/constants';
+export { DataAccess } from './lib/data-access/data-access';
+export { SQLiteDataAccess } from './lib/data-access/sqlite/sqlite.data-access';
 export { Endpoint } from './lib/endpoints/endpoint';
 export { type EndpointName } from './lib/endpoints/endpoint-name.type';
 export { ErrorCode } from './lib/errors/error-code.enum';

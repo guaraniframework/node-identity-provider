@@ -1,9 +1,12 @@
 import { Buffer } from 'buffer';
+import { DatabaseSync } from 'node:sqlite';
 import { URL } from 'url';
 
 import { DependencyInjectionContainer, Factory, getContainer, Injectable } from '@guarani/di';
 
 import { CONTAINER } from '../constants';
+import { DataAccess } from '../data-access/data-access';
+import { SQLiteDataAccess } from '../data-access/sqlite/sqlite.data-access';
 import { Endpoint } from '../endpoints/endpoint';
 import { NodeIdentityProvider } from '../http/providers/node/node.identity-provider';
 import { ConsoleLogger } from '../loggers/console/console.logger';
@@ -13,6 +16,12 @@ import { IdentityProviderFactory } from './identity-provider.factory';
 import { IdentityProviderFactoryEntry } from './identity-provider-factory.entry';
 
 const invalidTokens: any[] = [undefined, null, true, 1, 1.2, 1n, Buffer.alloc(1), () => {}, {}, []];
+
+const dataAccessEntries: IdentityProviderFactoryEntry<DataAccess>[] = [
+  SQLiteDataAccess,
+  () => Object.create(SQLiteDataAccess.prototype),
+  Object.create(SQLiteDataAccess.prototype),
+];
 
 const loggerEntries: IdentityProviderFactoryEntry<Logger>[] = [
   ConsoleLogger,
@@ -56,11 +65,14 @@ describe('Identity Provider Factory', () => {
     it('should instantiate a new Identity Provider Factory.', () => {
       const container = getContainer(CONTAINER);
 
+      container.bind(DatabaseSync).toValue(DatabaseSync.prototype);
+
       expect(factory['container']).toBe(container);
 
-      expect(container['registry']['bindings'].size).toBe(2);
+      expect(container['registry']['bindings'].size).toBe(4);
 
       expect(container.resolve(DependencyInjectionContainer)).toBe(container);
+      expect(container.resolve(DataAccess)).toBeInstanceOf(SQLiteDataAccess);
       expect(container.resolve(Logger)).toBeInstanceOf(ConsoleLogger);
     });
   });
@@ -121,6 +133,18 @@ describe('Identity Provider Factory', () => {
       expect(() => factory['addContainerEntry'](Buffer, buffer)).not.toThrow();
       expect(container.resolve(Buffer)).toBe(buffer);
     });
+  });
+
+  describe('addDataAccess()', () => {
+    it.each(dataAccessEntries)(
+      'should add the provided Data Access to the Identity Provider Factory.',
+      (dataAccess) => {
+        factory['container'].bind(DatabaseSync).toValue(DatabaseSync.prototype);
+
+        expect(() => factory.addDataAccess(dataAccess)).not.toThrow();
+        expect(factory['container'].resolve(DataAccess)).toBeInstanceOf(DataAccess);
+      },
+    );
   });
 
   describe('addLogger()', () => {

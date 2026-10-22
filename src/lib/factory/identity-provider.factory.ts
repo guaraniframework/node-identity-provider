@@ -9,6 +9,8 @@ import {
 import { isNonEmptyString } from '@guarani/primitives';
 
 import { CONTAINER } from '../constants';
+import { DataAccess } from '../data-access/data-access';
+import { SQLiteDataAccess } from '../data-access/sqlite/sqlite.data-access';
 import { IdentityProvider } from '../http/providers/identity-provider';
 import { ConsoleLogger } from '../loggers/console/console.logger';
 import { Logger } from '../loggers/logger';
@@ -32,6 +34,19 @@ export class IdentityProviderFactory {
     this.container.bind(DependencyInjectionContainer).toValue(this.container);
 
     this.addDefaultEntries();
+  }
+
+  /**
+   * Adds the provided Data Access to the Identity Provider.
+   *
+   * @param dataAccess Data Access to be added.
+   * @throws {TypeError} The provided Data Access is invalid.
+   * @returns Identity Provider Factory.
+   */
+  public addDataAccess(dataAccess: IdentityProviderFactoryEntry<DataAccess>): IdentityProviderFactory {
+    this.container.delete(DataAccess);
+    this.addContainerEntry(DataAccess, dataAccess);
+    return this;
   }
 
   /**
@@ -145,6 +160,7 @@ export class IdentityProviderFactory {
    * where an out-of-the-box implementation is provided.
    */
   private addDefaultEntries(): void {
+    this.container.bind(DataAccess).toClass(SQLiteDataAccess).asSingleton();
     this.container.bind(Logger).toClass(ConsoleLogger).asSingleton();
   }
 
