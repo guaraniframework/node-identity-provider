@@ -4,6 +4,8 @@ import { URL } from 'url';
 import { DependencyInjectionContainer, Factory, getContainer, Injectable } from '@guarani/di';
 
 import { CONTAINER } from '../constants';
+import { Endpoint } from '../endpoints/endpoint';
+import { NodeIdentityProvider } from '../http/providers/node/node.identity-provider';
 import { ConsoleLogger } from '../loggers/console/console.logger';
 import { Logger } from '../loggers/logger';
 import { Settings } from '../settings/settings';
@@ -140,6 +142,13 @@ describe('Identity Provider Factory', () => {
 
       expect(containerDeleteSpy).toHaveBeenCalledExactlyOnceWith(Buffer);
       expect(addContainerEntrySpy).toHaveBeenCalledExactlyOnceWith(Buffer, Buffer.alloc(0));
+    });
+  });
+
+  describe('create()', () => {
+    it('should return an instance of the provided Identity Provider.', () => {
+      factory.addSettings(Object.create(Settings.prototype)).add(Endpoint, Object.create(Endpoint.prototype));
+      expect(() => factory.create(NodeIdentityProvider)).not.toThrow();
     });
   });
 });

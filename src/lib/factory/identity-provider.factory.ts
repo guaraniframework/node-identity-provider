@@ -9,6 +9,7 @@ import {
 import { isNonEmptyString } from '@guarani/primitives';
 
 import { CONTAINER } from '../constants';
+import { IdentityProvider } from '../http/providers/identity-provider';
 import { ConsoleLogger } from '../loggers/console/console.logger';
 import { Logger } from '../loggers/logger';
 import { Settings } from '../settings/settings';
@@ -75,6 +76,21 @@ export class IdentityProviderFactory {
     this.container.delete(token);
     this.addContainerEntry(token, entry);
     return this;
+  }
+
+  /**
+   * Creates a new instance of the provided Identity Provider.
+   *
+   * @param provider Identity Provider Constructor.
+   * @throws {TypeError} The provided Identity Provider Constructor is invalid.
+   * @throws {TokenNotRegisteredError} The Token is not registered at the Container.
+   * @throws {InvalidProviderError} Attempted to resolve an invalid Provider.
+   * @returns Instance of the provided Identity Provider.
+   */
+  public create<T extends IdentityProvider>(provider: Constructor<T>): T {
+    this.container.delete(IdentityProvider);
+    this.addContainerEntry(IdentityProvider, provider);
+    return this.container.resolve(IdentityProvider) as T;
   }
 
   /**
