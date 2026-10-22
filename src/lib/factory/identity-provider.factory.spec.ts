@@ -32,6 +32,14 @@ describe('Identity Provider Factory', () => {
   let containerDeleteSpy: jest.SpyInstance;
   let addContainerEntrySpy: jest.SpyInstance;
 
+  beforeAll(() => {
+    global.console.debug = jest.fn();
+    global.console.error = jest.fn();
+    global.console.info = jest.fn();
+    global.console.trace = jest.fn();
+    global.console.warn = jest.fn();
+  });
+
   beforeEach(() => {
     factory = new IdentityProviderFactory();
 

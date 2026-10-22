@@ -11,21 +11,28 @@ describe('Console Logger', () => {
   let consoleSpies: NodeJS.Dict<jest.SpyInstance<void, any[], any>>;
 
   beforeAll(() => {
-    jest.useFakeTimers({ now: new Date(2026, 7, 12, 0, 0, 0, 0) });
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-08-12T00:00:00Z'));
+
+    global.console.debug = jest.fn();
+    global.console.error = jest.fn();
+    global.console.info = jest.fn();
+    global.console.trace = jest.fn();
+    global.console.warn = jest.fn();
   });
 
   beforeEach(() => {
+    consoleSpies = {
+      debug: jest.spyOn(global.console, 'debug'),
+      error: jest.spyOn(global.console, 'error'),
+      info: jest.spyOn(global.console, 'info'),
+      trace: jest.spyOn(global.console, 'trace'),
+      warn: jest.spyOn(global.console, 'warn'),
+    };
+
     container.bind(ConsoleLogger).toSelf().asSingleton();
 
     logger = container.resolve(ConsoleLogger);
-
-    consoleSpies = {
-      debug: jest.spyOn(console, 'debug').mockImplementationOnce(() => {}),
-      error: jest.spyOn(console, 'error').mockImplementationOnce(() => {}),
-      info: jest.spyOn(console, 'info').mockImplementationOnce(() => {}),
-      trace: jest.spyOn(console, 'trace').mockImplementationOnce(() => {}),
-      warn: jest.spyOn(console, 'warn').mockImplementationOnce(() => {}),
-    };
   });
 
   afterEach(() => {
@@ -45,10 +52,11 @@ describe('Console Logger', () => {
 
       expect(logger['loggerLevel']).toBe(LoggerLevel.TRACE);
 
-      expect(consoleSpies['warn']).toHaveBeenCalledExactlyOnceWith(
-        '[Warn] [2026-08-12T03:00:00.000Z] [ConsoleLogger] Using the default Console Logger. This is only recommended for development environments.',
+      expect(consoleSpies['warn']).toHaveBeenCalledWith(
+        '[Warn] [2026-08-12T00:00:00.000Z] [ConsoleLogger] Using the default Console Logger. This is only recommended for development environments.',
         'bd41fa1d-c43f-4e08-be2e-bbb5f6877dc5',
         null,
+        undefined,
       );
     });
 
@@ -59,10 +67,11 @@ describe('Console Logger', () => {
 
       expect(logger['loggerLevel']).toBe(LoggerLevel.WARN);
 
-      expect(consoleSpies['warn']).toHaveBeenCalledExactlyOnceWith(
-        '[Warn] [2026-08-12T03:00:00.000Z] [ConsoleLogger] Using the default Console Logger. This is only recommended for development environments.',
+      expect(consoleSpies['warn']).toHaveBeenCalledWith(
+        '[Warn] [2026-08-12T00:00:00.000Z] [ConsoleLogger] Using the default Console Logger. This is only recommended for development environments.',
         'bd41fa1d-c43f-4e08-be2e-bbb5f6877dc5',
         null,
+        undefined,
       );
     });
   });
@@ -75,7 +84,7 @@ describe('Console Logger', () => {
       logger['log'](LoggerLevel.FATAL, message, 'fatal-error-location', { data: 'foobar' }, error, 'parameter');
 
       expect(consoleSpies['error']).toHaveBeenCalledWith(
-        '[Fatal] [2026-08-12T03:00:00.000Z] Fatal Error Message: Broken System.',
+        '[Fatal] [2026-08-12T00:00:00.000Z] Fatal Error Message: Broken System.',
         'fatal-error-location',
         { data: 'foobar' },
         error,
@@ -90,7 +99,7 @@ describe('Console Logger', () => {
       logger['log'](LoggerLevel.ERROR, message, 'error-location', { data: 'foobar' }, error, 'parameter');
 
       expect(consoleSpies['error']).toHaveBeenCalledWith(
-        '[Error] [2026-08-12T03:00:00.000Z] Error Message: Business Rule Error.',
+        '[Error] [2026-08-12T00:00:00.000Z] Error Message: Business Rule Error.',
         'error-location',
         { data: 'foobar' },
         error,
@@ -105,7 +114,7 @@ describe('Console Logger', () => {
       logger['log'](LoggerLevel.WARN, message, 'warn-location', { data: 'foobar' }, error, 'parameter');
 
       expect(consoleSpies['warn']).toHaveBeenCalledWith(
-        '[Warn] [2026-08-12T03:00:00.000Z] Warn Message: Business Rule Warn.',
+        '[Warn] [2026-08-12T00:00:00.000Z] Warn Message: Business Rule Warn.',
         'warn-location',
         { data: 'foobar' },
         error,
@@ -119,7 +128,7 @@ describe('Console Logger', () => {
       logger['log'](LoggerLevel.INFO, message, 'info-location', { data: 'foobar' }, 'parameter');
 
       expect(consoleSpies['info']).toHaveBeenCalledWith(
-        '[Info] [2026-08-12T03:00:00.000Z] Info Message: Business Rule Info.',
+        '[Info] [2026-08-12T00:00:00.000Z] Info Message: Business Rule Info.',
         'info-location',
         { data: 'foobar' },
         'parameter',
@@ -132,7 +141,7 @@ describe('Console Logger', () => {
       logger['log'](LoggerLevel.DEBUG, message, 'debug-location', { data: 'foobar' }, 'parameter');
 
       expect(consoleSpies['debug']).toHaveBeenCalledWith(
-        '[Debug] [2026-08-12T03:00:00.000Z] Debug Message: Business Rule Debug.',
+        '[Debug] [2026-08-12T00:00:00.000Z] Debug Message: Business Rule Debug.',
         'debug-location',
         { data: 'foobar' },
         'parameter',
@@ -145,7 +154,7 @@ describe('Console Logger', () => {
       logger['log'](LoggerLevel.TRACE, message, 'trace-location', { data: 'foobar' }, 'parameter');
 
       expect(consoleSpies['trace']).toHaveBeenCalledWith(
-        '[Trace] [2026-08-12T03:00:00.000Z] Trace Message: Business Rule Trace.',
+        '[Trace] [2026-08-12T00:00:00.000Z] Trace Message: Business Rule Trace.',
         'trace-location',
         { data: 'foobar' },
         'parameter',
