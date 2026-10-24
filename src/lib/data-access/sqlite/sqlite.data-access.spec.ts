@@ -1,4 +1,5 @@
 import { Buffer } from 'buffer';
+import { randomUUIDv7 } from 'crypto';
 import fs from 'fs';
 import { DatabaseSync, SQLOutputValue } from 'node:sqlite';
 import path from 'path';
@@ -6,6 +7,9 @@ import path from 'path';
 import { getContainer } from '@guarani/di';
 
 import { CONTAINER } from '../../constants';
+import { Client } from '../../entities/client';
+import { Scope } from '../../entities/scope';
+import { Session } from '../../entities/session';
 import { Logger } from '../../loggers/logger';
 import { SQLiteDataAccess } from './sqlite.data-access';
 
@@ -84,6 +88,188 @@ describe('SQLite Data Access', () => {
       expect(databaseExecSpy).toHaveBeenNthCalledWith(1, 'PRAGMA foreign_keys = ON;');
       expect(databaseExecSpy).toHaveBeenNthCalledWith(2, 'BEGIN TRANSACTION;');
       expect(databaseExecSpy).toHaveBeenNthCalledWith(3, 'COMMIT;');
+    });
+  });
+
+  describe('findClientById()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should return null when no Client is found by the provided Identifier.', async () => {
+      await expect(dataAccess.findClientById('00000000-0000-0000-0000-000000000000')).resolves.toBeNull();
+    });
+
+    it('should return the Client of the provided Identifier.', async () => {
+      let client1!: Client;
+      let client2!: Client;
+
+      await expect(
+        async () => (client1 = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!),
+      ).resolves.toBeInstanceOf(Client);
+
+      await expect(
+        async () => (client2 = (await dataAccess.findClientById('922e0d5e-08ba-4b0d-8068-fde37f2c3604'))!),
+      ).resolves.toBeInstanceOf(Client);
+
+      const scopes = ['openid', 'profile', 'email', 'phone', 'address', 'offline_access', 'foo', 'bar', 'baz', 'qux'];
+
+      expect(client1.secrets.map((secret) => secret.secret)).toStrictEqual(['z9IyV0Pd6_-0XRJP5DN-UvFYeP56sbNX']);
+      expect(client1.scopes.map((scope) => scope.name)).toStrictEqual(expect.arrayContaining(scopes));
+
+      expect(client2.secrets.map((secret) => secret.secret)).toStrictEqual(['EHW-xzn8-CVIz9DnN2UjxIZpHo1hTO3h']);
+      expect(client2.scopes.map((scope) => scope.name)).toStrictEqual(expect.arrayContaining(scopes));
+    });
+  });
+
+  describe('findSessionById()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should return null when no Session is found by the provided Identifier.', async () => {
+      await expect(dataAccess.findSessionById('00000000-0000-0000-0000-000000000000')).resolves.toBeNull();
+    });
+
+    it('should return the Session of the provided Identifier as a fresh Session.', async () => {
+      let session!: Session;
+
+      const sessionId = randomUUIDv7();
+
+      const insertSessionSql = 'INSERT INTO sessions (id, active_login_id, grant_id) VALUES ($id, NULL, NULL)';
+      database.prepare(insertSessionSql).run({ id: toUUIDBuffer(sessionId) });
+
+      await expect(async () => (session = (await dataAccess.findSessionById(sessionId))!)).resolves.not.toThrow();
+
+      expect(session).toBeInstanceOf(Session);
+
+      expect(session.activeLogin).toBeNull();
+      expect(session.logins).toBeArrayOfSize(0);
+      expect(session.grant).toBeNull();
+    });
+
+    it('should return the Session of the provided Identifier.', async () => {
+      let session!: Session;
+
+      const sessionId = randomUUIDv7();
+      const loginId = randomUUIDv7();
+      const consentId = randomUUIDv7();
+      const grantId = randomUUIDv7();
+      const userId = '16907c32-687b-493c-85ba-f41f2c9d4daa';
+      const clientId = 'b1eeace9-2b0c-468e-a444-733befc3b35d';
+
+      const insertSessionSql = 'INSERT INTO sessions (id, active_login_id, grant_id) VALUES ($id, NULL, NULL)';
+
+      const insertLoginSql = 'INSERT INTO logins (id, user_id, session_id) VALUES ($id, $user_id, $session_id)';
+      const insertLoginsClientsSql = 'INSERT INTO logins_clients (login_id, client_id) VALUES ($login_id, $client_id)';
+
+      const insertConsentSql = 'INSERT INTO consents (id, client_id, user_id) VALUES ($id, $client_id, $user_id)';
+      const insertConsentScopes =
+        'INSERT INTO consent_scopes (consent_id, scope_id) SELECT c.id AS consent_id, s.id AS scope_id ' +
+        'FROM scopes AS s JOIN consents AS c WHERE c.id = $consent_id';
+
+      const insertGrantSql =
+        'INSERT INTO grants (id, login_challenge, consent_challenge, parameters, client_id, session_id, consent_id) ' +
+        'VALUES ($id, $login_challenge, $consent_challenge, $parameters, $client_id, $session_id, $consent_id)';
+
+      const updateSessionSql =
+        'UPDATE sessions SET active_login_id = $active_login_id, grant_id = $grant_id WHERE id = $id';
+
+      database.prepare(insertSessionSql).run({ id: toUUIDBuffer(sessionId) });
+
+      database
+        .prepare(insertLoginSql)
+        .run({ id: toUUIDBuffer(loginId), user_id: toUUIDBuffer(userId), session_id: toUUIDBuffer(sessionId) });
+
+      database
+        .prepare(insertLoginsClientsSql)
+        .run({ login_id: toUUIDBuffer(loginId), client_id: toUUIDBuffer(clientId) });
+
+      database
+        .prepare(insertConsentSql)
+        .run({ id: toUUIDBuffer(consentId), client_id: toUUIDBuffer(clientId), user_id: toUUIDBuffer(userId) });
+
+      database.prepare(insertConsentScopes).run({ consent_id: toUUIDBuffer(consentId) });
+
+      database.prepare(insertGrantSql).run({
+        id: toUUIDBuffer(grantId),
+        login_challenge: 'login_challenge',
+        consent_challenge: 'consent_challenge',
+        parameters: '{}',
+        client_id: toUUIDBuffer(clientId),
+        session_id: toUUIDBuffer(sessionId),
+        consent_id: toUUIDBuffer(consentId),
+      });
+
+      database
+        .prepare(updateSessionSql)
+        .run({ active_login_id: toUUIDBuffer(loginId), grant_id: toUUIDBuffer(grantId), id: toUUIDBuffer(sessionId) });
+
+      await expect(async () => (session = (await dataAccess.findSessionById(sessionId))!)).resolves.not.toThrow();
+
+      expect(session).toBeInstanceOf(Session);
+
+      expect(session.activeLogin!.id).toBe(loginId);
+      expect(session.activeLogin!.session).toBe(session);
+      expect(session.activeLogin!.user.id).toBe(userId);
+      expect(session.activeLogin!.clients[0]!.id).toBe(clientId);
+      expect(session.logins[0]!.id).toBe(loginId);
+      expect(session.grant!.id).toBe(grantId);
+      expect(session.grant!.client.id).toBe(clientId);
+      expect(session.grant!.session.id).toBe(sessionId);
+      expect(session.grant!.consent!.id).toBe(consentId);
+    });
+  });
+
+  describe('getScopes()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should return all Scopes.', async () => {
+      let scopes!: Scope[];
+
+      await expect(async () => (scopes = await dataAccess.getScopes())).resolves.not.toThrow();
+
+      expect(scopes).toSatisfyAll((scope) => scope instanceof Scope);
+      expect(scopes).toBeArrayOfSize(10);
+
+      expect(scopes.map((scope) => scope.name)).toStrictEqual(
+        expect.arrayContaining([
+          'openid',
+          'profile',
+          'email',
+          'phone',
+          'address',
+          'offline_access',
+          'foo',
+          'bar',
+          'baz',
+          'qux',
+        ]),
+      );
+    });
+  });
+
+  describe('getScopesByName()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should return the requested Scopes.', async () => {
+      let scopes!: Scope[];
+      const scopesNames: string[] = ['openid', 'profile', 'email', 'foo', 'bar'];
+
+      await expect(async () => (scopes = await dataAccess.getScopesByName(scopesNames))).resolves.not.toThrow();
+
+      expect(scopes).toSatisfyAll((scope) => scope instanceof Scope);
+      expect(scopes).toBeArrayOfSize(5);
+
+      expect(scopes.map((scope) => scope.name)).toStrictEqual(scopesNames.sort());
     });
   });
 
