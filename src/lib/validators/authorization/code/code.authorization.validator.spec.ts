@@ -52,6 +52,7 @@ describe('Code Authorization Validator', () => {
 
   const settingsMock = jest.mocked<Settings>(
     Object.assign<Settings, Partial<Settings>>(Object.create(Settings.prototype), {
+      idTokenSignatureAlgorithms: ['ES256'],
       uiLocales: ['en-US'],
       acrValues: ['urn:guarani:acr:1fa', 'urn:guarani:acr:2fa'],
       minimumMaxAge: 300,

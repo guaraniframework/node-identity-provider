@@ -123,7 +123,7 @@ export class NodeIdentityProvider extends IdentityProvider {
       http_request: httpRequest,
     });
 
-    return route.handler;
+    return route.handler.bind(endpoint);
   }
 
   /**

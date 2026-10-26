@@ -229,7 +229,7 @@ export class IdTokenHandler {
 
       await jwt.signed.deserialize(signedIdToken, {
         jsonWebKey,
-        expectedDigitalSignatureAlgorithms: Array.from(this.settings.idTokenSignatureAlgorithms),
+        expectedDigitalSignatureAlgorithms: this.settings.idTokenSignatureAlgorithms,
       });
 
       result = true;
@@ -394,8 +394,8 @@ export class IdTokenHandler {
     const jsonWebKey = await this.dataAccess.getUnwrapJsonWebKey!();
 
     const { plaintext } = await jwe.compact.deserialize(idToken, {
-      expectedContentEncryptionAlgorithms: [client.idTokenEncryptedResponseContentEncryption!],
-      expectedKeyManagementAlgorithms: [client.idTokenEncryptedResponseKeyWrap!],
+      expectedContentEncryptionAlgorithms: this.settings.idTokenContentEncryptionAlgorithms,
+      expectedKeyManagementAlgorithms: this.settings.idTokenKeyWrapAlgorithms,
       jsonWebKey,
     });
 

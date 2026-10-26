@@ -2,6 +2,8 @@ import { URL } from 'url';
 
 import { ContentEncryptionAlgorithm, DigitalSignatureAlgorithm, KeyManagementAlgorithm } from '@guarani/jose';
 
+import { InteractionsSettingsParameters } from './interactions/interactions.settings.parameters';
+
 /**
  * Parameters of the Settings of the Identity Provider.
  */
@@ -46,11 +48,23 @@ export interface SettingsParameters {
   readonly acrValues?: string[];
 
   /**
+   * Defines the Interactions Settings.
+   */
+  readonly interactions: InteractionsSettingsParameters;
+
+  /**
    * Defines the minimum accepted value for the "max_age" Authorization Request Parameter.
    *
    * @default 7,776,000 (90 days)
    */
   readonly minimumMaxAge?: number;
+
+  /**
+   * Enables Authorization Response Issuer Identifier in Authorization and Token Responses.
+   *
+   * @default false
+   */
+  readonly enableAuthorizationResponseIssuerIdentifier?: boolean;
 
   /**
    * Name of the Session Cookie.

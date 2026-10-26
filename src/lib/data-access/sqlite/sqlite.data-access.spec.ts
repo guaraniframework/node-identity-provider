@@ -17,6 +17,7 @@ import { AccessToken } from '../../entities/access-token';
 import { AuthorizationCode } from '../../entities/authorization-code';
 import { Client } from '../../entities/client';
 import { Consent } from '../../entities/consent';
+import { Grant } from '../../entities/grant';
 import { Login } from '../../entities/login';
 import { Scope } from '../../entities/scope';
 import { Session } from '../../entities/session';
@@ -24,6 +25,7 @@ import { User } from '../../entities/user';
 import { InvalidClientError } from '../../errors/invalid-client/invalid-client.error';
 import { Logger } from '../../loggers/logger';
 import { PKCE } from '../../pkces/pkce';
+import { AuthorizationRequest } from '../../requests/authorization/authorization-request';
 import { SQLiteDataAccess } from './sqlite.data-access';
 
 jest.mock('../../loggers/logger');
@@ -180,13 +182,10 @@ describe('SQLite Data Access', () => {
     it('should create an Authorization Code.', async () => {
       let authorizationCode!: AuthorizationCode;
 
-      const sessionId = randomUUIDv7();
       const loginId = randomUUIDv7();
       const consentId = randomUUIDv7();
       const userId = '16907c32-687b-493c-85ba-f41f2c9d4daa';
       const clientId = 'b1eeace9-2b0c-468e-a444-733befc3b35d';
-
-      const insertSessionSql = 'INSERT INTO sessions (id, active_login_id, grant_id) VALUES ($id, NULL, NULL)';
 
       const insertLoginSql = 'INSERT INTO logins (id, user_id, session_id) VALUES ($id, $user_id, $session_id)';
       const insertLoginsClientsSql = 'INSERT INTO logins_clients (login_id, client_id) VALUES ($login_id, $client_id)';
@@ -198,11 +197,11 @@ describe('SQLite Data Access', () => {
 
       const updateSessionSql = 'UPDATE sessions SET active_login_id = $active_login_id WHERE id = $id';
 
-      database.prepare(insertSessionSql).run({ id: toUUIDBuffer(sessionId) });
+      const session = await dataAccess.createSession();
 
       database
         .prepare(insertLoginSql)
-        .run({ id: toUUIDBuffer(loginId), user_id: toUUIDBuffer(userId), session_id: toUUIDBuffer(sessionId) });
+        .run({ id: toUUIDBuffer(loginId), user_id: toUUIDBuffer(userId), session_id: toUUIDBuffer(session.id) });
 
       database
         .prepare(insertLoginsClientsSql)
@@ -213,7 +212,7 @@ describe('SQLite Data Access', () => {
         .run({ id: toUUIDBuffer(consentId), client_id: toUUIDBuffer(clientId), user_id: toUUIDBuffer(userId) });
 
       database.prepare(insertConsentScopes).run({ consent_id: toUUIDBuffer(consentId) });
-      database.prepare(updateSessionSql).run({ active_login_id: toUUIDBuffer(loginId), id: toUUIDBuffer(sessionId) });
+      database.prepare(updateSessionSql).run({ active_login_id: toUUIDBuffer(loginId), id: toUUIDBuffer(session.id) });
 
       const codeChallenge = 'code_challenge';
       const codeChallengeMethod = pkceMock;
@@ -235,6 +234,111 @@ describe('SQLite Data Access', () => {
       expect(authorizationCode.codeChallengeMethod).toBe(codeChallengeMethod.name);
       expect(authorizationCode.login.id).toBe(loginId);
       expect(authorizationCode.consent.id).toBe(consentId);
+    });
+  });
+
+  describe('createGrant()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should create a Grant.', async () => {
+      let grant!: Grant;
+
+      const parameters: AuthorizationRequest = {
+        response_type: 'code',
+        client_id: 'client_id',
+        redirect_uri: 'https://client.example.com/oidc/callback',
+        scope: 'openid foo bar baz',
+        state: 'client_state',
+        response_mode: 'query',
+      };
+
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const session = await dataAccess.createSession();
+
+      await expect(async () => {
+        grant = await dataAccess.createGrant(parameters, client, session);
+      }).resolves.not.toThrow();
+
+      expect(grant).toBeInstanceOf(Grant);
+
+      expect(grant.parameters).toStrictEqual(parameters);
+      expect(grant.client).toStrictEqual(client);
+      expect(grant.session).toStrictEqual(session);
+      expect(grant.consent).toBeNull();
+    });
+  });
+
+  describe('createLogin()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should create a Login.', async () => {
+      let login!: Login;
+
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const session = await dataAccess.createSession();
+
+      await expect(async () => {
+        login = await dataAccess.createLogin(user, client, session, ['pwd', 'sms'], 'urn:guarani:acr:2fa');
+      }).resolves.not.toThrow();
+
+      expect(login).toBeInstanceOf(Login);
+
+      expect(login.amr).toStrictEqual<string[]>(expect.arrayContaining(['pwd', 'sms']));
+      expect(login.acr).toBe('urn:guarani:acr:2fa');
+      expect(login.user).toStrictEqual(user);
+      expect(login.session).toStrictEqual(session);
+      expect(login.clients).toStrictEqual<Client[]>(expect.arrayContaining([client]));
+    });
+
+    it('should create a Login without Authentication Methods and Authentication Context Class Reference.', async () => {
+      let login!: Login;
+
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const session = await dataAccess.createSession();
+
+      await expect(async () => {
+        login = await dataAccess.createLogin(user, client, session, [], null);
+      }).resolves.not.toThrow();
+
+      expect(login).toBeInstanceOf(Login);
+
+      expect(login.amr).toBeEmpty();
+      expect(login.acr).toBeNull();
+      expect(login.user).toStrictEqual(user);
+      expect(login.session).toStrictEqual(session);
+      expect(login.clients).toStrictEqual<Client[]>(expect.arrayContaining([client]));
+
+      expect(session.activeLogin).toBe(login);
+      expect(session.logins).toContain(login);
+    });
+  });
+
+  describe('createSession()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should create a Session.', async () => {
+      let session!: Session;
+
+      await expect(async () => {
+        session = await dataAccess.createSession();
+      }).resolves.not.toThrow();
+
+      expect(session).toBeInstanceOf(Session);
+
+      expect(session.activeLogin).toBeNull();
+      expect(session.logins).toBeArrayOfSize(0);
+      expect(session.grant).toBeNull();
     });
   });
 
@@ -267,6 +371,78 @@ describe('SQLite Data Access', () => {
 
       expect(client2.secrets.map((secret) => secret.secret)).toStrictEqual(['EHW-xzn8-CVIz9DnN2UjxIZpHo1hTO3h']);
       expect(client2.scopes.map((scope) => scope.name)).toStrictEqual(expect.arrayContaining(scopes));
+    });
+  });
+
+  describe('findConsentByClientAndUser()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should return null when no Consent is found by the provided Client and User.', async () => {
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+
+      await expect(dataAccess.findConsentByClientAndUser(client, user)).resolves.toBeNull();
+    });
+
+    it('should return the Consent of the provided Client and User with an expiring date.', async () => {
+      const id = randomUUIDv7();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+
+      const insertConsentSql =
+        'INSERT INTO consents (id, expires_at, client_id, user_id) VALUES ($id, $expires_at, $client_id, $user_id)';
+
+      const insertConsentScopes =
+        'INSERT INTO consent_scopes (consent_id, scope_id) SELECT c.id AS consent_id, s.id AS scope_id ' +
+        'FROM scopes AS s JOIN consents AS c WHERE c.id = $consent_id';
+
+      database
+        .prepare(insertConsentSql.replace('$expires_at', "(unixepoch('now', '+120 days'))"))
+        .run({ id: toUUIDBuffer(id), client_id: toUUIDBuffer(client.id), user_id: toUUIDBuffer(user.id) });
+
+      database.prepare(insertConsentScopes).run({ consent_id: toUUIDBuffer(id) });
+
+      await expect(dataAccess.findConsentByClientAndUser(client, user)).resolves.toStrictEqual<Consent>(
+        expect.objectContaining<Consent>({
+          id,
+          scopes: expect.arrayContaining(await dataAccess.getScopes()),
+          createdAt: expect.toBeDate(),
+          expiresAt: expect.toBeDate(),
+          client,
+          user,
+        }),
+      );
+    });
+
+    it('should return the Consent of the provided Client and User.', async () => {
+      const id = randomUUIDv7();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+
+      const insertConsentSql = 'INSERT INTO consents (id, client_id, user_id) VALUES ($id, $client_id, $user_id)';
+      const insertConsentScopes =
+        'INSERT INTO consent_scopes (consent_id, scope_id) SELECT c.id AS consent_id, s.id AS scope_id ' +
+        'FROM scopes AS s JOIN consents AS c WHERE c.id = $consent_id';
+
+      database
+        .prepare(insertConsentSql)
+        .run({ id: toUUIDBuffer(id), client_id: toUUIDBuffer(client.id), user_id: toUUIDBuffer(user.id) });
+
+      database.prepare(insertConsentScopes).run({ consent_id: toUUIDBuffer(id) });
+
+      await expect(dataAccess.findConsentByClientAndUser(client, user)).resolves.toStrictEqual<Consent>(
+        expect.objectContaining<Consent>({
+          id,
+          scopes: expect.arrayContaining(await dataAccess.getScopes()),
+          createdAt: expect.toBeDate(),
+          expiresAt: expect.toBeNil(),
+          client,
+          user,
+        }),
+      );
     });
   });
 
@@ -401,6 +577,82 @@ describe('SQLite Data Access', () => {
       expect(session.grant!.client.id).toBe(clientId);
       expect(session.grant!.session.id).toBe(sessionId);
       expect(session.grant!.consent!.id).toBe(consentId);
+    });
+
+    it('should return the Session of the provided Identifier with a null Consent.', async () => {
+      let session!: Session;
+
+      const sessionId = randomUUIDv7();
+      const login1Id = randomUUIDv7();
+      const login2Id = randomUUIDv7();
+      const grantId = randomUUIDv7();
+      const userId = '16907c32-687b-493c-85ba-f41f2c9d4daa';
+      const clientId = 'b1eeace9-2b0c-468e-a444-733befc3b35d';
+
+      const insertSessionSql = 'INSERT INTO sessions (id, active_login_id, grant_id) VALUES ($id, NULL, NULL)';
+
+      const insertLoginSql =
+        'INSERT INTO logins (id, expires_at, user_id, session_id) VALUES ($id, $expires_at, $user_id, $session_id)';
+
+      const insertLoginsClientsSql = 'INSERT INTO logins_clients (login_id, client_id) VALUES ($login_id, $client_id)';
+
+      const insertGrantSql =
+        'INSERT INTO grants (id, login_challenge, consent_challenge, parameters, client_id, session_id, consent_id) ' +
+        'VALUES ($id, $login_challenge, $consent_challenge, $parameters, $client_id, $session_id, $consent_id)';
+
+      const updateSessionSql =
+        'UPDATE sessions SET active_login_id = $active_login_id, grant_id = $grant_id WHERE id = $id';
+
+      database.prepare(insertSessionSql).run({ id: toUUIDBuffer(sessionId) });
+
+      database.prepare(insertLoginSql).run({
+        id: toUUIDBuffer(login1Id),
+        expires_at: null,
+        user_id: toUUIDBuffer(userId),
+        session_id: toUUIDBuffer(sessionId),
+      });
+
+      database.prepare(insertLoginSql.replace('$expires_at', "(unixepoch('now', '+7 days'))")).run({
+        id: toUUIDBuffer(login2Id),
+        user_id: toUUIDBuffer(userId),
+        session_id: toUUIDBuffer(sessionId),
+      });
+
+      database
+        .prepare(insertLoginsClientsSql)
+        .run({ login_id: toUUIDBuffer(login1Id), client_id: toUUIDBuffer(clientId) });
+
+      database
+        .prepare(insertLoginsClientsSql)
+        .run({ login_id: toUUIDBuffer(login2Id), client_id: toUUIDBuffer(clientId) });
+
+      database.prepare(insertGrantSql).run({
+        id: toUUIDBuffer(grantId),
+        login_challenge: 'login_challenge',
+        consent_challenge: 'consent_challenge',
+        parameters: '{}',
+        client_id: toUUIDBuffer(clientId),
+        session_id: toUUIDBuffer(sessionId),
+      });
+
+      database
+        .prepare(updateSessionSql)
+        .run({ active_login_id: toUUIDBuffer(login1Id), grant_id: toUUIDBuffer(grantId), id: toUUIDBuffer(sessionId) });
+
+      await expect(async () => (session = (await dataAccess.findSessionById(sessionId))!)).resolves.not.toThrow();
+
+      expect(session).toBeInstanceOf(Session);
+
+      expect(session.activeLogin!.id).toBe(login1Id);
+      expect(session.activeLogin!.session).toBe(session);
+      expect(session.activeLogin!.user.id).toBe(userId);
+      expect(session.activeLogin!.clients[0]!.id).toBe(clientId);
+      expect(session.logins[0]!.id).toBe(login1Id);
+      expect(session.logins[1]!.id).toBe(login2Id);
+      expect(session.grant!.id).toBe(grantId);
+      expect(session.grant!.client.id).toBe(clientId);
+      expect(session.grant!.session.id).toBe(sessionId);
+      expect(session.grant!.consent).toBeNull();
     });
   });
 
@@ -628,6 +880,123 @@ describe('SQLite Data Access', () => {
         address: {},
         updated_at: Math.ceil(user.updatedAt!.getTime() / 1000),
       });
+    });
+  });
+
+  describe('inactivateSessionActiveLogin()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should remove the Active Login of the Session without deleting the Login.', async () => {
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const session = await dataAccess.createSession();
+      const login = await dataAccess.createLogin(user, client, session, [], null);
+
+      expect(
+        database.prepare('SELECT active_login_id FROM sessions WHERE id = $id').get({ id: toUUIDBuffer(session.id) }),
+      ).toStrictEqual<Record<string, SQLOutputValue>>(
+        expect.objectContaining({ active_login_id: Uint8Array.from(toUUIDBuffer(login.id)) }),
+      );
+
+      await expect(dataAccess.inactivateSessionActiveLogin(session)).resolves.not.toThrow();
+
+      expect(
+        database.prepare('SELECT active_login_id FROM sessions WHERE id = $id').get({ id: toUUIDBuffer(session.id) }),
+      ).toStrictEqual<Record<string, SQLOutputValue>>(expect.objectContaining({ active_login_id: null }));
+    });
+  });
+
+  describe('logout()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it("should delete the Login and remove it from the Session's Active Login.", async () => {
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const session = await dataAccess.createSession();
+      const login = await dataAccess.createLogin(user, client, session, [], null);
+
+      expect(session.logins).toContain(login);
+
+      expect(
+        database.prepare('SELECT active_login_id FROM sessions WHERE id = $id').get({ id: toUUIDBuffer(session.id) }),
+      ).toStrictEqual<Record<string, SQLOutputValue>>(
+        expect.objectContaining({ active_login_id: Uint8Array.from(toUUIDBuffer(login.id)) }),
+      );
+
+      await expect(dataAccess.logout(login, session)).resolves.not.toThrow();
+
+      expect(
+        database.prepare('SELECT active_login_id FROM sessions WHERE id = $id').get({ id: toUUIDBuffer(session.id) }),
+      ).toStrictEqual<Record<string, SQLOutputValue>>(expect.objectContaining({ active_login_id: null }));
+
+      expect(
+        database.prepare('SELECT * FROM logins WHERE id = $id').get({ id: toUUIDBuffer(login.id) }),
+      ).toBeUndefined();
+
+      expect(session.logins).not.toContain(login);
+    });
+  });
+
+  describe('removeConsent()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should delete the Consent.', async () => {
+      const id = randomUUIDv7();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+
+      const insertConsentSql = 'INSERT INTO consents (id, client_id, user_id) VALUES ($id, $client_id, $user_id)';
+      const insertConsentScopes =
+        'INSERT INTO consent_scopes (consent_id, scope_id) SELECT c.id AS consent_id, s.id AS scope_id ' +
+        'FROM scopes AS s JOIN consents AS c WHERE c.id = $consent_id';
+
+      database
+        .prepare(insertConsentSql)
+        .run({ id: toUUIDBuffer(id), client_id: toUUIDBuffer(client.id), user_id: toUUIDBuffer(user.id) });
+
+      database.prepare(insertConsentScopes).run({ consent_id: toUUIDBuffer(id) });
+
+      const consent = (await dataAccess.findConsentByClientAndUser(client, user))!;
+
+      await expect(dataAccess.removeConsent(consent)).resolves.not.toThrow();
+      await expect(dataAccess.findConsentByClientAndUser(client, user)).resolves.toBeNull();
+    });
+  });
+
+  describe('removeGrant()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should delete the Consent.', async () => {
+      const parameters: AuthorizationRequest = {
+        response_type: 'code',
+        client_id: 'client_id',
+        redirect_uri: 'https://client.example.com/oidc/callback',
+        scope: 'openid foo bar baz',
+        state: 'client_state',
+        response_mode: 'query',
+      };
+
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const session = await dataAccess.createSession();
+      const grant = await dataAccess.createGrant(parameters, client, session);
+
+      await expect(dataAccess.removeGrant(grant)).resolves.not.toThrow();
+
+      expect(
+        database.prepare('SELECT * FROM grants WHERE id = $id').get({ id: toUUIDBuffer(grant.id) }),
+      ).toBeUndefined();
     });
   });
 

@@ -1,0 +1,1 @@
+UPDATE sessions SET grant_id = $grant_id WHERE id = $id;

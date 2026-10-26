@@ -8,9 +8,9 @@ import { Display } from './display';
 import { DisplayName } from './display-name.type';
 
 /**
- * Display Registry.
+ * Display Registry of the Identity Provider.
  */
-export const displayRegistry: Record<DisplayName, Constructor<Display>> = {
+export const DISPLAY_REGISTRY: Record<DisplayName, Constructor<Display>> = {
   page: PageDisplay,
   popup: PopupDisplay,
   touch: TouchDisplay,

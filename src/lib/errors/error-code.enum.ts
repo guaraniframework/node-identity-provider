@@ -8,6 +8,11 @@ export enum ErrorCode {
   AccessDenied = 'access_denied',
 
   /**
+   * The Identity Provider needs to get consent from the User before proceeding.
+   */
+  ConsentRequired = 'consent_required',
+
+  /**
    * The Client is invalid or failed authentication.
    */
   InvalidClient = 'invalid_client',
@@ -21,6 +26,11 @@ export enum ErrorCode {
    * The requested Scope is invalid.
    */
   InvalidScope = 'invalid_scope',
+
+  /**
+   * The Identity Provider needs to authenticate the User before proceeding.
+   */
+  LoginRequired = 'login_required',
 
   /**
    * The requested Endpoint exists in the Identity Provider but does not support the requested Http Request Method.

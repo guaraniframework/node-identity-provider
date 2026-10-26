@@ -94,6 +94,7 @@ describe('Authorization Validator', () => {
 
   const settingsMock = jest.mocked<Settings>(
     Object.assign<Settings, Partial<Settings>>(Object.create(Settings.prototype), {
+      idTokenSignatureAlgorithms: ['ES256'],
       uiLocales: ['en-US'],
       acrValues: ['urn:guarani:acr:1fa', 'urn:guarani:acr:2fa'],
       minimumMaxAge: 300,
@@ -702,6 +703,27 @@ describe('Authorization Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[CustomAuthorizationValidator] Unsupported UI Locale "unknown"',
         'f53991a0-2891-4155-ac41-dec761a4d6ca',
+        { parameters },
+        error,
+      );
+    });
+
+    it('should throw when the Identity Provider does not support ID Tokens.', async () => {
+      const request = requestFactory(HttpRequestMethod.GET, { id_token_hint: 'id_token_hint' });
+
+      dataAccessMock.findClientById.mockResolvedValueOnce(client);
+      scopeHandlerMock.getAllowedScopes.mockResolvedValueOnce(requestedScopes);
+
+      settingsMock.idTokenSignatureAlgorithms.length = 0;
+
+      const error = new InvalidRequestError('The Identity Provider does not support ID Tokens.');
+      await expect(validator.validate(request)).rejects.toThrowWithMessage(InvalidRequestError, error.description);
+
+      settingsMock.idTokenSignatureAlgorithms.push('ES256');
+
+      expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
+        '[CustomAuthorizationValidator] The Identity Provider does not support ID Tokens',
+        'd29a78a7-d4be-46ff-a80e-7d877910110e',
         { parameters },
         error,
       );

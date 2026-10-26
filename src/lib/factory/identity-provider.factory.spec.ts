@@ -8,11 +8,16 @@ import { JsonWebKeySet } from '@guarani/jose';
 import { CONTAINER } from '../constants';
 import { DataAccess } from '../data-access/data-access';
 import { SQLiteDataAccess } from '../data-access/sqlite/sqlite.data-access';
+import { AuthorizationEndpoint } from '../endpoints/authorization/authorization.endpoint';
 import { Endpoint } from '../endpoints/endpoint';
+import { IdTokenHandler } from '../handlers/id-token/id-token.handler';
+import { ScopeHandler } from '../handlers/scope/scope.handler';
+import { IdentityProvider } from '../http/providers/identity-provider';
 import { NodeIdentityProvider } from '../http/providers/node/node.identity-provider';
 import { ConsoleLogger } from '../loggers/console/console.logger';
 import { Logger } from '../loggers/logger';
 import { Settings } from '../settings/settings';
+import { SubjectType } from '../subject-types/subject-type';
 import { IdentityProviderFactory } from './identity-provider.factory';
 import { IdentityProviderFactoryEntry } from './identity-provider-factory.entry';
 
@@ -71,9 +76,10 @@ describe('Identity Provider Factory', () => {
 
       expect(factory['container']).toBe(container);
 
-      expect(container['registry']['bindings'].size).toBe(5);
+      expect(container['registry']['bindings'].size).toBe(6);
 
       expect(container.resolve(DependencyInjectionContainer)).toBe(container);
+      expect(container.resolve(ScopeHandler)).toBeInstanceOf(ScopeHandler);
       expect(container.resolve(DataAccess)).toBeInstanceOf(SQLiteDataAccess);
       expect(container.resolve(Logger)).toBeInstanceOf(ConsoleLogger);
     });
@@ -137,6 +143,26 @@ describe('Identity Provider Factory', () => {
     });
   });
 
+  describe('addAuthorizationEndpoint()', () => {
+    it('should add the Authorization Endpoint with the default options to the Identity Provider Factory.', () => {
+      factory['container'].bind(Settings).toValue(Settings.prototype);
+      factory['container'].bind(JsonWebKeySet).toValue(JsonWebKeySet.prototype);
+      factory['container'].bind(DatabaseSync).toValue(DatabaseSync.prototype);
+
+      expect(() => factory.addAuthorizationEndpoint()).not.toThrow();
+      expect(factory['container'].resolve(Endpoint)).toBeInstanceOf(AuthorizationEndpoint);
+    });
+
+    it('should add the Authorization Endpoint with the provided options to the Identity Provider Factory.', () => {
+      factory['container'].bind(Settings).toValue(Settings.prototype);
+      factory['container'].bind(JsonWebKeySet).toValue(JsonWebKeySet.prototype);
+      factory['container'].bind(DatabaseSync).toValue(DatabaseSync.prototype);
+
+      expect(() => factory.addAuthorizationEndpoint((options) => options.build())).not.toThrow();
+      expect(factory['container'].resolve(Endpoint)).toBeInstanceOf(AuthorizationEndpoint);
+    });
+  });
+
   describe('addDataAccess()', () => {
     it.each(dataAccessEntries)(
       'should add the provided Data Access to the Identity Provider Factory.',
@@ -182,8 +208,46 @@ describe('Identity Provider Factory', () => {
 
   describe('create()', () => {
     it('should return an instance of the provided Identity Provider.', () => {
-      factory.addSettings(Object.create(Settings.prototype)).add(Endpoint, Object.create(Endpoint.prototype));
-      expect(() => factory.create(NodeIdentityProvider)).not.toThrow();
+      let provider!: IdentityProvider;
+
+      const settings: Settings = Object.assign<Settings, Partial<Settings>>(Object.create(Settings.prototype), {
+        idTokenSignatureAlgorithms: [],
+        idTokenKeyWrapAlgorithms: [],
+        idTokenContentEncryptionAlgorithms: [],
+      });
+
+      factory
+        .addAuthorizationEndpoint()
+        .addSettings(settings)
+        .add(DatabaseSync, Object.create(DatabaseSync.prototype))
+        .add(JsonWebKeySet, Object.create(JsonWebKeySet.prototype));
+
+      expect(() => (provider = factory.create(NodeIdentityProvider))).not.toThrow();
+
+      expect(factory['container'].has(IdTokenHandler)).toBeFalse();
+      expect(provider['endpoints']).toStrictEqual<Endpoint[]>([expect.any(AuthorizationEndpoint)]);
+    });
+
+    it('should return an instance of the provided Identity Provider with ID Token support.', () => {
+      let provider!: IdentityProvider;
+
+      const settings: Settings = Object.assign<Settings, Partial<Settings>>(Object.create(Settings.prototype), {
+        idTokenSignatureAlgorithms: ['ES256'],
+        idTokenKeyWrapAlgorithms: [],
+        idTokenContentEncryptionAlgorithms: [],
+      });
+
+      factory
+        .addAuthorizationEndpoint()
+        .addSettings(settings)
+        .add(DatabaseSync, Object.create(DatabaseSync.prototype))
+        .add(JsonWebKeySet, Object.create(JsonWebKeySet.prototype))
+        .add(SubjectType, Object.create(SubjectType.prototype)); // TODO: Remove this when adding Interaction Endpoint.
+
+      expect(() => (provider = factory.create(NodeIdentityProvider))).not.toThrow();
+
+      expect(factory['container'].has(IdTokenHandler)).toBeTrue();
+      expect(provider['endpoints']).toStrictEqual<Endpoint[]>([expect.any(AuthorizationEndpoint)]);
     });
   });
 });

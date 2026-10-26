@@ -2,6 +2,7 @@ import { Buffer } from 'buffer';
 import { URL } from 'url';
 
 import { DEFAULT_MINIMUM_MAX_AGE, DEFAULT_SESSION_COOKIE } from '../constants';
+import { InteractionsSettings } from './interactions/interactions.settings';
 import { Settings } from './settings';
 import { SettingsParameters } from './settings.parameters';
 
@@ -202,6 +203,21 @@ const invalidAcrValues: any[] = [
   [''],
 ];
 
+const invalidInteractionsSettings: any[] = [
+  undefined,
+  null,
+  true,
+  1,
+  1.2,
+  1n,
+  'a',
+  Symbol('a'),
+  Buffer,
+  Buffer.alloc(1),
+  () => {},
+  [],
+];
+
 const invalidMinimumMaxAges: any[] = [
   undefined,
   null,
@@ -217,6 +233,21 @@ const invalidMinimumMaxAges: any[] = [
   1.1,
   0,
   -1,
+];
+
+const invalidEnableAuthorizationResponseIssuerIdentifiers: any[] = [
+  undefined,
+  null,
+  1,
+  1.2,
+  1n,
+  'a',
+  Symbol('a'),
+  Buffer,
+  Buffer.alloc(1),
+  () => {},
+  {},
+  [],
 ];
 
 const invalidSessionCookies: any[] = [
@@ -248,7 +279,15 @@ describe('Settings', () => {
         idTokenContentEncryptionAlgorithms: ['A128GCM'],
         uiLocales: ['en-US'],
         acrValues: ['urn:guarani:acr:1fa', 'urn:guarani:acr:2fa'],
+        interactions: {
+          errorUrl: 'https://provider.example.com/oidc/error',
+          registrationUrl: 'https://provider.example.com/auth/registration',
+          accountSelectionUrl: 'https://provider.example.com/auth/account-selection',
+          loginUrl: 'https://provider.example.com/auth/login',
+          consentUrl: 'https://provider.example.com/auth/consent',
+        },
         minimumMaxAge: 86400,
+        enableAuthorizationResponseIssuerIdentifier: true,
         sessionCookie: '_session',
       };
     });
@@ -321,12 +360,32 @@ describe('Settings', () => {
       },
     );
 
+    it.each(invalidInteractionsSettings)(
+      'should throw when the provided Interactions Settings is invalid.',
+      (interactions) => {
+        expect(() => new Settings({ ...parameters, interactions })).toThrowWithMessage(
+          TypeError,
+          'The provided Interactions Settings is invalid.',
+        );
+      },
+    );
+
     it.each(invalidMinimumMaxAges)('should throw when the provided Minimum Max Age is invalid.', (minimumMaxAge) => {
       expect(() => new Settings({ ...parameters, minimumMaxAge })).toThrowWithMessage(
         TypeError,
         'The provided Minimum Max Age is invalid.',
       );
     });
+
+    it.each(invalidEnableAuthorizationResponseIssuerIdentifiers)(
+      'should throw when the provided Enable Authorization Response Issuer Identifier is invalid.',
+      (enableAuthorizationResponseIssuerIdentifier) => {
+        expect(() => new Settings({ ...parameters, enableAuthorizationResponseIssuerIdentifier })).toThrowWithMessage(
+          TypeError,
+          'The provided Enable Authorization Response Issuer Identifier is invalid.',
+        );
+      },
+    );
 
     it.each(invalidSessionCookies)('should throw when the provided Session Cookie is invalid.', (sessionCookie) => {
       expect(() => new Settings({ ...parameters, sessionCookie })).toThrowWithMessage(
@@ -389,7 +448,15 @@ describe('Settings', () => {
           idTokenContentEncryptionAlgorithms: ['A128GCM'],
           uiLocales: ['en-US'],
           acrValues: ['urn:guarani:acr:1fa', 'urn:guarani:acr:2fa'],
+          interactions: expect.objectContaining<Partial<InteractionsSettings>>({
+            errorUrl: new URL('https://provider.example.com/oidc/error'),
+            registrationUrl: new URL('https://provider.example.com/auth/registration'),
+            accountSelectionUrl: new URL('https://provider.example.com/auth/account-selection'),
+            loginUrl: new URL('https://provider.example.com/auth/login'),
+            consentUrl: new URL('https://provider.example.com/auth/consent'),
+          }),
           minimumMaxAge: 86400,
+          enableAuthorizationResponseIssuerIdentifier: true,
           sessionCookie: '_session',
         }),
       );
@@ -399,7 +466,17 @@ describe('Settings', () => {
       let settings!: Settings;
 
       expect(() => {
-        settings = new Settings({ issuer: 'https://provider.example.com', secretKey: 'secret_key' });
+        settings = new Settings({
+          issuer: 'https://provider.example.com',
+          secretKey: 'secret_key',
+          interactions: {
+            errorUrl: 'https://provider.example.com/oidc/error',
+            registrationUrl: 'https://provider.example.com/auth/registration',
+            accountSelectionUrl: 'https://provider.example.com/auth/account-selection',
+            loginUrl: 'https://provider.example.com/auth/login',
+            consentUrl: 'https://provider.example.com/auth/consent',
+          },
+        });
       }).not.toThrow();
 
       expect(settings).toBeInstanceOf(Settings);
@@ -413,7 +490,15 @@ describe('Settings', () => {
           idTokenContentEncryptionAlgorithms: [],
           uiLocales: [],
           acrValues: [],
+          interactions: expect.objectContaining<Partial<InteractionsSettings>>({
+            errorUrl: new URL('https://provider.example.com/oidc/error'),
+            registrationUrl: new URL('https://provider.example.com/auth/registration'),
+            accountSelectionUrl: new URL('https://provider.example.com/auth/account-selection'),
+            loginUrl: new URL('https://provider.example.com/auth/login'),
+            consentUrl: new URL('https://provider.example.com/auth/consent'),
+          }),
           minimumMaxAge: DEFAULT_MINIMUM_MAX_AGE,
+          enableAuthorizationResponseIssuerIdentifier: false,
           sessionCookie: DEFAULT_SESSION_COOKIE,
         }),
       );

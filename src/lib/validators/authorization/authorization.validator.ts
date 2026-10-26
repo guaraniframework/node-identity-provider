@@ -768,17 +768,32 @@ export abstract class AuthorizationValidator<
       parameters,
     });
 
-    if ('id_token_hint' in parameters && !isNonEmptyString(parameters.id_token_hint)) {
-      const error = new InvalidRequestError('Invalid parameter "id_token_hint".');
+    if ('id_token_hint' in parameters) {
+      if (this.settings.idTokenSignatureAlgorithms.length === 0) {
+        const error = new InvalidRequestError('The Identity Provider does not support ID Tokens.');
 
-      this.logger.error(
-        `[${this.constructor.name}] Invalid parameter "id_token_hint"`,
-        '85e4ddc3-7d7a-415e-b541-d2390fc95c8a',
-        { parameters },
-        error,
-      );
+        this.logger.error(
+          `[${this.constructor.name}] The Identity Provider does not support ID Tokens`,
+          'd29a78a7-d4be-46ff-a80e-7d877910110e',
+          { parameters },
+          error,
+        );
 
-      throw error;
+        throw error;
+      }
+
+      if (!isNonEmptyString(parameters.id_token_hint)) {
+        const error = new InvalidRequestError('Invalid parameter "id_token_hint".');
+
+        this.logger.error(
+          `[${this.constructor.name}] Invalid parameter "id_token_hint"`,
+          '85e4ddc3-7d7a-415e-b541-d2390fc95c8a',
+          { parameters },
+          error,
+        );
+
+        throw error;
+      }
     }
 
     const idTokenHint = parameters.id_token_hint ?? null;

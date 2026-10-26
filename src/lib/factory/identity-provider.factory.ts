@@ -11,10 +11,15 @@ import { isNonEmptyString } from '@guarani/primitives';
 import { CONTAINER } from '../constants';
 import { DataAccess } from '../data-access/data-access';
 import { SQLiteDataAccess } from '../data-access/sqlite/sqlite.data-access';
+import { AuthorizationEndpoint } from '../endpoints/authorization/authorization.endpoint';
+import { Endpoint } from '../endpoints/endpoint';
+import { IdTokenHandler } from '../handlers/id-token/id-token.handler';
+import { ScopeHandler } from '../handlers/scope/scope.handler';
 import { IdentityProvider } from '../http/providers/identity-provider';
 import { ConsoleLogger } from '../loggers/console/console.logger';
 import { Logger } from '../loggers/logger';
 import { Settings } from '../settings/settings';
+import { AuthorizationEndpointOptions } from './options/authorization-endpoint/authorization-endpoint.options';
 import { IdentityProviderFactoryEntry } from './identity-provider-factory.entry';
 
 /**
@@ -34,6 +39,34 @@ export class IdentityProviderFactory {
     this.container.bind(DependencyInjectionContainer).toValue(this.container);
 
     this.addDefaultEntries();
+  }
+
+  /**
+   * Adds the Authorization Endpoint to the Identity Provider.
+   *
+   * @param callback Callback function used to configure the Authorization Endpoint.
+   * @throws {TypeError} Failed to add the Authorization Endpoint.
+   * @returns Identity Provider Factory.
+   */
+  public addAuthorizationEndpoint(callback?: (options: AuthorizationEndpointOptions) => void): IdentityProviderFactory {
+    const options = new AuthorizationEndpointOptions(this.container);
+
+    if (typeof callback === 'function') {
+      callback(options);
+    }
+
+    // const endpoints = (this.container.getAll(Endpoint) as Constructor<Endpoint>[]).map((endpoint) => {
+    //   return endpoint.prototype.name;
+    // });
+
+    if (
+      !this.container.has(Endpoint) ||
+      !(this.container.getAll(Endpoint) as Constructor<Endpoint>[]).includes(AuthorizationEndpoint)
+    ) {
+      options.build();
+    }
+
+    return this;
   }
 
   /**
@@ -104,7 +137,13 @@ export class IdentityProviderFactory {
    */
   public create<T extends IdentityProvider>(provider: Constructor<T>): T {
     this.container.delete(IdentityProvider);
+
+    if ((this.container.get(Settings) as Settings).idTokenSignatureAlgorithms.length !== 0) {
+      this.addContainerEntry(IdTokenHandler);
+    }
+
     this.addContainerEntry(IdentityProvider, provider);
+
     return this.container.resolve(IdentityProvider) as T;
   }
 
@@ -161,6 +200,7 @@ export class IdentityProviderFactory {
    */
   private addDefaultEntries(): void {
     this.container.bind(DataAccess).toClass(SQLiteDataAccess).asSingleton();
+    this.container.bind(ScopeHandler).toSelf().asSingleton();
     this.container.bind(Logger).toClass(ConsoleLogger).asSingleton();
   }
 

@@ -10,6 +10,7 @@ import {
 import { isNonEmptyString, isPlainObject } from '@guarani/primitives';
 
 import { DEFAULT_MINIMUM_MAX_AGE, DEFAULT_SESSION_COOKIE } from '../constants';
+import { InteractionsSettings } from './interactions/interactions.settings';
 import { SettingsParameters } from './settings.parameters';
 
 /**
@@ -52,11 +53,23 @@ export class Settings {
   public readonly acrValues: string[];
 
   /**
+   * Defines the Interactions Settings.
+   */
+  public readonly interactions: InteractionsSettings;
+
+  /**
    * Defines the minimum accepted value for the "max_age" Authorization Request Parameter.
    *
    * @default 7,776,000 (90 days)
    */
   public readonly minimumMaxAge: number;
+
+  /**
+   * Enables Authorization Response Issuer Identifier in Authorization and Token Responses.
+   *
+   * @default false
+   */
+  public readonly enableAuthorizationResponseIssuerIdentifier: boolean;
 
   /**
    * Name of the Session Cookie.
@@ -83,7 +96,9 @@ export class Settings {
     this.idTokenContentEncryptionAlgorithms = this.getIdTokenContentEncryptionAlgorithms(parameters);
     this.uiLocales = this.getUiLocales(parameters);
     this.acrValues = this.getAcrValues(parameters);
+    this.interactions = this.getInteractions(parameters);
     this.minimumMaxAge = this.getMinimumMaxAge(parameters);
+    this.enableAuthorizationResponseIssuerIdentifier = this.getEnableAuthorizationResponseIssuerIdentifier(parameters);
     this.sessionCookie = this.getSessionCookie(parameters);
 
     this.checkIdTokenAlgorithms();
@@ -227,6 +242,21 @@ export class Settings {
   }
 
   /**
+   * Checks and returns the provided Interactions Settings.
+   *
+   * @param parameters Parameters of the Settings.
+   * @throws {TypeError} The provided Interactions Settings is invalid.
+   * @returns Provided Interactions Settings.
+   */
+  private getInteractions(parameters: SettingsParameters): InteractionsSettings {
+    if ('interactions' in parameters && !isPlainObject(parameters.interactions)) {
+      throw new TypeError('The provided Interactions Settings is invalid.');
+    }
+
+    return new InteractionsSettings(parameters.interactions);
+  }
+
+  /**
    * Checks and returns the provided Minimum Max Age or the Default Minimum Max Age.
    *
    * @param parameters Parameters of the Settings.
@@ -244,6 +274,24 @@ export class Settings {
     }
 
     return parameters.minimumMaxAge ?? DEFAULT_MINIMUM_MAX_AGE;
+  }
+
+  /**
+   * Checks and returns the provided Enable Authorization Response Issuer Identifier.
+   *
+   * @param parameters Parameters of the Settings.
+   * @throws {TypeError} The provided Enable Authorization Response Issuer Identifier is invalid.
+   * @returns Provided Enable Authorization Response Issuer Identifier.
+   */
+  private getEnableAuthorizationResponseIssuerIdentifier(parameters: SettingsParameters): boolean {
+    if (
+      'enableAuthorizationResponseIssuerIdentifier' in parameters &&
+      typeof parameters.enableAuthorizationResponseIssuerIdentifier !== 'boolean'
+    ) {
+      throw new TypeError('The provided Enable Authorization Response Issuer Identifier is invalid.');
+    }
+
+    return parameters.enableAuthorizationResponseIssuerIdentifier ?? false;
   }
 
   /**

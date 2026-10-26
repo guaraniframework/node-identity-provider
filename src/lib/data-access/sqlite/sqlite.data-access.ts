@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer';
-import { randomUUIDv7 } from 'crypto';
+import { randomBytes, randomUUIDv7 } from 'crypto';
 import fs from 'fs';
 import { DatabaseSync, SQLOutputValue } from 'node:sqlite';
 import path from 'path';
@@ -13,7 +13,7 @@ import {
   JsonWebKeySet,
   KeyManagementAlgorithm,
 } from '@guarani/jose';
-import { jsonParse, removeNullishValues } from '@guarani/primitives';
+import { jsonParse, jsonStringify, removeNullishValues } from '@guarani/primitives';
 
 import { UserinfoClaimsParameters } from '../../claims/userinfo/userinfo.claims.parameters';
 import { AccessToken } from '../../entities/access-token';
@@ -132,9 +132,7 @@ export class SQLiteDataAccess extends DataAccess {
       scopes,
       createdAt: new Date((accessTokenParameters['created_at'] as number) * 1000),
       expiresAt: new Date((accessTokenParameters['expires_at'] as number) * 1000),
-      revokedAt: accessTokenParameters['revoked_at']
-        ? new Date((accessTokenParameters['revoked_at'] as number) * 1000) // TODO: Test on Revocation Endpoint
-        : null,
+      revokedAt: null,
       validAfter: new Date((accessTokenParameters['valid_after'] as number) * 1000),
       client,
       user,
@@ -173,12 +171,123 @@ export class SQLiteDataAccess extends DataAccess {
       codeChallengeMethod: authorizationCodeParameters['code_challenge_method']!.toString() as PKCEName,
       createdAt: new Date((authorizationCodeParameters['created_at'] as number) * 1000),
       expiresAt: new Date((authorizationCodeParameters['expires_at'] as number) * 1000),
-      revokedAt: authorizationCodeParameters['revoked_at']
-        ? new Date((authorizationCodeParameters['revoked_at'] as number) * 1000) // TODO: Test on Token Endpoint
-        : null,
+      revokedAt: null,
       validAfter: new Date((authorizationCodeParameters['valid_after'] as number) * 1000),
       login,
       consent,
+    });
+  }
+
+  /**
+   * Creates a Grant used to authenticate an User at the Identity Provider.
+   *
+   * @param parameters Parameters of the Authorization Request.
+   * @param client Client requesting authorization.
+   * @param session Session containing the Logins for the User-Agent.
+   * @returns Created Grant.
+   */
+  public async createGrant(parameters: AuthorizationRequest, client: Client, session: Session): Promise<Grant> {
+    const id = randomUUIDv7();
+    const loginChallenge = randomBytes(16).toString('hex');
+    const consentChallenge = randomBytes(16).toString('hex');
+
+    const grantSql = this._procedure('create-grant.sql');
+    const grantParameters = this.database.prepare(grantSql).get({
+      id: toUUIDBuffer(id),
+      login_challenge: loginChallenge,
+      consent_challenge: consentChallenge,
+      parameters: jsonStringify(parameters),
+      client_id: toUUIDBuffer(client.id),
+      session_id: toUUIDBuffer(session.id),
+    })!;
+
+    const grant = Object.assign<Grant, Grant>(new Grant(), {
+      id: toUUIDString(grantParameters['id'] as Uint8Array),
+      loginChallenge: grantParameters['login_challenge']!.toString(),
+      consentChallenge: grantParameters['consent_challenge']!.toString(),
+      parameters: jsonParse(grantParameters['parameters']!.toString()) as AuthorizationRequest,
+      interactions: jsonParse(grantParameters['interactions']!.toString()) as InteractionTypeName[],
+      createdAt: new Date((grantParameters['created_at'] as number) * 1000),
+      expiresAt: new Date((grantParameters['expires_at'] as number) * 1000),
+      client,
+      session,
+      consent: null,
+    });
+
+    session.grant = grant;
+
+    const sessionSql = this._procedure('set-session-grant.sql');
+    this.database.prepare(sessionSql).run({ grant_id: toUUIDBuffer(grant.id), id: toUUIDBuffer(session.id) });
+
+    return grant;
+  }
+
+  /**
+   * Authenticates the provided User and saves its Login to the Session of the Grant.
+   *
+   * @param user User to be Authenticated.
+   * @param client Client requesting Authorization.
+   * @param session Session where the Login will be recorded.
+   * @param amr Authentication Methods used in the Authentication.
+   * @param acr Authentication Context Class Reference satisfied by the Authentication Process.
+   */
+  public async createLogin(
+    user: User,
+    client: Client,
+    session: Session,
+    amr: string[],
+    acr: string | null,
+  ): Promise<Login> {
+    const id = randomUUIDv7();
+
+    const loginSql = this._procedure('create-login.sql');
+    const loginParameters = this.database.prepare(loginSql).get({
+      id: toUUIDBuffer(id),
+      amr: jsonStringify(amr),
+      acr,
+      user_id: toUUIDBuffer(user.id),
+      session_id: toUUIDBuffer(session.id),
+    })!;
+
+    const loginClientSql = this._procedure('set-login-client.sql');
+    this.database.prepare(loginClientSql).run({ login_id: toUUIDBuffer(id), client_id: toUUIDBuffer(client.id) });
+
+    const sessionSql = this._procedure('set-session-active-login.sql');
+    this.database.prepare(sessionSql).run({ active_login_id: toUUIDBuffer(id), id: toUUIDBuffer(session.id) });
+
+    const login = Object.assign<Login, Login>(new Login(), {
+      id: toUUIDString(loginParameters['id'] as Uint8Array),
+      amr: jsonParse(loginParameters['amr']!.toString()) as string[],
+      acr: loginParameters['acr']?.toString() ?? null,
+      createdAt: new Date((loginParameters['created_at'] as number) * 1000),
+      expiresAt: new Date((loginParameters['expires_at'] as number) * 1000),
+      user,
+      session,
+      clients: this._findLoginClientsByLoginId(id),
+    });
+
+    session.activeLogin = login;
+    session.logins.push(login);
+
+    return login;
+  }
+
+  /**
+   * Creates a Session Entity to store the Sessions created at the Device for multi-account.
+   *
+   * @returns Newly created Session Entity.
+   */
+  public async createSession(): Promise<Session> {
+    const id = randomUUIDv7();
+
+    const sessionSql = this._procedure('create-session.sql');
+    const sessionParameters = this.database.prepare(sessionSql).get({ id: toUUIDBuffer(id) })!;
+
+    return Object.assign<Session, Session>(new Session(), {
+      id: toUUIDString(sessionParameters['id'] as Uint8Array),
+      activeLogin: null,
+      logins: [],
+      grant: null,
     });
   }
 
@@ -190,6 +299,17 @@ export class SQLiteDataAccess extends DataAccess {
    */
   public async findClientById(id: string): Promise<Client | null> {
     return this._findClientById(id);
+  }
+
+  /**
+   * Searches the application's storage for a Consent based on the provided Client and User.
+   *
+   * @param client Client requesting Consent.
+   * @param user User granting Consent.
+   * @returns Consent based on the provided Client and User.
+   */
+  public async findConsentByClientAndUser(client: Client, user: User): Promise<Consent | null> {
+    return this._findConsentByClientAndUser(client, user);
   }
 
   /**
@@ -325,6 +445,56 @@ export class SQLiteDataAccess extends DataAccess {
   }
 
   /**
+   * Inactivates the Active Login from the User-Agent's Session.
+   *
+   * This does not remove the actual Login from the storage,
+   * only makes it inactive on the Session.
+   *
+   * @param session Session of the User-Agent.
+   */
+  public async inactivateSessionActiveLogin(session: Session): Promise<void> {
+    const sql = this._procedure('inactivate-session-active-login.sql');
+    this.database.prepare(sql).run({ id: toUUIDBuffer(session.id) });
+  }
+
+  /**
+   * Logs out the Authenticated User represented by the provided Login.
+   *
+   * @param login Login to be removed.
+   * @param session Session of the User-Agent.
+   */
+  public async logout(login: Login, session: Session): Promise<void> {
+    const sql = this._procedure('logout.sql');
+    this.database.prepare(sql).run({ id: toUUIDBuffer(login.id) });
+
+    Reflect.set(
+      session,
+      'logins',
+      session.logins.filter((sessionLogin) => sessionLogin.id !== login.id),
+    );
+  }
+
+  /**
+   * Removes the provided Consent.
+   *
+   * @param consent Consent to be removed.
+   */
+  public async removeConsent(consent: Consent): Promise<void> {
+    const sql = this._procedure('remove-consent-by-id.sql');
+    this.database.prepare(sql).run({ id: toUUIDBuffer(consent.id) });
+  }
+
+  /**
+   * Removes the provided Grant.
+   *
+   * @param grant Grant to be removed.
+   */
+  public async removeGrant(grant: Grant): Promise<void> {
+    const sql = this._procedure('remove-grant-by-id.sql');
+    this.database.prepare(sql).run({ id: toUUIDBuffer(grant.id) });
+  }
+
+  /**
    * Runs the database migrations.
    */
   public async up(): Promise<void> {
@@ -433,6 +603,26 @@ export class SQLiteDataAccess extends DataAccess {
         createdAt: new Date((clientSecretParameters['created_at']! as number) * 1000),
         expiresAt: new Date((clientSecretParameters['expires_at']! as number) * 1000),
       });
+    });
+  }
+
+  private _findConsentByClientAndUser(client: Client, user: User): Consent | null {
+    const consentSql = this._procedure('find-consent-by-client-id-and-user-id.sql');
+    const consentParameters = this.database
+      .prepare(consentSql)
+      .get({ client_id: toUUIDBuffer(client.id), user_id: toUUIDBuffer(user.id) });
+
+    if (typeof consentParameters === 'undefined') {
+      return null;
+    }
+
+    return Object.assign<Consent, Partial<Consent>>(Reflect.construct(Consent, []), {
+      id: toUUIDString(consentParameters['id'] as Uint8Array),
+      scopes: this._findConsentScopesByConsentId(toUUIDString(consentParameters['id'] as Uint8Array)),
+      createdAt: new Date((consentParameters['created_at']! as number) * 1000),
+      expiresAt: consentParameters['expires_at'] ? new Date((consentParameters['expires_at']! as number) * 1000) : null,
+      client: this._findClientById(toUUIDString(consentParameters['client_id'] as Uint8Array))!,
+      user: this._findUserById(toUUIDString(consentParameters['user_id'] as Uint8Array))!,
     });
   }
 

@@ -5,11 +5,13 @@ import { AccessToken } from '../entities/access-token';
 import { AuthorizationCode } from '../entities/authorization-code';
 import { Client } from '../entities/client';
 import { Consent } from '../entities/consent';
+import { Grant } from '../entities/grant';
 import { Login } from '../entities/login';
 import { Scope } from '../entities/scope';
 import { Session } from '../entities/session';
 import { User } from '../entities/user';
 import { PKCE } from '../pkces/pkce';
+import { AuthorizationRequest } from '../requests/authorization/authorization-request';
 
 /**
  * The Data Access is used for the operations of the Identity Provider that need to interact with external systems.
@@ -50,12 +52,55 @@ export abstract class DataAccess {
   ): Promise<AuthorizationCode>;
 
   /**
+   * Creates a Grant used to authenticate an User at the Identity Provider.
+   *
+   * @param parameters Parameters of the Authorization Request.
+   * @param client Client requesting authorization.
+   * @param session Session containing the Logins for the User-Agent.
+   * @returns Created Grant.
+   */
+  public abstract createGrant(parameters: AuthorizationRequest, client: Client, session: Session): Promise<Grant>;
+
+  /**
+   * Authenticates the provided User and saves its Login to the Session of the Grant.
+   *
+   * @param user User to be Authenticated.
+   * @param client Client requesting Authorization.
+   * @param session Session where the Login will be recorded.
+   * @param amr Authentication Methods used in the Authentication.
+   * @param acr Authentication Context Class Reference satisfied by the Authentication Process.
+   */
+  public abstract createLogin(
+    user: User,
+    client: Client,
+    session: Session,
+    amr: string[],
+    acr: string | null,
+  ): Promise<Login>;
+
+  /**
+   * Creates a Session Entity to store the Sessions created at the Device for multi-account.
+   *
+   * @returns Newly created Session Entity.
+   */
+  public abstract createSession(): Promise<Session>;
+
+  /**
    * Searches the application's storage for a Client containing the provided Identifier.
    *
    * @param id Client Identifier.
    * @returns Client based on the provided Identifier.
    */
   public abstract findClientById(id: string): Promise<Client | null>;
+
+  /**
+   * Searches the application's storage for a Consent based on the provided Client and User.
+   *
+   * @param client Client requesting Consent.
+   * @param user User granting Consent.
+   * @returns Consent based on the provided Client and User.
+   */
+  public abstract findConsentByClientAndUser(client: Client, user: User): Promise<Consent | null>;
 
   /**
    * Gets a JSON Web Key from the Identity Provider based on the provided Key Identifier.
@@ -129,4 +174,35 @@ export abstract class DataAccess {
    * @returns Claims about the provided User.
    */
   public abstract getUserinfo?(user: User, scopes: Scope[]): Promise<UserinfoClaimsParameters>;
+
+  /**
+   * Inactivates the Active Login from the User-Agent's Session.
+   *
+   * This does not remove the actual Login from the storage, only makes it inactive on the Session.
+   *
+   * @param session Session of the User-Agent.
+   */
+  public abstract inactivateSessionActiveLogin(session: Session): Promise<void>;
+
+  /**
+   * Logs out the Authenticated User represented by the provided Login.
+   *
+   * @param login Login to be removed.
+   * @param session Session of the User-Agent.
+   */
+  public abstract logout(login: Login, session: Session): Promise<void>;
+
+  /**
+   * Removes the provided Consent.
+   *
+   * @param consent Consent to be removed.
+   */
+  public abstract removeConsent(consent: Consent): Promise<void>;
+
+  /**
+   * Removes the provided Grant.
+   *
+   * @param grant Grant to be removed.
+   */
+  public abstract removeGrant(grant: Grant): Promise<void>;
 }
