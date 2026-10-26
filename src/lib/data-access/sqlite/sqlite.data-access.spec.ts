@@ -1,16 +1,29 @@
 import { Buffer } from 'buffer';
 import { randomUUIDv7 } from 'crypto';
 import fs from 'fs';
+import { ClientRequest } from 'http';
+import https from 'https';
 import { DatabaseSync, SQLOutputValue } from 'node:sqlite';
 import path from 'path';
+import { PassThrough } from 'stream';
 
 import { getContainer } from '@guarani/di';
+import { JsonWebKey, JsonWebKeyParameters, JsonWebKeySet, jwks } from '@guarani/jose';
+import { jsonStringify } from '@guarani/primitives';
 
+import { UserinfoClaimsParameters } from '../../claims/userinfo/userinfo.claims.parameters';
 import { CONTAINER } from '../../constants';
+import { AccessToken } from '../../entities/access-token';
+import { AuthorizationCode } from '../../entities/authorization-code';
 import { Client } from '../../entities/client';
+import { Consent } from '../../entities/consent';
+import { Login } from '../../entities/login';
 import { Scope } from '../../entities/scope';
 import { Session } from '../../entities/session';
+import { User } from '../../entities/user';
+import { InvalidClientError } from '../../errors/invalid-client/invalid-client.error';
 import { Logger } from '../../loggers/logger';
+import { PKCE } from '../../pkces/pkce';
 import { SQLiteDataAccess } from './sqlite.data-access';
 
 jest.mock('../../loggers/logger');
@@ -19,18 +32,46 @@ describe('SQLite Data Access', () => {
   let dataAccess: SQLiteDataAccess;
   const container = getContainer(CONTAINER);
 
-  let databaseExecSpy: jest.SpyInstance;
-
   let database: DatabaseSync;
+  let jsonWebKeySet: JsonWebKeySet;
+
   const loggerMock = jest.mocked(Logger.prototype);
 
-  beforeEach(() => {
+  const pkceMock = jest.mocked<PKCE>(
+    Object.assign<PKCE, Partial<PKCE>>(Reflect.construct(PKCE, []), { name: 'plain' }),
+  );
+
+  let databaseExecSpy: jest.SpyInstance;
+
+  beforeEach(async () => {
+    jsonWebKeySet = await jwks.create({
+      keys: [
+        {
+          kty: 'OKP',
+          crv: 'Ed25519',
+          x: 'aLLPBvu0m2zeDGU6Bsd_jc3hNJd0zE6MG4xENqHi5xM',
+          d: '4cCY4C_0woQOaTN9gwyVca3_Cf9GHUp48mdskkHwMyU',
+          use: 'sig',
+          kid: '6c0690cb-025c-4f11-97cc-301b3af64657',
+        },
+        {
+          kty: 'OKP',
+          crv: 'Ed25519',
+          x: 'RB3LvKwogf_dAYCugq4FpWv7fU_QRqZtTQ5rPCeN9p4',
+          d: '8fNTJd2ZYSCF_2PsOftMnix8u7K55j34Y9TamOtgA0k',
+          use: 'enc',
+          kid: '13f886b4-41f9-4450-a595-9d5f15df1d6f',
+        },
+      ],
+    });
+
     database = new DatabaseSync(':memory:');
 
     databaseExecSpy = jest.spyOn(database, 'exec');
 
     container.bind(Logger).toValue(loggerMock);
     container.bind(DatabaseSync).toValue(database);
+    container.bind(JsonWebKeySet).toValue(jsonWebKeySet);
     container.bind(SQLiteDataAccess).toSelf().asSingleton();
 
     dataAccess = container.resolve(SQLiteDataAccess);
@@ -91,6 +132,112 @@ describe('SQLite Data Access', () => {
     });
   });
 
+  describe('createAccessToken()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should create an Access Token without a User.', async () => {
+      let accessToken!: AccessToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+
+      await expect(async () => {
+        accessToken = await dataAccess.createAccessToken(scopes, client, null);
+      }).resolves.not.toThrow();
+
+      expect(accessToken).toBeInstanceOf(AccessToken);
+      expect(accessToken.scopes).toStrictEqual(scopes);
+      expect(accessToken.client).toStrictEqual(client);
+    });
+
+    it('should create an Access Token with a User.', async () => {
+      let accessToken!: AccessToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user: User = Object.assign<User, Partial<User>>(new User(), { id: '16907c32-687b-493c-85ba-f41f2c9d4daa' });
+
+      await expect(async () => {
+        accessToken = await dataAccess.createAccessToken(scopes, client, user);
+      }).resolves.not.toThrow();
+
+      expect(accessToken).toBeInstanceOf(AccessToken);
+      expect(accessToken.scopes).toStrictEqual(scopes);
+      expect(accessToken.client).toStrictEqual(client);
+      expect(accessToken.user).toStrictEqual(user);
+    });
+  });
+
+  describe('createAuthorizationCode()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should create an Authorization Code.', async () => {
+      let authorizationCode!: AuthorizationCode;
+
+      const sessionId = randomUUIDv7();
+      const loginId = randomUUIDv7();
+      const consentId = randomUUIDv7();
+      const userId = '16907c32-687b-493c-85ba-f41f2c9d4daa';
+      const clientId = 'b1eeace9-2b0c-468e-a444-733befc3b35d';
+
+      const insertSessionSql = 'INSERT INTO sessions (id, active_login_id, grant_id) VALUES ($id, NULL, NULL)';
+
+      const insertLoginSql = 'INSERT INTO logins (id, user_id, session_id) VALUES ($id, $user_id, $session_id)';
+      const insertLoginsClientsSql = 'INSERT INTO logins_clients (login_id, client_id) VALUES ($login_id, $client_id)';
+
+      const insertConsentSql = 'INSERT INTO consents (id, client_id, user_id) VALUES ($id, $client_id, $user_id)';
+      const insertConsentScopes =
+        'INSERT INTO consent_scopes (consent_id, scope_id) SELECT c.id AS consent_id, s.id AS scope_id ' +
+        'FROM scopes AS s JOIN consents AS c WHERE c.id = $consent_id';
+
+      const updateSessionSql = 'UPDATE sessions SET active_login_id = $active_login_id WHERE id = $id';
+
+      database.prepare(insertSessionSql).run({ id: toUUIDBuffer(sessionId) });
+
+      database
+        .prepare(insertLoginSql)
+        .run({ id: toUUIDBuffer(loginId), user_id: toUUIDBuffer(userId), session_id: toUUIDBuffer(sessionId) });
+
+      database
+        .prepare(insertLoginsClientsSql)
+        .run({ login_id: toUUIDBuffer(loginId), client_id: toUUIDBuffer(clientId) });
+
+      database
+        .prepare(insertConsentSql)
+        .run({ id: toUUIDBuffer(consentId), client_id: toUUIDBuffer(clientId), user_id: toUUIDBuffer(userId) });
+
+      database.prepare(insertConsentScopes).run({ consent_id: toUUIDBuffer(consentId) });
+      database.prepare(updateSessionSql).run({ active_login_id: toUUIDBuffer(loginId), id: toUUIDBuffer(sessionId) });
+
+      const codeChallenge = 'code_challenge';
+      const codeChallengeMethod = pkceMock;
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), { id: loginId });
+      const consent: Consent = Object.assign<Consent, Partial<Consent>>(new Consent(), { id: consentId });
+
+      await expect(async () => {
+        authorizationCode = await dataAccess.createAuthorizationCode(
+          codeChallenge,
+          codeChallengeMethod,
+          login,
+          consent,
+        );
+      }).resolves.not.toThrow();
+
+      expect(authorizationCode).toBeInstanceOf(AuthorizationCode);
+
+      expect(authorizationCode.codeChallenge).toBe(codeChallenge);
+      expect(authorizationCode.codeChallengeMethod).toBe(codeChallengeMethod.name);
+      expect(authorizationCode.login.id).toBe(loginId);
+      expect(authorizationCode.consent.id).toBe(consentId);
+    });
+  });
+
   describe('findClientById()', () => {
     beforeEach(async () => {
       await dataAccess.up();
@@ -120,6 +267,23 @@ describe('SQLite Data Access', () => {
 
       expect(client2.secrets.map((secret) => secret.secret)).toStrictEqual(['EHW-xzn8-CVIz9DnN2UjxIZpHo1hTO3h']);
       expect(client2.scopes.map((scope) => scope.name)).toStrictEqual(expect.arrayContaining(scopes));
+    });
+  });
+
+  describe('findJsonWebKeyByKeyId()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should return null when a JSON Web Key with the provided Identifier is not registered at the Identity Provider.', async () => {
+      await expect(dataAccess.findJsonWebKeyByKeyId!('0f73294d-dfdb-4380-bdde-ed0efa568fba')).resolves.toBeNull();
+    });
+
+    it('should return the JSON Web Key of the Identity Provider based on the provided Identifier.', async () => {
+      await expect(dataAccess.findJsonWebKeyByKeyId!('6c0690cb-025c-4f11-97cc-301b3af64657')).resolves.toBe(
+        jsonWebKeySet.keys[0]!,
+      );
     });
   });
 
@@ -154,7 +318,8 @@ describe('SQLite Data Access', () => {
       let session!: Session;
 
       const sessionId = randomUUIDv7();
-      const loginId = randomUUIDv7();
+      const login1Id = randomUUIDv7();
+      const login2Id = randomUUIDv7();
       const consentId = randomUUIDv7();
       const grantId = randomUUIDv7();
       const userId = '16907c32-687b-493c-85ba-f41f2c9d4daa';
@@ -162,7 +327,9 @@ describe('SQLite Data Access', () => {
 
       const insertSessionSql = 'INSERT INTO sessions (id, active_login_id, grant_id) VALUES ($id, NULL, NULL)';
 
-      const insertLoginSql = 'INSERT INTO logins (id, user_id, session_id) VALUES ($id, $user_id, $session_id)';
+      const insertLoginSql =
+        'INSERT INTO logins (id, expires_at, user_id, session_id) VALUES ($id, $expires_at, $user_id, $session_id)';
+
       const insertLoginsClientsSql = 'INSERT INTO logins_clients (login_id, client_id) VALUES ($login_id, $client_id)';
 
       const insertConsentSql = 'INSERT INTO consents (id, client_id, user_id) VALUES ($id, $client_id, $user_id)';
@@ -179,13 +346,26 @@ describe('SQLite Data Access', () => {
 
       database.prepare(insertSessionSql).run({ id: toUUIDBuffer(sessionId) });
 
-      database
-        .prepare(insertLoginSql)
-        .run({ id: toUUIDBuffer(loginId), user_id: toUUIDBuffer(userId), session_id: toUUIDBuffer(sessionId) });
+      database.prepare(insertLoginSql).run({
+        id: toUUIDBuffer(login1Id),
+        expires_at: null,
+        user_id: toUUIDBuffer(userId),
+        session_id: toUUIDBuffer(sessionId),
+      });
+
+      database.prepare(insertLoginSql.replace('$expires_at', "(unixepoch('now', '+7 days'))")).run({
+        id: toUUIDBuffer(login2Id),
+        user_id: toUUIDBuffer(userId),
+        session_id: toUUIDBuffer(sessionId),
+      });
 
       database
         .prepare(insertLoginsClientsSql)
-        .run({ login_id: toUUIDBuffer(loginId), client_id: toUUIDBuffer(clientId) });
+        .run({ login_id: toUUIDBuffer(login1Id), client_id: toUUIDBuffer(clientId) });
+
+      database
+        .prepare(insertLoginsClientsSql)
+        .run({ login_id: toUUIDBuffer(login2Id), client_id: toUUIDBuffer(clientId) });
 
       database
         .prepare(insertConsentSql)
@@ -205,21 +385,106 @@ describe('SQLite Data Access', () => {
 
       database
         .prepare(updateSessionSql)
-        .run({ active_login_id: toUUIDBuffer(loginId), grant_id: toUUIDBuffer(grantId), id: toUUIDBuffer(sessionId) });
+        .run({ active_login_id: toUUIDBuffer(login1Id), grant_id: toUUIDBuffer(grantId), id: toUUIDBuffer(sessionId) });
 
       await expect(async () => (session = (await dataAccess.findSessionById(sessionId))!)).resolves.not.toThrow();
 
       expect(session).toBeInstanceOf(Session);
 
-      expect(session.activeLogin!.id).toBe(loginId);
+      expect(session.activeLogin!.id).toBe(login1Id);
       expect(session.activeLogin!.session).toBe(session);
       expect(session.activeLogin!.user.id).toBe(userId);
       expect(session.activeLogin!.clients[0]!.id).toBe(clientId);
-      expect(session.logins[0]!.id).toBe(loginId);
+      expect(session.logins[0]!.id).toBe(login1Id);
+      expect(session.logins[1]!.id).toBe(login2Id);
       expect(session.grant!.id).toBe(grantId);
       expect(session.grant!.client.id).toBe(clientId);
       expect(session.grant!.session.id).toBe(sessionId);
       expect(session.grant!.consent!.id).toBe(consentId);
+    });
+  });
+
+  describe('findUserById()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should return null when no User is found by the provided Identifier.', async () => {
+      await expect(dataAccess.findUserById('00000000-0000-0000-0000-000000000000')).resolves.toBeNull();
+    });
+
+    it('should return the User of the provided Identifier.', async () => {
+      await expect(dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa')).resolves.toBeInstanceOf(User);
+      await expect(dataAccess.findUserById('5abe9a9c-c868-4f12-8c76-f34dec7e1cc0')).resolves.toBeInstanceOf(User);
+    });
+  });
+
+  describe('getClientWrapJsonWebKey()', () => {
+    let clientJsonWebKeyParameters!: JsonWebKeyParameters;
+    let clientJsonWebKeySet!: JsonWebKeySet;
+
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+
+      clientJsonWebKeyParameters = {
+        kty: 'OKP',
+        crv: 'Ed25519',
+        x: 'aNoALKSUE1UsotuZvHUj1HEGqhpzLtsSTLmkBITDMAk',
+        use: 'enc',
+        kid: '1360a8dd-5df9-4c22-a347-3ea738656afb',
+      };
+
+      clientJsonWebKeySet = await jwks.create({ keys: [clientJsonWebKeyParameters] });
+    });
+
+    it("should throw when failing to get a Wrap JSON Web Key from the Client's JSON Web Key Set.", async () => {
+      clientJsonWebKeySet.keys[0]!.parameters.use = 'sig';
+
+      const streamMock = new PassThrough();
+
+      jest.spyOn(https, 'get').mockImplementationOnce((_: any, callback: any) => {
+        callback(streamMock);
+
+        streamMock.write(Buffer.from(jsonStringify(clientJsonWebKeySet.toJSON()), 'utf8'));
+        streamMock.end();
+
+        return { on: jest.fn(), end: jest.fn() } as unknown as ClientRequest;
+      });
+
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+
+      const error = new InvalidClientError('Failed to obtain a valid JSON Web Key from the Client.');
+
+      await expect(dataAccess.getClientWrapJsonWebKey!(client)).rejects.toThrowWithMessage(
+        InvalidClientError,
+        error.description,
+      );
+    });
+
+    it("should return the Client's Wrap JSON Web Key from its JSON Web Key Set.", async () => {
+      let jsonWebKey!: JsonWebKey;
+
+      const streamMock = new PassThrough();
+
+      jest.spyOn(https, 'get').mockImplementationOnce((_: any, callback: any) => {
+        callback(streamMock);
+
+        streamMock.write(Buffer.from(jsonStringify(clientJsonWebKeySet.toJSON()), 'utf8'));
+        streamMock.end();
+
+        return { on: jest.fn(), end: jest.fn() } as unknown as ClientRequest;
+      });
+
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+
+      await expect(async () => {
+        jsonWebKey = await dataAccess.getClientWrapJsonWebKey!(client);
+      }).resolves.not.toThrow();
+
+      expect(jsonWebKey).toBeInstanceOf(JsonWebKey);
+      expect(jsonWebKey.parameters).toStrictEqual(clientJsonWebKeyParameters);
     });
   });
 
@@ -270,6 +535,99 @@ describe('SQLite Data Access', () => {
       expect(scopes).toBeArrayOfSize(5);
 
       expect(scopes.map((scope) => scope.name)).toStrictEqual(scopesNames.sort());
+    });
+  });
+
+  describe('getSignJsonWebKey()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should return the Sign JSON Web Key of the Identity Provider.', async () => {
+      await expect(dataAccess.getSignJsonWebKey!()).resolves.toBe(jsonWebKeySet.keys[0]!);
+    });
+  });
+
+  describe('getUnwrapJsonWebKey()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should return the Unwrap JSON Web Key of the Identity Provider.', async () => {
+      await expect(dataAccess.getUnwrapJsonWebKey!()).resolves.toBe(jsonWebKeySet.keys[1]!);
+    });
+  });
+
+  describe('getUserinfo()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should return an empty object as the Userinfo Claims about the requested User.', async () => {
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+      const scopes: Scope[] = [];
+
+      await expect(dataAccess.getUserinfo!(user, scopes)).resolves.toBeEmptyObject();
+    });
+
+    it('should return all the Userinfo Claims about the requested User.', async () => {
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+
+      const scopes = ['openid', 'profile', 'email', 'phone', 'address'].map((scope) => {
+        return Object.assign<Scope, Partial<Scope>>(new Scope(), { name: scope });
+      });
+
+      await expect(dataAccess.getUserinfo!(user, scopes)).resolves.toStrictEqual<UserinfoClaimsParameters>({
+        name: user.givenName! + ' ' + user.middleName! + ' ' + user.familyName!,
+        given_name: user.givenName!,
+        middle_name: user.middleName!,
+        family_name: user.familyName!,
+        nickname: user.nickname!,
+        preferred_username: user.preferredUsername!,
+        profile: user.profile!.href,
+        picture: user.picture!.href,
+        website: user.website!.href,
+        email: user.email!,
+        email_verified: user.emailVerified!,
+        gender: user.gender!,
+        birthdate: user.birthdate!,
+        zoneinfo: user.zoneinfo!,
+        locale: user.locale!,
+        phone_number: user.phoneNumber!,
+        phone_number_verified: user.phoneNumberVerified!,
+        address: {
+          formatted: user.address!.streetAddress!,
+          street_address: user.address!.streetAddress!,
+          locality: user.address!.locality!,
+          region: user.address!.region!,
+          postal_code: user.address!.postalCode!,
+          country: user.address!.country!,
+        },
+        updated_at: Math.ceil(user.updatedAt!.getTime() / 1000),
+      });
+    });
+
+    it('should return the basic Userinfo Claims about the requested User.', async () => {
+      const user = (await dataAccess.findUserById('5abe9a9c-c868-4f12-8c76-f34dec7e1cc0'))!;
+
+      const scopes = ['openid', 'profile', 'email', 'phone', 'address'].map((scope) => {
+        return Object.assign<Scope, Partial<Scope>>(new Scope(), { name: scope });
+      });
+
+      await expect(dataAccess.getUserinfo!(user, scopes)).resolves.toStrictEqual<UserinfoClaimsParameters>({
+        given_name: user.givenName!,
+        family_name: user.familyName!,
+        email: user.email!,
+        email_verified: user.emailVerified!,
+        birthdate: user.birthdate!,
+        phone_number: user.phoneNumber!,
+        phone_number_verified: user.phoneNumberVerified!,
+        address: {},
+        updated_at: Math.ceil(user.updatedAt!.getTime() / 1000),
+      });
     });
   });
 
@@ -370,7 +728,7 @@ describe('SQLite Data Access', () => {
             id: Buffer.from('16907c32687b493c85baf41f2c9d4daa', 'hex'),
             password: 'ldMBaaWcQYtSATMV_IG8mf3wp7A6EW80arYoSW80ntU',
             given_name: 'John',
-            middle_name: null,
+            middle_name: 'Franklin',
             family_name: 'Doe',
             nickname: 'johnny',
             preferred_username: 'j.doe',
@@ -388,14 +746,32 @@ describe('SQLite Data Access', () => {
             created_at: expect.toBeNumber(),
             updated_at: expect.toBeNumber(),
           },
+          {
+            id: Buffer.from('5abe9a9cc8684f128c76f34dec7e1cc0', 'hex'),
+            password: 'jmfdE1VxQjms3gmLbxz5Br3kW-bbgm3Cysp1NuB66EQ',
+            given_name: 'Joe',
+            middle_name: null,
+            family_name: 'Don',
+            nickname: null,
+            preferred_username: null,
+            profile: null,
+            picture: null,
+            website: null,
+            email: 'joe.don@email.com',
+            email_verified: 1,
+            gender: null,
+            birthdate: '2003-08-05',
+            zoneinfo: null,
+            locale: null,
+            phone_number: '+55 (11) 99999-9999',
+            phone_number_verified: 1,
+            created_at: expect.toBeNumber(),
+            updated_at: expect.toBeNumber(),
+          },
         ]),
       );
 
-      expect(
-        database
-          .prepare('SELECT * FROM user_addresses WHERE user_id = $user_id')
-          .all({ user_id: toUUIDBuffer('16907c32-687b-493c-85ba-f41f2c9d4daa') }),
-      ).toStrictEqual<Record<string, SQLOutputValue>[]>(
+      expect(database.prepare('SELECT * FROM user_addresses').all()).toStrictEqual<Record<string, SQLOutputValue>[]>(
         expect.arrayContaining([
           {
             id: Buffer.from('59ad24975d174110865629b581af7d01', 'hex'),
@@ -405,6 +781,15 @@ describe('SQLite Data Access', () => {
             postal_code: '01310-200',
             country: 'Brazil',
             user_id: Buffer.from('16907c32687b493c85baf41f2c9d4daa', 'hex'),
+          },
+          {
+            id: Buffer.from('6644d819322d4df3a52f134880ced952', 'hex'),
+            street_address: null,
+            locality: null,
+            region: null,
+            postal_code: null,
+            country: null,
+            user_id: Buffer.from('5abe9a9cc8684f128c76f34dec7e1cc0', 'hex'),
           },
         ]),
       );

@@ -1,13 +1,23 @@
 import { Buffer } from 'buffer';
+import { randomUUIDv7 } from 'crypto';
 import fs from 'fs';
 import { DatabaseSync, SQLOutputValue } from 'node:sqlite';
 import path from 'path';
 import { URL } from 'url';
 
 import { Injectable } from '@guarani/di';
-import { ContentEncryptionAlgorithm, DigitalSignatureAlgorithm, KeyManagementAlgorithm } from '@guarani/jose';
-import { jsonParse } from '@guarani/primitives';
+import {
+  ContentEncryptionAlgorithm,
+  DigitalSignatureAlgorithm,
+  JsonWebKey,
+  JsonWebKeySet,
+  KeyManagementAlgorithm,
+} from '@guarani/jose';
+import { jsonParse, removeNullishValues } from '@guarani/primitives';
 
+import { UserinfoClaimsParameters } from '../../claims/userinfo/userinfo.claims.parameters';
+import { AccessToken } from '../../entities/access-token';
+import { AuthorizationCode } from '../../entities/authorization-code';
 import { Client } from '../../entities/client';
 import { ClientSecret } from '../../entities/client-secret';
 import { Consent } from '../../entities/consent';
@@ -19,11 +29,15 @@ import { User } from '../../entities/user';
 import { UserAddress } from '../../entities/user-address';
 import { InteractionTypeName } from '../../interaction-types/interaction-type-name.type';
 import { Logger } from '../../loggers/logger';
+import { PKCE } from '../../pkces/pkce';
+import { PKCEName } from '../../pkces/pkce-name.type';
 import { AuthorizationRequest } from '../../requests/authorization/authorization-request';
 import { ResponseTypeName } from '../../response-types/response-type-name.type';
 import { SubjectTypeName } from '../../subject-types/subject-type-name.type';
+import { AccessTokenType } from '../../types/access-token-type.type';
 import { ApplicationType } from '../../types/application-type.type';
 import { ClientType } from '../../types/client-type.type';
+import { getClientJsonWebKey } from '../../utils/get-client-jsonwebkey/get-client-jsonwebkey';
 import { DataAccess } from '../data-access';
 
 /**
@@ -36,10 +50,12 @@ export class SQLiteDataAccess extends DataAccess {
    *
    * @param logger Logger of the Identity Provider.
    * @param database Instance of the SQLite Database.
+   * @param jsonWebKeySet JSON Web Key Set of the Identity Provider.
    */
   public constructor(
     private readonly logger: Logger,
     private readonly database: DatabaseSync,
+    private readonly jsonWebKeySet: JsonWebKeySet,
   ) {
     super();
 
@@ -84,6 +100,89 @@ export class SQLiteDataAccess extends DataAccess {
   }
 
   /**
+   * Creates an Access Token for authorized use by the Client.
+   *
+   * @param scopes Scopes granted to the Client.
+   * @param client Client requesting Authorization.
+   * @param user User that granted Authorization.
+   * @returns Created Access Token.
+   */
+  public async createAccessToken(scopes: Scope[], client: Client, user: User | null): Promise<AccessToken> {
+    const id = randomUUIDv7();
+
+    const accessTokenSql = this._procedure('create-access-token.sql');
+    const accessTokenParameters = this.database
+      .prepare(accessTokenSql)
+      .get({ id: toUUIDBuffer(id), client_id: toUUIDBuffer(client.id), user_id: user ? toUUIDBuffer(user.id) : null })!;
+
+    const scopesIds = scopes.map((scope) => scope.id);
+
+    const accessTokenScopesSql = this._procedure('create-access-token-scopes.sql').replace(
+      '$data',
+      scopesIds.map(() => '(?, ?)').join(', '),
+    );
+
+    this.database
+      .prepare(accessTokenScopesSql)
+      .run(...scopesIds.flatMap((scopeId) => [toUUIDBuffer(id), toUUIDBuffer(scopeId)]));
+
+    return Object.assign<AccessToken, AccessToken>(new AccessToken(), {
+      id: toUUIDString(accessTokenParameters['id'] as Uint8Array),
+      type: accessTokenParameters['type'] as AccessTokenType,
+      scopes,
+      createdAt: new Date((accessTokenParameters['created_at'] as number) * 1000),
+      expiresAt: new Date((accessTokenParameters['expires_at'] as number) * 1000),
+      revokedAt: accessTokenParameters['revoked_at']
+        ? new Date((accessTokenParameters['revoked_at'] as number) * 1000) // TODO: Test on Revocation Endpoint
+        : null,
+      validAfter: new Date((accessTokenParameters['valid_after'] as number) * 1000),
+      client,
+      user,
+    });
+  }
+
+  /**
+   * Creates an Authorization Code to be exchanged by the Client at the Token Endpoint for an Access Token.
+   *
+   * @param codeChallenge PKCE Code Challenge.
+   * @param codeChallengeMethod PKCE Code Challenge Method.
+   * @param login Login with the Authentication information of the User.
+   * @param consent Consent with the Scopes granted by the User.
+   * @returns Created Authorization Code.
+   */
+  public async createAuthorizationCode(
+    codeChallenge: string,
+    codeChallengeMethod: PKCE,
+    login: Login,
+    consent: Consent,
+  ): Promise<AuthorizationCode> {
+    const id = randomUUIDv7();
+
+    const authorizationCodeSql = this._procedure('create-authorization-code.sql');
+    const authorizationCodeParameters = this.database.prepare(authorizationCodeSql).get({
+      id: toUUIDBuffer(id),
+      code_challenge: codeChallenge,
+      code_challenge_method: codeChallengeMethod.name,
+      login_id: toUUIDBuffer(login.id),
+      consent_id: toUUIDBuffer(consent.id),
+    })!;
+
+    return Object.assign<AuthorizationCode, AuthorizationCode>(new AuthorizationCode(), {
+      id: toUUIDString(authorizationCodeParameters['id'] as Uint8Array),
+      codeChallenge: authorizationCodeParameters['code_challenge']!.toString(),
+      codeChallengeMethod: authorizationCodeParameters['code_challenge_method']!.toString() as PKCEName,
+      createdAt: new Date((authorizationCodeParameters['created_at'] as number) * 1000),
+      expiresAt: new Date((authorizationCodeParameters['expires_at'] as number) * 1000),
+      revokedAt: authorizationCodeParameters['revoked_at']
+        ? new Date((authorizationCodeParameters['revoked_at'] as number) * 1000) // TODO: Test on Token Endpoint
+        : null,
+      validAfter: new Date((authorizationCodeParameters['valid_after'] as number) * 1000),
+      login,
+      consent,
+    });
+  }
+
+  /**
    * Searches the application's storage for a Client containing the provided Identifier.
    *
    * @param id Client Identifier.
@@ -94,6 +193,16 @@ export class SQLiteDataAccess extends DataAccess {
   }
 
   /**
+   * Gets a JSON Web Key from the Identity Provider based on the provided Key Identifier.
+   *
+   * @param id JSON Web Key Identifier.
+   * @returns JSON Web Key of the Identity Provider based on the provided Key Identifier.
+   */
+  public async findJsonWebKeyByKeyId?(id: string): Promise<JsonWebKey | null> {
+    return this.jsonWebKeySet.find((jsonWebKey) => jsonWebKey.kid === id);
+  }
+
+  /**
    * Searches the application's storage for a Session containing the provided Identifier.
    *
    * @param id Session Identifier.
@@ -101,6 +210,27 @@ export class SQLiteDataAccess extends DataAccess {
    */
   public async findSessionById(id: string): Promise<Session | null> {
     return this._findSessionById(id, null, null);
+  }
+
+  /**
+   * Searches the application's storage for a User containing the provided Identifier.
+   *
+   * @param id User Identifier.
+   * @returns User based on the provided Identifier.
+   */
+  public async findUserById(id: string): Promise<User | null> {
+    return this._findUserById(id);
+  }
+
+  /**
+   * Retrieves the Wrap JSON Web Key of the Client.
+   *
+   * @param client Client of the Request.
+   * @throws {InvalidClientError} Failed to get a Wrap JSON Web Key from the Client's JSON Web Key Set.
+   * @returns Wrap JSON Web key of the Client.
+   */
+  public async getClientWrapJsonWebKey?(client: Client): Promise<JsonWebKey> {
+    return await getClientJsonWebKey(client, (jsonWebKey) => jsonWebKey.use === 'enc');
   }
 
   /**
@@ -120,6 +250,78 @@ export class SQLiteDataAccess extends DataAccess {
    */
   public async getScopesByName(scopes: string[]): Promise<Scope[]> {
     return this._getScopesByName(scopes);
+  }
+
+  /**
+   * Gets the active Sign JSON Web Key of the Identity Provider.
+   *
+   * @returns Active Sign JSON Web Key of the Identity Provider.
+   */
+  public async getSignJsonWebKey?(): Promise<JsonWebKey> {
+    return this.jsonWebKeySet.get((jsonWebKey) => jsonWebKey.use === 'sig');
+  }
+
+  /**
+   * Gets the active Unwrap JSON Web Key of the Identity Provider.
+   *
+   * *Note: This method only needs to be implemented if the Identity Provider supports nested ID Tokens.*
+   *
+   * @returns Active Unwrap JSON Web Key of the Identity Provider.
+   */
+  public async getUnwrapJsonWebKey?(): Promise<JsonWebKey> {
+    return this.jsonWebKeySet.get((jsonWebKey) => jsonWebKey.use === 'enc');
+  }
+
+  /**
+   * Retrieves the claims of the provided User based on the provided Scopes.
+   *
+   * @param user User to have its information gathered.
+   * @param scopes Scopes requested by the Client.
+   * @returns Claims about the provided User.
+   */
+  public async getUserinfo?(user: User, scopes: Scope[]): Promise<UserinfoClaimsParameters> {
+    const scopesNames = scopes.map((scope) => scope.name);
+    const claims: UserinfoClaimsParameters = {};
+
+    if (scopesNames.includes('profile')) {
+      claims.name = user.name ?? undefined!;
+      claims.given_name = user.givenName!;
+      claims.middle_name = user.middleName ?? undefined!;
+      claims.family_name = user.familyName!;
+      claims.nickname = user.nickname ?? undefined!;
+      claims.preferred_username = user.preferredUsername ?? undefined!;
+      claims.profile = user.profile?.href ?? undefined!;
+      claims.picture = user.picture?.href ?? undefined!;
+      claims.website = user.website?.href ?? undefined!;
+      claims.gender = user.gender ?? undefined!;
+      claims.birthdate = user.birthdate!;
+      claims.zoneinfo = user.zoneinfo ?? undefined!;
+      claims.locale = user.locale ?? undefined!;
+      claims.updated_at = Math.ceil(user.updatedAt.getTime() / 1000);
+    }
+
+    if (scopesNames.includes('email')) {
+      claims.email = user.email!;
+      claims.email_verified = user.emailVerified!;
+    }
+
+    if (scopesNames.includes('phone')) {
+      claims.phone_number = user.phoneNumber!;
+      claims.phone_number_verified = user.phoneNumberVerified!;
+    }
+
+    if (scopesNames.includes('address')) {
+      claims.address = {
+        formatted: user.address?.streetAddress ? user.address.streetAddress : undefined!,
+        street_address: user.address?.streetAddress ?? undefined!,
+        locality: user.address?.locality ?? undefined!,
+        region: user.address?.region ?? undefined!,
+        postal_code: user.address?.postalCode ?? undefined!,
+        country: user.address?.country ?? undefined!,
+      };
+    }
+
+    return removeNullishValues(claims);
   }
 
   /**
@@ -259,7 +461,7 @@ export class SQLiteDataAccess extends DataAccess {
     return instantiateScopes(scopesParameters);
   }
 
-  private _findGrantById(id: string, session: Session | null): Grant | null {
+  private _findGrantById(id: string, session: Session): Grant | null {
     const grantSql = this._procedure('find-grant-by-id.sql');
     const grantParameters = this.database.prepare(grantSql).get({ id: toUUIDBuffer(id) });
 
@@ -276,13 +478,8 @@ export class SQLiteDataAccess extends DataAccess {
       createdAt: new Date((grantParameters['created_at']! as number) * 1000),
       expiresAt: new Date((grantParameters['expires_at']! as number) * 1000),
       client: this._findClientById(toUUIDString(grantParameters['client_id'] as Uint8Array))!,
+      session,
     });
-
-    Reflect.set(
-      grant,
-      'session',
-      session ?? this._findSessionById(toUUIDString(grantParameters['session_id'] as Uint8Array), null, grant)!,
-    );
 
     Reflect.set(
       grant,
@@ -295,7 +492,7 @@ export class SQLiteDataAccess extends DataAccess {
     return grant;
   }
 
-  private _findLoginById(id: string, session: Session | null): Login | null {
+  private _findLoginById(id: string, session: Session): Login | null {
     const loginSql = this._procedure('find-login-by-id.sql');
     const loginParameters = this.database.prepare(loginSql).get({ id: toUUIDBuffer(id) });
 
@@ -303,23 +500,16 @@ export class SQLiteDataAccess extends DataAccess {
       return null;
     }
 
-    const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+    return Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
       id: toUUIDString(loginParameters['id'] as Uint8Array),
       amr: jsonParse(loginParameters['amr']!.toString()) as string[],
       acr: loginParameters['acr']?.toString() ?? null,
       createdAt: new Date((loginParameters['created_at']! as number) * 1000),
       expiresAt: loginParameters['expires_at'] ? new Date((loginParameters['expires_at']! as number) * 1000) : null,
       user: this._findUserById(toUUIDString(loginParameters['user_id'] as Uint8Array))!,
+      session,
       clients: this._findLoginClientsByLoginId(id),
     });
-
-    Reflect.set(
-      login,
-      'session',
-      session ?? this._findSessionById(toUUIDString(loginParameters['session_id'] as Uint8Array), login, null)!,
-    );
-
-    return login;
   }
 
   private _findLoginClientsByLoginId(id: string): Client[] {
@@ -409,7 +599,9 @@ export class SQLiteDataAccess extends DataAccess {
     return Object.assign<User, Partial<User>>(Reflect.construct(User, []), {
       id: toUUIDString(userParameters['id'] as Uint8Array),
       password: userParameters['password']!.toString(),
-      name: userParameters['given_name']!.toString() + ' ' + userParameters['family_name']!.toString(),
+      name: userParameters['middle_name']
+        ? `${userParameters['given_name']!.toString()} ${userParameters['middle_name'].toString()} ${userParameters['family_name']!.toString()}`
+        : null,
       givenName: userParameters['given_name']!.toString(),
       middleName: userParameters['middle_name']?.toString() ?? null,
       familyName: userParameters['family_name']!.toString(),

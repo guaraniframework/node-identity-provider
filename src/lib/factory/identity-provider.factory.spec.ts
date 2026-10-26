@@ -3,6 +3,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { URL } from 'url';
 
 import { DependencyInjectionContainer, Factory, getContainer, Injectable } from '@guarani/di';
+import { JsonWebKeySet } from '@guarani/jose';
 
 import { CONTAINER } from '../constants';
 import { DataAccess } from '../data-access/data-access';
@@ -65,11 +66,12 @@ describe('Identity Provider Factory', () => {
     it('should instantiate a new Identity Provider Factory.', () => {
       const container = getContainer(CONTAINER);
 
+      container.bind(JsonWebKeySet).toValue(JsonWebKeySet.prototype);
       container.bind(DatabaseSync).toValue(DatabaseSync.prototype);
 
       expect(factory['container']).toBe(container);
 
-      expect(container['registry']['bindings'].size).toBe(4);
+      expect(container['registry']['bindings'].size).toBe(5);
 
       expect(container.resolve(DependencyInjectionContainer)).toBe(container);
       expect(container.resolve(DataAccess)).toBeInstanceOf(SQLiteDataAccess);
@@ -139,6 +141,7 @@ describe('Identity Provider Factory', () => {
     it.each(dataAccessEntries)(
       'should add the provided Data Access to the Identity Provider Factory.',
       (dataAccess) => {
+        factory['container'].bind(JsonWebKeySet).toValue(JsonWebKeySet.prototype);
         factory['container'].bind(DatabaseSync).toValue(DatabaseSync.prototype);
 
         expect(() => factory.addDataAccess(dataAccess)).not.toThrow();

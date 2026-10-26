@@ -1,5 +1,12 @@
 import { URL } from 'url';
 
+import {
+  ContentEncryptionAlgorithm,
+  DigitalSignatureAlgorithm,
+  JsonWebEncryptionHeader,
+  JsonWebSignatureHeader,
+  KeyManagementAlgorithm,
+} from '@guarani/jose';
 import { isNonEmptyString, isPlainObject } from '@guarani/primitives';
 
 import { DEFAULT_MINIMUM_MAX_AGE, DEFAULT_SESSION_COOKIE } from '../constants';
@@ -18,6 +25,21 @@ export class Settings {
    * Secret Key of the Identity Provider.
    */
   public readonly secretKey: string;
+
+  /**
+   * JSON Web Signature Digital Signature Algorithms for ID Token Signature registered at the Identity Provider.
+   */
+  public readonly idTokenSignatureAlgorithms: Exclude<DigitalSignatureAlgorithm, 'none'>[];
+
+  /**
+   * JSON Web Encryption Key Wrap Algorithms for ID Token Encryption registered at the Identity Provider.
+   */
+  public readonly idTokenKeyWrapAlgorithms: KeyManagementAlgorithm[];
+
+  /**
+   * JSON Web Encryption Content Encryption Algorithms for ID Token Encryption registered at the Identity Provider.
+   */
+  public readonly idTokenContentEncryptionAlgorithms: ContentEncryptionAlgorithm[];
 
   /**
    * UI Locales registered at the Identity Provider.
@@ -56,10 +78,15 @@ export class Settings {
 
     this.issuer = this.getIssuer(parameters);
     this.secretKey = this.getSecretKey(parameters);
+    this.idTokenSignatureAlgorithms = this.getIdTokenSignatureAlgorithms(parameters);
+    this.idTokenKeyWrapAlgorithms = this.getIdTokenKeyWrapAlgorithms(parameters);
+    this.idTokenContentEncryptionAlgorithms = this.getIdTokenContentEncryptionAlgorithms(parameters);
     this.uiLocales = this.getUiLocales(parameters);
     this.acrValues = this.getAcrValues(parameters);
     this.minimumMaxAge = this.getMinimumMaxAge(parameters);
     this.sessionCookie = this.getSessionCookie(parameters);
+
+    this.checkIdTokenAlgorithms();
   }
 
   /**
@@ -90,6 +117,73 @@ export class Settings {
     }
 
     return parameters.secretKey;
+  }
+
+  /**
+   * Checks and returns the provied ID Token Signature Algorithms or an empty array.
+   *
+   * @param parameters Parameters of the Settings.
+   * @throws {TypeError} The provided ID Token Signature Algorithms is invalid.
+   * @returns Provided ID Token Signature Algorithms.
+   */
+  private getIdTokenSignatureAlgorithms(parameters: SettingsParameters): Exclude<DigitalSignatureAlgorithm, 'none'>[] {
+    if (
+      'idTokenSignatureAlgorithms' in parameters &&
+      (!Array.isArray(parameters.idTokenSignatureAlgorithms) ||
+        parameters.idTokenSignatureAlgorithms.length === 0 ||
+        parameters.idTokenSignatureAlgorithms.includes('none' as any) ||
+        parameters.idTokenSignatureAlgorithms.some((algorithm) => {
+          return !JsonWebSignatureHeader.digitalSignatureAlgorithms.includes(algorithm);
+        }))
+    ) {
+      throw new TypeError('The provided ID Token Signature Algorithms is invalid.');
+    }
+
+    return parameters.idTokenSignatureAlgorithms ?? [];
+  }
+
+  /**
+   * Checks and returns the provied ID Token Key Wrap Algorithms or an empty array.
+   *
+   * @param parameters Parameters of the Settings.
+   * @throws {TypeError} The provided ID Token Key Wrap Algorithms is invalid.
+   * @returns Provided ID Token Key Wrap Algorithms.
+   */
+  private getIdTokenKeyWrapAlgorithms(parameters: SettingsParameters): KeyManagementAlgorithm[] {
+    if (
+      'idTokenKeyWrapAlgorithms' in parameters &&
+      (!Array.isArray(parameters.idTokenKeyWrapAlgorithms) ||
+        parameters.idTokenKeyWrapAlgorithms.length === 0 ||
+        parameters.idTokenKeyWrapAlgorithms.some((algorithm) => {
+          return !JsonWebEncryptionHeader.keyManagementAlgorithms.includes(algorithm);
+        }))
+    ) {
+      throw new TypeError('The provided ID Token Key Wrap Algorithms is invalid.');
+    }
+
+    return parameters.idTokenKeyWrapAlgorithms ?? [];
+  }
+
+  /**
+   * Checks and returns the provied ID Token Content Encryption Algorithms or an empty array.
+   *
+   * @param parameters Parameters of the Settings.
+   * @throws {TypeError} The provided ID Token Content Encryption Algorithms is invalid.
+   * @returns Provided ID Token Content Encryption Algorithms.
+   */
+  private getIdTokenContentEncryptionAlgorithms(parameters: SettingsParameters): ContentEncryptionAlgorithm[] {
+    if (
+      'idTokenContentEncryptionAlgorithms' in parameters &&
+      (!Array.isArray(parameters.idTokenContentEncryptionAlgorithms) ||
+        parameters.idTokenContentEncryptionAlgorithms.length === 0 ||
+        parameters.idTokenContentEncryptionAlgorithms.some((algorithm) => {
+          return !JsonWebEncryptionHeader.contentEncryptionAlgorithms.includes(algorithm);
+        }))
+    ) {
+      throw new TypeError('The provided ID Token Content Encryption Algorithms is invalid.');
+    }
+
+    return parameters.idTokenContentEncryptionAlgorithms ?? [];
   }
 
   /**
@@ -165,5 +259,34 @@ export class Settings {
     }
 
     return parameters.sessionCookie ?? DEFAULT_SESSION_COOKIE;
+  }
+
+  /**
+   * Checks if the combination of provided ID Token Algorithms is valid.
+   *
+   * @throws {TypeError} The provided combination of ID Token Algorithms is invalid.
+   */
+  private checkIdTokenAlgorithms(): void {
+    const signatureEnabled = this.idTokenSignatureAlgorithms.length !== 0;
+    const keyWrapEnabled = this.idTokenKeyWrapAlgorithms.length !== 0;
+    const contentEncryptionEnabled = this.idTokenContentEncryptionAlgorithms.length !== 0;
+
+    if (!signatureEnabled) {
+      if (keyWrapEnabled) {
+        throw new TypeError('Missing required ID Token Signature Algorithms when using ID Token Encryption.');
+      }
+
+      if (contentEncryptionEnabled) {
+        throw new TypeError('Missing required ID Token Signature Algorithms when using ID Token Encryption.');
+      }
+    } else {
+      if (!keyWrapEnabled && contentEncryptionEnabled) {
+        throw new TypeError('Missing required ID Token Key Wrap Algorithms when using ID Token Encryption.');
+      }
+
+      if (keyWrapEnabled && !contentEncryptionEnabled) {
+        throw new TypeError('Missing required ID Token Content Encryption Algorithms when using ID Token Encryption.');
+      }
+    }
   }
 }
