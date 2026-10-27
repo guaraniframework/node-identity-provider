@@ -16,6 +16,7 @@ import {
 import { jsonParse, jsonStringify, removeNullishValues } from '@guarani/primitives';
 
 import { UserinfoClaimsParameters } from '../../claims/userinfo/userinfo.claims.parameters';
+import { ClientAuthenticationName } from '../../client-authentication/client-authentication-name.type';
 import { AccessToken } from '../../entities/access-token';
 import { AuthorizationCode } from '../../entities/authorization-code';
 import { Client } from '../../entities/client';
@@ -340,6 +341,26 @@ export class SQLiteDataAccess extends DataAccess {
    */
   public async findUserById(id: string): Promise<User | null> {
     return this._findUserById(id);
+  }
+
+  /**
+   * Gets the active Client Assertion Sign JSON Web Key of the Identity Provider.
+   *
+   * @returns Active Client Assertion Sign JSON Web Key of the Identity Provider.
+   */
+  public async getClientAssertionSignJsonWebKey?(): Promise<JsonWebKey> {
+    return this.jsonWebKeySet.get((jsonWebKey) => jsonWebKey.use === 'sig');
+  }
+
+  /**
+   * Gets the active Client Assertion Unwrap JSON Web Key of the Identity Provider.
+   *
+   * *Note: This method only needs to be implemented if the Identity Provider supports nested Client Assertions.*
+   *
+   * @returns Active Client Assertion Unwrap JSON Web Key of the Identity Provider.
+   */
+  public async getClientAssertionUnwrapJsonWebKey?(): Promise<JsonWebKey> {
+    return this.jsonWebKeySet.get((jsonWebKey) => jsonWebKey.use === 'enc');
   }
 
   /**
@@ -860,6 +881,7 @@ function instantiateClient(
     }),
     scopes,
     responseTypes: jsonParse(parameters['response_types']!.toString()) as ResponseTypeName[],
+    authenticationMethod: parameters['authentication_method']!.toString() as ClientAuthenticationName,
     contacts: jsonParse(parameters['contacts']!.toString()) as string[],
     clientUri: parameters['client_uri'] ? new URL(parameters['client_uri'].toString()) : null,
     logoUri: parameters['logo_uri'] ? new URL(parameters['logo_uri'].toString()) : null,
@@ -877,6 +899,8 @@ function instantiateClient(
       (parameters['id_token_encrypted_response_alg']?.toString() as KeyManagementAlgorithm) ?? null,
     idTokenEncryptedResponseContentEncryption:
       (parameters['id_token_encrypted_response_enc']?.toString() as ContentEncryptionAlgorithm) ?? null,
+    authenticationSigningAlgorithm:
+      (parameters['authentication_signing_alg']?.toString() as Exclude<DigitalSignatureAlgorithm, 'none'>) ?? null,
     defaultMaxAge: (parameters['default_max_age'] as number) ?? null,
     requireAuthTime: parameters['require_auth_time'] === 1,
     defaultAcrValues: jsonParse(parameters['default_acr_values']!.toString()),

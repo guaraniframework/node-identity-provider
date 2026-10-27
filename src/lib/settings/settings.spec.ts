@@ -145,6 +145,97 @@ const invalidIdTokenContentEncryptionAlgorithms: any[] = [
   ['ES256'],
 ];
 
+const invalidAuthenticationSigningAlgorithms: any[] = [
+  undefined,
+  null,
+  true,
+  1,
+  1.2,
+  1n,
+  'a',
+  Symbol('a'),
+  Buffer,
+  Buffer.alloc(1),
+  () => {},
+  {},
+  [],
+  [undefined],
+  [null],
+  [true],
+  [1],
+  [1.2],
+  [1n],
+  [Symbol('a')],
+  [Buffer],
+  [Buffer.alloc(1)],
+  [() => {}],
+  [{}],
+  [[]],
+  ['none'],
+  [''],
+  ['RSA-OAEP'],
+];
+
+const invalidAuthenticationEncryptionKeyWrapAlgorithms: any[] = [
+  undefined,
+  null,
+  true,
+  1,
+  1.2,
+  1n,
+  'a',
+  Symbol('a'),
+  Buffer,
+  Buffer.alloc(1),
+  () => {},
+  {},
+  [],
+  [undefined],
+  [null],
+  [true],
+  [1],
+  [1.2],
+  [1n],
+  [Symbol('a')],
+  [Buffer],
+  [Buffer.alloc(1)],
+  [() => {}],
+  [{}],
+  [[]],
+  [''],
+  ['A128GCM'],
+];
+
+const invalidAuthenticationEncryptionContentEncryptionAlgorithms: any[] = [
+  undefined,
+  null,
+  true,
+  1,
+  1.2,
+  1n,
+  'a',
+  Symbol('a'),
+  Buffer,
+  Buffer.alloc(1),
+  () => {},
+  {},
+  [],
+  [undefined],
+  [null],
+  [true],
+  [1],
+  [1.2],
+  [1n],
+  [Symbol('a')],
+  [Buffer],
+  [Buffer.alloc(1)],
+  [() => {}],
+  [{}],
+  [[]],
+  [''],
+  ['ES256'],
+];
+
 const invalidUiLocales: any[] = [
   undefined,
   null,
@@ -277,6 +368,9 @@ describe('Settings', () => {
         idTokenSignatureAlgorithms: ['ES256'],
         idTokenKeyWrapAlgorithms: ['RSA-OAEP'],
         idTokenContentEncryptionAlgorithms: ['A128GCM'],
+        clientAuthenticationSigningAlgorithms: ['ES256'],
+        clientAuthenticationEncryptionKeyWrapAlgorithms: ['RSA-OAEP'],
+        clientAuthenticationEncryptionContentEncryptionAlgorithms: ['A128GCM'],
         uiLocales: ['en-US'],
         acrValues: ['urn:guarani:acr:1fa', 'urn:guarani:acr:2fa'],
         interactions: {
@@ -339,6 +433,40 @@ describe('Settings', () => {
         expect(() => new Settings({ ...parameters, idTokenContentEncryptionAlgorithms })).toThrowWithMessage(
           TypeError,
           'The provided ID Token Content Encryption Algorithms is invalid.',
+        );
+      },
+    );
+
+    it.each(invalidAuthenticationSigningAlgorithms)(
+      'should throw when the provided Client Authentication Signing Algorithms is invalid.',
+      (clientAuthenticationSigningAlgorithms) => {
+        expect(() => new Settings({ ...parameters, clientAuthenticationSigningAlgorithms })).toThrowWithMessage(
+          TypeError,
+          'The provided Client Authentication Signing Algorithms is invalid.',
+        );
+      },
+    );
+
+    it.each(invalidAuthenticationEncryptionKeyWrapAlgorithms)(
+      'should throw when the provided Client Authentication Encryption Key Wrap Algorithms is invalid.',
+      (clientAuthenticationEncryptionKeyWrapAlgorithms) => {
+        expect(() => {
+          return new Settings({ ...parameters, clientAuthenticationEncryptionKeyWrapAlgorithms });
+        }).toThrowWithMessage(
+          TypeError,
+          'The provided Client Authentication Encryption Key Wrap Algorithms is invalid.',
+        );
+      },
+    );
+
+    it.each(invalidAuthenticationEncryptionContentEncryptionAlgorithms)(
+      'should throw when the provided Client Authentication Encryption Content Encryption Algorithms is invalid.',
+      (clientAuthenticationEncryptionContentEncryptionAlgorithms) => {
+        expect(() => {
+          return new Settings({ ...parameters, clientAuthenticationEncryptionContentEncryptionAlgorithms });
+        }).toThrowWithMessage(
+          TypeError,
+          'The provided Client Authentication Encryption Content Encryption Algorithms is invalid.',
         );
       },
     );
@@ -432,6 +560,44 @@ describe('Settings', () => {
       );
     });
 
+    it('should throw when not providing a Client Authentication Signature Algorithm and providing a Client Authentication Key Wrap Algorithm.', () => {
+      Reflect.deleteProperty(parameters, 'clientAuthenticationSigningAlgorithms');
+      Reflect.deleteProperty(parameters, 'clientAuthenticationEncryptionContentEncryptionAlgorithms');
+
+      expect(() => new Settings(parameters)).toThrowWithMessage(
+        TypeError,
+        'Missing required Client Authentication Signature Algorithms when using Client Authentication Encryption.',
+      );
+    });
+
+    it('should throw when not providing a Client Authentication Signature Algorithm and providing a Client Authentication Content Encryption Algorithm.', () => {
+      Reflect.deleteProperty(parameters, 'clientAuthenticationSigningAlgorithms');
+      Reflect.deleteProperty(parameters, 'clientAuthenticationEncryptionKeyWrapAlgorithms');
+
+      expect(() => new Settings(parameters)).toThrowWithMessage(
+        TypeError,
+        'Missing required Client Authentication Signature Algorithms when using Client Authentication Encryption.',
+      );
+    });
+
+    it('should throw when not providing a Client Authentication Key Wrap Algorithm and providing a Client Authentication Content Encryption Algorithm.', () => {
+      Reflect.deleteProperty(parameters, 'clientAuthenticationEncryptionKeyWrapAlgorithms');
+
+      expect(() => new Settings(parameters)).toThrowWithMessage(
+        TypeError,
+        'Missing required Client Authentication Key Wrap Algorithms when using Client Authentication Encryption.',
+      );
+    });
+
+    it('should throw when not providing a Client Authentication Content Encryption Algorithm and providing a Client Authentication Key Wrap Algorithm.', () => {
+      Reflect.deleteProperty(parameters, 'clientAuthenticationEncryptionContentEncryptionAlgorithms');
+
+      expect(() => new Settings(parameters)).toThrowWithMessage(
+        TypeError,
+        'Missing required Client Authentication Content Encryption Algorithms when using Client Authentication Encryption.',
+      );
+    });
+
     it('should instantiate a new Settings with the provided values.', () => {
       let settings!: Settings;
 
@@ -446,6 +612,9 @@ describe('Settings', () => {
           idTokenSignatureAlgorithms: ['ES256'],
           idTokenKeyWrapAlgorithms: ['RSA-OAEP'],
           idTokenContentEncryptionAlgorithms: ['A128GCM'],
+          clientAuthenticationSigningAlgorithms: ['ES256'],
+          clientAuthenticationEncryptionKeyWrapAlgorithms: ['RSA-OAEP'],
+          clientAuthenticationEncryptionContentEncryptionAlgorithms: ['A128GCM'],
           uiLocales: ['en-US'],
           acrValues: ['urn:guarani:acr:1fa', 'urn:guarani:acr:2fa'],
           interactions: expect.objectContaining<Partial<InteractionsSettings>>({
@@ -488,6 +657,9 @@ describe('Settings', () => {
           idTokenSignatureAlgorithms: [],
           idTokenKeyWrapAlgorithms: [],
           idTokenContentEncryptionAlgorithms: [],
+          clientAuthenticationSigningAlgorithms: [],
+          clientAuthenticationEncryptionKeyWrapAlgorithms: [],
+          clientAuthenticationEncryptionContentEncryptionAlgorithms: [],
           uiLocales: [],
           acrValues: [],
           interactions: expect.objectContaining<Partial<InteractionsSettings>>({

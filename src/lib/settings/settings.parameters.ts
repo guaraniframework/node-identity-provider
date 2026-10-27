@@ -34,6 +34,21 @@ export interface SettingsParameters {
   readonly idTokenContentEncryptionAlgorithms?: ContentEncryptionAlgorithm[];
 
   /**
+   * JSON Web Signature Digital Signature Algorithms for ID Token Signature registered at the Identity Provider.
+   */
+  readonly clientAuthenticationSigningAlgorithms?: Exclude<DigitalSignatureAlgorithm, 'none'>[];
+
+  /**
+   * JSON Web Encryption Key Wrap Algorithms for ID Token Encryption registered at the Identity Provider.
+   */
+  readonly clientAuthenticationEncryptionKeyWrapAlgorithms?: KeyManagementAlgorithm[];
+
+  /**
+   * JSON Web Encryption Content Encryption Algorithms for ID Token Encryption registered at the Identity Provider.
+   */
+  readonly clientAuthenticationEncryptionContentEncryptionAlgorithms?: ContentEncryptionAlgorithm[];
+
+  /**
    * UI Locales registered at the Identity Provider.
    *
    * @default []

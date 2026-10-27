@@ -7,6 +7,7 @@ import {
   KeyManagementAlgorithm,
 } from '@guarani/jose';
 
+import { ClientAuthenticationName } from '../client-authentication/client-authentication-name.type';
 import { ResponseTypeName } from '../response-types/response-type-name.type';
 import { SubjectTypeName } from '../subject-types/subject-type-name.type';
 import { ApplicationType } from '../types/application-type.type';
@@ -57,6 +58,11 @@ export class Client implements NodeJS.Dict<unknown> {
    * Client Response Types.
    */
   public responseTypes!: ResponseTypeName[];
+
+  /**
+   * Client Authentication Methods.
+   */
+  public authenticationMethod!: ClientAuthenticationName;
 
   /**
    * Array of email addresses of people responsible for the Client.
@@ -117,6 +123,11 @@ export class Client implements NodeJS.Dict<unknown> {
    * JSON Web Encryption Content Encryption Algorithm used to encrypt the ID Token issued to the Client.
    */
   public idTokenEncryptedResponseContentEncryption!: ContentEncryptionAlgorithm | null;
+
+  /**
+   * JSON Web Signature Algorithm used to validate the JWT Bearer Client Assertion.
+   */
+  public authenticationSigningAlgorithm!: Exclude<DigitalSignatureAlgorithm, 'none'> | null;
 
   /**
    * Default Maximum Authentication Age.

@@ -55,10 +55,6 @@ export class IdentityProviderFactory {
       callback(options);
     }
 
-    // const endpoints = (this.container.getAll(Endpoint) as Constructor<Endpoint>[]).map((endpoint) => {
-    //   return endpoint.prototype.name;
-    // });
-
     if (
       !this.container.has(Endpoint) ||
       !(this.container.getAll(Endpoint) as Constructor<Endpoint>[]).includes(AuthorizationEndpoint)

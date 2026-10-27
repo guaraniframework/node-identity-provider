@@ -672,6 +672,28 @@ describe('SQLite Data Access', () => {
     });
   });
 
+  describe('getClientAssertionSignJsonWebKey()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should return the Client Assertion Sign JSON Web Key of the Identity Provider.', async () => {
+      await expect(dataAccess.getClientAssertionSignJsonWebKey!()).resolves.toBe(jsonWebKeySet.keys[0]!);
+    });
+  });
+
+  describe('getClientAssertionUnwrapJsonWebKey()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should return the Client Assertion Unwrap JSON Web Key of the Identity Provider.', async () => {
+      await expect(dataAccess.getClientAssertionUnwrapJsonWebKey!()).resolves.toBe(jsonWebKeySet.keys[1]!);
+    });
+  });
+
   describe('getClientWrapJsonWebKey()', () => {
     let clientJsonWebKeyParameters!: JsonWebKeyParameters;
     let clientJsonWebKeySet!: JsonWebKeySet;
@@ -1250,6 +1272,7 @@ describe('SQLite Data Access', () => {
             redirect_uris: '["https://client.example.com/oidc/callback"]',
             response_types:
               '["code","code id_token","code id_token token","code token","id_token","id_token token","none","token"]',
+            authentication_method: 'client_secret_basic',
             contacts: '[]',
             client_uri: 'https://client.example.com/about',
             logo_uri: 'https://client.example.com/logo.png',
@@ -1262,6 +1285,7 @@ describe('SQLite Data Access', () => {
             id_token_signed_response_alg: 'ES256',
             id_token_encrypted_response_alg: 'RSA-OAEP',
             id_token_encrypted_response_enc: 'A128GCM',
+            authentication_signing_alg: null,
             default_max_age: 7776000,
             require_auth_time: 1,
             default_acr_values: '["urn:guarani:acr:2fa"]',
@@ -1277,6 +1301,7 @@ describe('SQLite Data Access', () => {
             profile: 'native',
             redirect_uris: '["https://client.example.org/oidc/callback"]',
             response_types: '["code"]',
+            authentication_method: 'none',
             contacts: '[]',
             client_uri: null,
             logo_uri: null,
@@ -1289,6 +1314,7 @@ describe('SQLite Data Access', () => {
             id_token_signed_response_alg: null,
             id_token_encrypted_response_alg: null,
             id_token_encrypted_response_enc: null,
+            authentication_signing_alg: null,
             default_max_age: null,
             require_auth_time: 0,
             default_acr_values: '["urn:guarani:acr:2fa"]',

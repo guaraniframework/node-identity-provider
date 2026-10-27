@@ -127,6 +127,22 @@ export abstract class DataAccess {
   public abstract findUserById(id: string): Promise<User | null>;
 
   /**
+   * Gets the active Client Assertion Sign JSON Web Key of the Identity Provider.
+   *
+   * @returns Active Client Assertion Sign JSON Web Key of the Identity Provider.
+   */
+  public abstract getClientAssertionSignJsonWebKey?(): Promise<JsonWebKey>;
+
+  /**
+   * Gets the active Client Assertion Unwrap JSON Web Key of the Identity Provider.
+   *
+   * *Note: This method only needs to be implemented if the Identity Provider supports nested Client Assertions.*
+   *
+   * @returns Active Client Assertion Unwrap JSON Web Key of the Identity Provider.
+   */
+  public abstract getClientAssertionUnwrapJsonWebKey?(): Promise<JsonWebKey>;
+
+  /**
    * Retrieves the Wrap JSON Web Key of the Client.
    *
    * @param client Client of the Request.

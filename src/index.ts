@@ -5,6 +5,20 @@ if (Reflect == null || !('getMetadata' in Reflect)) {
 export { IdTokenClaims } from './lib/claims/id-token/id-token.claims';
 export { type AddressClaimParameters } from './lib/claims/userinfo/address.claim.parameters';
 export { type UserinfoClaimsParameters } from './lib/claims/userinfo/userinfo.claims.parameters';
+export { ClientAssertion } from './lib/client-assertions/client-assertion';
+export { type ClientAssertionParameters } from './lib/client-assertions/client-assertion.parameters';
+export { type ClientAssertionName } from './lib/client-assertions/client-assertion-name.type';
+export { JwtBearerClientAssertion } from './lib/client-assertions/jwt-bearer/jwt-bearer.client-assertion';
+export { type JwtBearerClientAssertionParameters } from './lib/client-assertions/jwt-bearer/jwt-bearer.client-assertion.parameters';
+export { ClientAuthentication } from './lib/client-authentication/client-authentication';
+export { type ClientAuthenticationName } from './lib/client-authentication/client-authentication-name.type';
+export { ClientSecretBasicClientAuthentication } from './lib/client-authentication/client-secret-basic/client-secret-basic.client-authentication';
+export { ClientSecretJwtClientAuthentication } from './lib/client-authentication/client-secret-jwt/client-secret-jwt.client-authentication';
+export { ClientSecretPostClientAuthentication } from './lib/client-authentication/client-secret-post/client-secret-post.client-authentication';
+export { type ClientSecretPostClientAuthenticationParameters } from './lib/client-authentication/client-secret-post/client-secret-post.client-authentication.parameters';
+export { NoneClientAuthentication } from './lib/client-authentication/none/none.client-authentication';
+export { type NoneClientAuthenticationParameters } from './lib/client-authentication/none/none.client-authentication.parameters';
+export { PrivateKeyJwtClientAuthentication } from './lib/client-authentication/private-key-jwt/private-key-jwt.client-authentication';
 export { CONTAINER, DEFAULT_MINIMUM_MAX_AGE, DEFAULT_SESSION_COOKIE } from './lib/constants';
 export { type AuthorizationContext } from './lib/context/authorization/authorization-context';
 export { type CodeAuthorizationContext } from './lib/context/authorization/code/code.authorization-context';
@@ -52,6 +66,7 @@ export { UnauthorizedClientError } from './lib/errors/unauthorized-client/unauth
 export { UnsupportedMediaTypeError } from './lib/errors/unsupported-media-type/unsupported-media-type.error';
 export { UnsupportedResponseTypeError } from './lib/errors/unsupported-response-type/unsupported-response-type.error';
 export { IdentityProviderFactory } from './lib/factory/identity-provider.factory';
+export { ClientAuthenticationHandler } from './lib/handlers/client-authentication/client-authentication.handler';
 export { IdTokenHandler } from './lib/handlers/id-token/id-token.handler';
 export { ScopeHandler } from './lib/handlers/scope/scope.handler';
 export { IdentityProvider } from './lib/http/providers/identity-provider';

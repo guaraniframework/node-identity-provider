@@ -43,6 +43,21 @@ export class Settings {
   public readonly idTokenContentEncryptionAlgorithms: ContentEncryptionAlgorithm[];
 
   /**
+   * JSON Web Signature Digital Signature Algorithms for ID Token Signature registered at the Identity Provider.
+   */
+  public readonly clientAuthenticationSigningAlgorithms: Exclude<DigitalSignatureAlgorithm, 'none'>[];
+
+  /**
+   * JSON Web Encryption Key Wrap Algorithms for ID Token Encryption registered at the Identity Provider.
+   */
+  public readonly clientAuthenticationEncryptionKeyWrapAlgorithms: KeyManagementAlgorithm[];
+
+  /**
+   * JSON Web Encryption Content Encryption Algorithms for ID Token Encryption registered at the Identity Provider.
+   */
+  public readonly clientAuthenticationEncryptionContentEncryptionAlgorithms: ContentEncryptionAlgorithm[];
+
+  /**
    * UI Locales registered at the Identity Provider.
    */
   public readonly uiLocales: string[];
@@ -94,6 +109,11 @@ export class Settings {
     this.idTokenSignatureAlgorithms = this.getIdTokenSignatureAlgorithms(parameters);
     this.idTokenKeyWrapAlgorithms = this.getIdTokenKeyWrapAlgorithms(parameters);
     this.idTokenContentEncryptionAlgorithms = this.getIdTokenContentEncryptionAlgorithms(parameters);
+    this.clientAuthenticationSigningAlgorithms = this.getClientAuthenticationSigningAlgorithms(parameters);
+    this.clientAuthenticationEncryptionKeyWrapAlgorithms =
+      this.getClientAuthenticationEncryptionKeyWrapAlgorithms(parameters);
+    this.clientAuthenticationEncryptionContentEncryptionAlgorithms =
+      this.getClientAuthenticationEncryptionContentEncryptionAlgorithms(parameters);
     this.uiLocales = this.getUiLocales(parameters);
     this.acrValues = this.getAcrValues(parameters);
     this.interactions = this.getInteractions(parameters);
@@ -102,6 +122,7 @@ export class Settings {
     this.sessionCookie = this.getSessionCookie(parameters);
 
     this.checkIdTokenAlgorithms();
+    this.checkClientAuthenticationAlgorithms();
   }
 
   /**
@@ -199,6 +220,77 @@ export class Settings {
     }
 
     return parameters.idTokenContentEncryptionAlgorithms ?? [];
+  }
+
+  /**
+   * Checks and returns the provied Client Authentication Signing Algorithms or an empty array.
+   *
+   * @param parameters Parameters of the Settings.
+   * @throws {TypeError} The provided Client Authentication Signing Algorithms is invalid.
+   * @returns Provided Client Authentication Signing Algorithms.
+   */
+  private getClientAuthenticationSigningAlgorithms(
+    parameters: SettingsParameters,
+  ): Exclude<DigitalSignatureAlgorithm, 'none'>[] {
+    if (
+      'clientAuthenticationSigningAlgorithms' in parameters &&
+      (!Array.isArray(parameters.clientAuthenticationSigningAlgorithms) ||
+        parameters.clientAuthenticationSigningAlgorithms.length === 0 ||
+        parameters.clientAuthenticationSigningAlgorithms.includes('none' as any) ||
+        parameters.clientAuthenticationSigningAlgorithms.some((algorithm) => {
+          return !JsonWebSignatureHeader.digitalSignatureAlgorithms.includes(algorithm);
+        }))
+    ) {
+      throw new TypeError('The provided Client Authentication Signing Algorithms is invalid.');
+    }
+
+    return parameters.clientAuthenticationSigningAlgorithms ?? [];
+  }
+
+  /**
+   * Checks and returns the provied Client Authentication Encryption Key Wrap Algorithms or an empty array.
+   *
+   * @param parameters Parameters of the Settings.
+   * @throws {TypeError} The provided Client Authentication Encryption Key Wrap Algorithms is invalid.
+   * @returns Provided Client Authentication Encryption Key Wrap Algorithms.
+   */
+  private getClientAuthenticationEncryptionKeyWrapAlgorithms(parameters: SettingsParameters): KeyManagementAlgorithm[] {
+    if (
+      'clientAuthenticationEncryptionKeyWrapAlgorithms' in parameters &&
+      (!Array.isArray(parameters.clientAuthenticationEncryptionKeyWrapAlgorithms) ||
+        parameters.clientAuthenticationEncryptionKeyWrapAlgorithms.length === 0 ||
+        parameters.clientAuthenticationEncryptionKeyWrapAlgorithms.some((algorithm) => {
+          return !JsonWebEncryptionHeader.keyManagementAlgorithms.includes(algorithm);
+        }))
+    ) {
+      throw new TypeError('The provided Client Authentication Encryption Key Wrap Algorithms is invalid.');
+    }
+
+    return parameters.clientAuthenticationEncryptionKeyWrapAlgorithms ?? [];
+  }
+
+  /**
+   * Checks and returns the provied Client Authentication Encryption Content Encryption Algorithms or an empty array.
+   *
+   * @param parameters Parameters of the Settings.
+   * @throws {TypeError} The provided Client Authentication Encryption Content Encryption Algorithms is invalid.
+   * @returns Provided Client Authentication Encryption Content Encryption Algorithms.
+   */
+  private getClientAuthenticationEncryptionContentEncryptionAlgorithms(
+    parameters: SettingsParameters,
+  ): ContentEncryptionAlgorithm[] {
+    if (
+      'clientAuthenticationEncryptionContentEncryptionAlgorithms' in parameters &&
+      (!Array.isArray(parameters.clientAuthenticationEncryptionContentEncryptionAlgorithms) ||
+        parameters.clientAuthenticationEncryptionContentEncryptionAlgorithms.length === 0 ||
+        parameters.clientAuthenticationEncryptionContentEncryptionAlgorithms.some((algorithm) => {
+          return !JsonWebEncryptionHeader.contentEncryptionAlgorithms.includes(algorithm);
+        }))
+    ) {
+      throw new TypeError('The provided Client Authentication Encryption Content Encryption Algorithms is invalid.');
+    }
+
+    return parameters.clientAuthenticationEncryptionContentEncryptionAlgorithms ?? [];
   }
 
   /**
@@ -334,6 +426,43 @@ export class Settings {
 
       if (keyWrapEnabled && !contentEncryptionEnabled) {
         throw new TypeError('Missing required ID Token Content Encryption Algorithms when using ID Token Encryption.');
+      }
+    }
+  }
+
+  /**
+   * Checks if the combination of provided Client Authentication Algorithms is valid.
+   *
+   * @throws {TypeError} The provided combination of Client Authentication Algorithms is invalid.
+   */
+  private checkClientAuthenticationAlgorithms(): void {
+    const signatureEnabled = this.clientAuthenticationSigningAlgorithms.length !== 0;
+    const keyWrapEnabled = this.clientAuthenticationEncryptionKeyWrapAlgorithms.length !== 0;
+    const contentEncryptionEnabled = this.clientAuthenticationEncryptionContentEncryptionAlgorithms.length !== 0;
+
+    if (!signatureEnabled) {
+      if (keyWrapEnabled) {
+        throw new TypeError(
+          'Missing required Client Authentication Signature Algorithms when using Client Authentication Encryption.',
+        );
+      }
+
+      if (contentEncryptionEnabled) {
+        throw new TypeError(
+          'Missing required Client Authentication Signature Algorithms when using Client Authentication Encryption.',
+        );
+      }
+    } else {
+      if (!keyWrapEnabled && contentEncryptionEnabled) {
+        throw new TypeError(
+          'Missing required Client Authentication Key Wrap Algorithms when using Client Authentication Encryption.',
+        );
+      }
+
+      if (keyWrapEnabled && !contentEncryptionEnabled) {
+        throw new TypeError(
+          'Missing required Client Authentication Content Encryption Algorithms when using Client Authentication Encryption.',
+        );
       }
     }
   }
