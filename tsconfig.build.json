@@ -3,5 +3,5 @@
     "rootDir": "src"
   },
   "extends": "./tsconfig.json",
-  "exclude": ["dist", "node_modules", "**/*.spec.ts"]
+  "exclude": ["dist", "node_modules", "**/*.spec.ts", "tests/**/*.ts"]
 }

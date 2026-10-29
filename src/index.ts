@@ -181,6 +181,7 @@ export { type DecisionInteractionResponse } from './lib/responses/interaction/de
 export { type LoginDecisionInteractionResponse } from './lib/responses/interaction/decision/login/login.decision-interaction-response';
 export { type SelectAccountDecisionInteractionResponse } from './lib/responses/interaction/decision/select-account/select-account.decision-interaction-response';
 export { type InteractionResponse } from './lib/responses/interaction/interaction-response';
+export { type TokenResponse } from './lib/responses/token-response';
 export { InteractionsSettings } from './lib/settings/interactions/interactions.settings';
 export { Settings } from './lib/settings/settings';
 export { PairwiseSubjectType } from './lib/subject-types/pairwise/pairwise.subject-type';

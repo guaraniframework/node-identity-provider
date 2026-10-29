@@ -1,6 +1,6 @@
 import { AccessToken } from '../../entities/access-token';
 import { Scope } from '../../entities/scope';
-import { TokenResponse } from '../../responses/token/token-response';
+import { TokenResponse } from '../../responses/token-response';
 import { createTokenResponse } from './create-token-response';
 
 describe('createTokenResponse()', () => {

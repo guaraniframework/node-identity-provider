@@ -1,5 +1,5 @@
 import { AccessToken } from '../../entities/access-token';
-import { TokenResponse } from '../../responses/token/token-response';
+import { TokenResponse } from '../../responses/token-response';
 
 /**
  * Returns a formatted Token Response based on the provided Access Token.
