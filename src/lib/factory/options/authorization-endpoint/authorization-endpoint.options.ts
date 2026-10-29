@@ -98,7 +98,7 @@ export class AuthorizationEndpointOptions {
   /**
    * Instructs the Identity Provider Factory to register the requested Response Modes.
    *
-   * @param pkces Requested Response Modes.
+   * @param responseModes Requested Response Modes.
    * @throws {TypeError} The provided Response Modes is invalid.
    * @returns Authorization Endpoint Configuration.
    */
@@ -120,7 +120,7 @@ export class AuthorizationEndpointOptions {
   /**
    * Instructs the Identity Provider Factory to register the requested Response Types.
    *
-   * @param pkces Requested Response Types.
+   * @param responseTypes Requested Response Types.
    * @throws {TypeError} The provided Response Types is invalid.
    * @returns Authorization Endpoint Configuration.
    */
@@ -147,7 +147,6 @@ export class AuthorizationEndpointOptions {
   public build(): void {
     this.checkRequiredResponseTypes();
 
-    this.container.delete(AuthorizationEndpoint);
     this.container.delete(Display);
     this.container.delete(PKCE);
     this.container.delete(ResponseMode);

@@ -148,7 +148,7 @@ describe('Authorization Endpoint', () => {
         cookies: {},
         headers: {},
         method: HttpRequestMethod.GET,
-        url: addParametersToUrl(new URL('https://provider.example.com/oidc/authorization'), parameters),
+        url: addParametersToUrl('https://provider.example.com/oidc/authorization', parameters),
       });
     };
 
@@ -650,7 +650,7 @@ describe('Authorization Endpoint', () => {
 
       const response = await endpoint.handle(request);
 
-      const location = addParametersToUrl(new URL('https://provider.example.com/oidc/authorization'), request.query);
+      const location = addParametersToUrl('https://provider.example.com/oidc/authorization', request.query);
 
       expect(response.cookies).toStrictEqual<NodeJS.Dict<unknown>>({ guarani: session.id });
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });

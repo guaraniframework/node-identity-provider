@@ -4,6 +4,11 @@
 export const CONTAINER: symbol = Symbol('CONTAINER');
 
 /**
+ * Token that represents the Client Authentication Methods of the Interaction Endpoint.
+ */
+export const INTERACTION_CLIENT_AUTHENTICATION: symbol = Symbol('INTERACTION_CLIENT_AUTHENTICATION');
+
+/**
  * Default minimum Max Age value in seconds.
  *
  * @default 7,776,000 (90 days)

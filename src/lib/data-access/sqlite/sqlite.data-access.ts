@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer';
-import { randomBytes, randomUUIDv7 } from 'crypto';
+import { createHash, randomBytes, randomUUIDv7 } from 'crypto';
 import fs from 'fs';
 import { DatabaseSync, SQLOutputValue } from 'node:sqlite';
 import path from 'path';
@@ -180,6 +180,43 @@ export class SQLiteDataAccess extends DataAccess {
   }
 
   /**
+   * Creates a Consent for the Client and the User of the Active Login.
+   *
+   * @param scopes Scopes granted to the Client.
+   * @param client Client requesting Authorization.
+   * @param user User that granted Consent.
+   * @returns Created Consent.
+   */
+  public async createConsent(scopes: Scope[], client: Client, user: User): Promise<Consent> {
+    const id = randomUUIDv7();
+
+    const consentSql = this._procedure('create-consent.sql');
+    const consentParameters = this.database
+      .prepare(consentSql)
+      .get({ id: toUUIDBuffer(id), client_id: toUUIDBuffer(client.id), user_id: toUUIDBuffer(user.id) })!;
+
+    const scopesIds = scopes.map((scope) => scope.id);
+
+    const consentScopesSql = this._procedure('create-consent-scopes.sql').replace(
+      '$data',
+      scopesIds.map(() => '(?, ?)').join(', '),
+    );
+
+    this.database
+      .prepare(consentScopesSql)
+      .run(...scopesIds.flatMap((scopeId) => [toUUIDBuffer(id), toUUIDBuffer(scopeId)]));
+
+    return Object.assign<Consent, Consent>(new Consent(), {
+      id,
+      scopes,
+      createdAt: new Date((consentParameters['created_at'] as number) * 1000),
+      expiresAt: null,
+      client,
+      user,
+    });
+  }
+
+  /**
    * Creates a Grant used to authenticate an User at the Identity Provider.
    *
    * @param parameters Parameters of the Authorization Request.
@@ -293,6 +330,50 @@ export class SQLiteDataAccess extends DataAccess {
   }
 
   /**
+   * Creates a new User based on the provided data.
+   *
+   * @param data Data of the User to be registered.
+   * @returns Created User.
+   */
+  public async createUser(data: NodeJS.Dict<string>): Promise<User> {
+    const userId = randomUUIDv7();
+    const userAddressId = randomUUIDv7();
+
+    const userSql = this._procedure('create-user.sql');
+    const userParameters = this.database.prepare(userSql).get({
+      id: toUUIDBuffer(userId),
+      password: createHash('sha256').update(data['password']!, 'utf8').digest('base64url'),
+      given_name: data['given_name']!,
+      middle_name: data['middle_name'] ?? null,
+      family_name: data['family_name']!,
+      nickname: data['nickname'] ?? null,
+      preferred_username: data['preferred_username'] ?? null,
+      profile: data['profile'] ?? null,
+      picture: data['picture'] ?? null,
+      website: data['website'] ?? null,
+      email: data['email']!,
+      gender: data['gender'] ?? null,
+      birthdate: data['birthdate']!,
+      zoneinfo: data['zoneinfo'] ?? null,
+      locale: data['locale'] ?? null,
+      phone_number: data['phone_number']!,
+    })!;
+
+    const userAddressSql = this._procedure('create-user-address.sql');
+    const userAddressParameters = this.database.prepare(userAddressSql).get({
+      id: toUUIDBuffer(userAddressId),
+      street_address: data['street_address'] ?? null,
+      locality: data['locality'] ?? null,
+      region: data['region'] ?? null,
+      postal_code: data['postal_code'] ?? null,
+      country: data['country'] ?? null,
+      user_id: toUUIDBuffer(userId),
+    })!;
+
+    return instantiateUser(userParameters, { ...userAddressParameters, address_id: userAddressParameters['id']! });
+  }
+
+  /**
    * Searches the application's storage for a Client containing the provided Identifier.
    *
    * @param id Client Identifier.
@@ -311,6 +392,26 @@ export class SQLiteDataAccess extends DataAccess {
    */
   public async findConsentByClientAndUser(client: Client, user: User): Promise<Consent | null> {
     return this._findConsentByClientAndUser(client, user);
+  }
+
+  /**
+   * Searches the application's storage for a Grant containing the provided Consent Challenge.
+   *
+   * @param consentChallenge Consent Challenge of the Grant.
+   * @returns Grant based on the provided Consent Challenge.
+   */
+  public async findGrantByConsentChallenge(consentChallenge: string): Promise<Grant | null> {
+    return this._findGrantByConsentChallenge(consentChallenge, null);
+  }
+
+  /**
+   * Searches the application's storage for a Grant containing the provided Login Challenge.
+   *
+   * @param loginChallenge Login Challenge of the Grant.
+   * @returns Grant based on the provided Login Challenge.
+   */
+  public async findGrantByLoginChallenge(loginChallenge: string): Promise<Grant | null> {
+    return this._findGrantByLoginChallenge(loginChallenge, null);
   }
 
   /**
@@ -516,6 +617,55 @@ export class SQLiteDataAccess extends DataAccess {
   }
 
   /**
+   * Persists the provided Grant into the application's storage.
+   *
+   * @param grant Grant to be persisted.
+   */
+  public async saveGrant(grant: Grant): Promise<void> {
+    const sql = this._procedure('save-grant.sql');
+
+    this.database.prepare(sql).run({
+      interactions: jsonStringify(grant.interactions),
+      consent_id: grant.consent ? toUUIDBuffer(grant.consent.id) : null,
+      id: toUUIDBuffer(grant.id),
+    });
+  }
+
+  /**
+   * Persists the provided Login into the application's storage.
+   *
+   * @param login Login to be persisted.
+   */
+  public async saveLogin(login: Login): Promise<void> {
+    const sql = this._procedure('save-login.sql')
+      .replace('$login_id', `X'${login.id.replaceAll('-', '')}'`)
+      .replace('$clients_ids', login.clients.map((client) => `X'${client.id.replaceAll('-', '')}'`).join(', '))
+      .replace(
+        '$logins_clients',
+        login.clients
+          .map((client) => `(X'${login.id.replaceAll('-', '')}', X'${client.id.replaceAll('-', '')}')`)
+          .join(', '),
+      );
+
+    this.database.exec(sql);
+  }
+
+  /**
+   * Persists the provided Session into the application's storage.
+   *
+   * @param session Session to be persisted.
+   */
+  public async saveSession(session: Session): Promise<void> {
+    const sql = this._procedure('save-session.sql');
+
+    this.database.prepare(sql).run({
+      active_login_id: session.activeLogin ? toUUIDBuffer(session.activeLogin.id) : null,
+      grant_id: session.grant ? toUUIDBuffer(session.grant.id) : null,
+      id: toUUIDBuffer(session.id),
+    });
+  }
+
+  /**
    * Runs the database migrations.
    */
   public async up(): Promise<void> {
@@ -672,6 +822,31 @@ export class SQLiteDataAccess extends DataAccess {
     return instantiateScopes(scopesParameters);
   }
 
+  private _findGrantByConsentChallenge(consentChallenge: string, session: Session | null): Grant | null {
+    const grantSql = this._procedure('find-grant-by-consent-challenge.sql');
+    const grantParameters = this.database.prepare(grantSql).get({ consent_challenge: consentChallenge });
+
+    if (typeof grantParameters === 'undefined') {
+      return null;
+    }
+
+    const grant = instantiateGrant(grantParameters);
+
+    const client = this._findClientById(toUUIDString(grantParameters['client_id'] as Uint8Array))!;
+
+    session ??= this._findSessionById(toUUIDString(grantParameters['session_id'] as Uint8Array), null, grant)!;
+
+    const consent = grantParameters['consent_id']
+      ? this._findConsentById(toUUIDString(grantParameters['consent_id'] as Uint8Array))
+      : null;
+
+    Reflect.set(grant, 'client', client);
+    Reflect.set(grant, 'session', session);
+    Reflect.set(grant, 'consent', consent);
+
+    return grant;
+  }
+
   private _findGrantById(id: string, session: Session): Grant | null {
     const grantSql = this._procedure('find-grant-by-id.sql');
     const grantParameters = this.database.prepare(grantSql).get({ id: toUUIDBuffer(id) });
@@ -680,25 +855,44 @@ export class SQLiteDataAccess extends DataAccess {
       return null;
     }
 
-    const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
-      id: toUUIDString(grantParameters['id'] as Uint8Array),
-      loginChallenge: Buffer.from(grantParameters['login_challenge'] as Uint8Array).toString('hex'),
-      consentChallenge: Buffer.from(grantParameters['consent_challenge'] as Uint8Array).toString('hex'),
-      parameters: jsonParse(grantParameters['parameters']!.toString()) as AuthorizationRequest,
-      interactions: jsonParse(grantParameters['interactions']!.toString()) as InteractionTypeName[],
-      createdAt: new Date((grantParameters['created_at']! as number) * 1000),
-      expiresAt: new Date((grantParameters['expires_at']! as number) * 1000),
-      client: this._findClientById(toUUIDString(grantParameters['client_id'] as Uint8Array))!,
-      session,
-    });
+    const grant = instantiateGrant(grantParameters);
 
-    Reflect.set(
-      grant,
-      'consent',
-      grantParameters['consent_id']
-        ? this._findConsentById(toUUIDString(grantParameters['consent_id'] as Uint8Array))
-        : null,
-    );
+    const client = this._findClientById(toUUIDString(grantParameters['client_id'] as Uint8Array))!;
+
+    session ??= this._findSessionById(toUUIDString(grantParameters['session_id'] as Uint8Array), null, grant)!;
+
+    const consent = grantParameters['consent_id']
+      ? this._findConsentById(toUUIDString(grantParameters['consent_id'] as Uint8Array))
+      : null;
+
+    Reflect.set(grant, 'client', client);
+    Reflect.set(grant, 'session', session);
+    Reflect.set(grant, 'consent', consent);
+
+    return grant;
+  }
+
+  private _findGrantByLoginChallenge(loginChallenge: string, session: Session | null): Grant | null {
+    const grantSql = this._procedure('find-grant-by-login-challenge.sql');
+    const grantParameters = this.database.prepare(grantSql).get({ login_challenge: loginChallenge });
+
+    if (typeof grantParameters === 'undefined') {
+      return null;
+    }
+
+    const grant = instantiateGrant(grantParameters);
+
+    const client = this._findClientById(toUUIDString(grantParameters['client_id'] as Uint8Array))!;
+
+    session ??= this._findSessionById(toUUIDString(grantParameters['session_id'] as Uint8Array), null, grant)!;
+
+    const consent = grantParameters['consent_id']
+      ? this._findConsentById(toUUIDString(grantParameters['consent_id'] as Uint8Array))
+      : null;
+
+    Reflect.set(grant, 'client', client);
+    Reflect.set(grant, 'session', session);
+    Reflect.set(grant, 'consent', consent);
 
     return grant;
   }
@@ -797,42 +991,7 @@ export class SQLiteDataAccess extends DataAccess {
       return null;
     }
 
-    const address: UserAddress = Object.assign<UserAddress, UserAddress>(new UserAddress(), {
-      id: toUUIDString(userParameters['address_id'] as Uint8Array),
-      formatted: null,
-      streetAddress: userParameters['street_address']?.toString() ?? null,
-      locality: userParameters['locality']?.toString() ?? null,
-      region: userParameters['region']?.toString() ?? null,
-      postalCode: userParameters['postal_code']?.toString() ?? null,
-      country: userParameters['country']?.toString() ?? null,
-    });
-
-    return Object.assign<User, Partial<User>>(Reflect.construct(User, []), {
-      id: toUUIDString(userParameters['id'] as Uint8Array),
-      password: userParameters['password']!.toString(),
-      name: userParameters['middle_name']
-        ? `${userParameters['given_name']!.toString()} ${userParameters['middle_name'].toString()} ${userParameters['family_name']!.toString()}`
-        : null,
-      givenName: userParameters['given_name']!.toString(),
-      middleName: userParameters['middle_name']?.toString() ?? null,
-      familyName: userParameters['family_name']!.toString(),
-      nickname: userParameters['nickname']?.toString() ?? null,
-      preferredUsername: userParameters['preferred_username']?.toString() ?? null,
-      profile: userParameters['profile'] ? new URL(userParameters['profile'].toString()) : null,
-      picture: userParameters['picture'] ? new URL(userParameters['picture'].toString()) : null,
-      website: userParameters['website'] ? new URL(userParameters['website'].toString()) : null,
-      email: userParameters['email']!.toString(),
-      emailVerified: userParameters['email_verified']! === 1,
-      gender: userParameters['gender']?.toString() ?? null,
-      birthdate: userParameters['birthdate']!.toString(),
-      zoneinfo: userParameters['zoneinfo']?.toString() ?? null,
-      locale: userParameters['locale']?.toString() ?? null,
-      phoneNumber: userParameters['phone_number']!.toString(),
-      phoneNumberVerified: userParameters['phone_number_verified']! === 1,
-      address,
-      createdAt: new Date((userParameters['created_at']! as number) * 1000),
-      updatedAt: new Date((userParameters['updated_at']! as number) * 1000),
-    });
+    return instantiateUser(userParameters, userParameters);
   }
 
   private _getScopes(): Scope[] {
@@ -911,6 +1070,18 @@ function instantiateClient(
   });
 }
 
+function instantiateGrant(parameters: Record<string, SQLOutputValue>): Grant {
+  return Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+    id: toUUIDString(parameters['id'] as Uint8Array),
+    loginChallenge: parameters['login_challenge']!.toString(),
+    consentChallenge: parameters['consent_challenge']!.toString(),
+    parameters: jsonParse(parameters['parameters']!.toString()) as AuthorizationRequest,
+    interactions: jsonParse(parameters['interactions']!.toString()) as InteractionTypeName[],
+    createdAt: new Date((parameters['created_at']! as number) * 1000),
+    expiresAt: new Date((parameters['expires_at']! as number) * 1000),
+  });
+}
+
 function instantiateScopes(parameters: Record<string, SQLOutputValue>[]): Scope[] {
   return parameters.map((scope) => {
     return Object.assign<Scope, Scope>(new Scope(), {
@@ -920,5 +1091,47 @@ function instantiateScopes(parameters: Record<string, SQLOutputValue>[]): Scope[
       createdAt: new Date((scope['created_at']! as number) * 1000),
       updatedAt: new Date((scope['updated_at']! as number) * 1000),
     });
+  });
+}
+
+function instantiateUser(
+  userParameters: Record<string, SQLOutputValue>,
+  userAddressParameters: Record<string, SQLOutputValue>,
+): User {
+  const address: UserAddress = Object.assign<UserAddress, UserAddress>(new UserAddress(), {
+    id: toUUIDString(userAddressParameters['address_id'] as Uint8Array),
+    formatted: null,
+    streetAddress: userAddressParameters['street_address']?.toString() ?? null,
+    locality: userAddressParameters['locality']?.toString() ?? null,
+    region: userAddressParameters['region']?.toString() ?? null,
+    postalCode: userAddressParameters['postal_code']?.toString() ?? null,
+    country: userAddressParameters['country']?.toString() ?? null,
+  });
+
+  return Object.assign<User, Partial<User>>(Reflect.construct(User, []), {
+    id: toUUIDString(userParameters['id'] as Uint8Array),
+    password: userParameters['password']!.toString(),
+    name: userParameters['middle_name']
+      ? `${userParameters['given_name']!.toString()} ${userParameters['middle_name'].toString()} ${userParameters['family_name']!.toString()}`
+      : null,
+    givenName: userParameters['given_name']!.toString(),
+    middleName: userParameters['middle_name']?.toString() ?? null,
+    familyName: userParameters['family_name']!.toString(),
+    nickname: userParameters['nickname']?.toString() ?? null,
+    preferredUsername: userParameters['preferred_username']?.toString() ?? null,
+    profile: userParameters['profile'] ? new URL(userParameters['profile'].toString()) : null,
+    picture: userParameters['picture'] ? new URL(userParameters['picture'].toString()) : null,
+    website: userParameters['website'] ? new URL(userParameters['website'].toString()) : null,
+    email: userParameters['email']!.toString(),
+    emailVerified: userParameters['email_verified']! === 1,
+    gender: userParameters['gender']?.toString() ?? null,
+    birthdate: userParameters['birthdate']!.toString(),
+    zoneinfo: userParameters['zoneinfo']?.toString() ?? null,
+    locale: userParameters['locale']?.toString() ?? null,
+    phoneNumber: userParameters['phone_number']!.toString(),
+    phoneNumberVerified: userParameters['phone_number_verified']! === 1,
+    address,
+    createdAt: new Date((userParameters['created_at']! as number) * 1000),
+    updatedAt: new Date((userParameters['updated_at']! as number) * 1000),
   });
 }

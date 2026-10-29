@@ -13,13 +13,19 @@ import { DataAccess } from '../data-access/data-access';
 import { SQLiteDataAccess } from '../data-access/sqlite/sqlite.data-access';
 import { AuthorizationEndpoint } from '../endpoints/authorization/authorization.endpoint';
 import { Endpoint } from '../endpoints/endpoint';
+import { InteractionEndpoint } from '../endpoints/interaction/interaction.endpoint';
+import { ClientAuthenticationHandler } from '../handlers/client-authentication/client-authentication.handler';
 import { IdTokenHandler } from '../handlers/id-token/id-token.handler';
 import { ScopeHandler } from '../handlers/scope/scope.handler';
 import { IdentityProvider } from '../http/providers/identity-provider';
 import { ConsoleLogger } from '../loggers/console/console.logger';
 import { Logger } from '../loggers/logger';
 import { Settings } from '../settings/settings';
+import { SubjectType } from '../subject-types/subject-type';
+import { SUBJECT_TYPE_REGISTRY } from '../subject-types/subject-type.registry';
+import { SubjectTypeName } from '../subject-types/subject-type-name.type';
 import { AuthorizationEndpointOptions } from './options/authorization-endpoint/authorization-endpoint.options';
+import { InteractionEndpointOptions } from './options/interaction-endpoint/interaction-endpoint.options';
 import { IdentityProviderFactoryEntry } from './identity-provider-factory.entry';
 
 /**
@@ -79,6 +85,30 @@ export class IdentityProviderFactory {
   }
 
   /**
+   * Adds the Interaction Endpoint to the Identity Provider.
+   *
+   * @param callback Callback function used to configure the Interaction Endpoint.
+   * @throws {TypeError} Failed to add the Interaction Endpoint.
+   * @returns Identity Provider Factory.
+   */
+  public addInteractionEndpoint(callback?: (options: InteractionEndpointOptions) => void): IdentityProviderFactory {
+    const options = new InteractionEndpointOptions(this.container);
+
+    if (typeof callback === 'function') {
+      callback(options);
+    }
+
+    if (
+      !this.container.has(Endpoint) ||
+      !(this.container.getAll(Endpoint) as Constructor<Endpoint>[]).includes(InteractionEndpoint)
+    ) {
+      options.build();
+    }
+
+    return this;
+  }
+
+  /**
    * Adds the provided Logger to the Identity Provider.
    *
    * @param logger Logger to be added.
@@ -109,6 +139,31 @@ export class IdentityProviderFactory {
   }
 
   /**
+   * Adds the provided Subject Types to the Identity Provider.
+   *
+   * @param subjectTypes Requested Subject Types.
+   * @throws {TypeError} The provided Subject Types is invalid.
+   * @returns Authorization Endpoint Configuration.
+   */
+  public addSubjectTypes(subjectTypes: SubjectTypeName[]): IdentityProviderFactory {
+    if (
+      !Array.isArray(subjectTypes) ||
+      subjectTypes.length === 0 ||
+      subjectTypes.some((subjectType) => !isNonEmptyString(subjectType) || !(subjectType in SUBJECT_TYPE_REGISTRY))
+    ) {
+      throw new TypeError('The provided Subject Types is invalid.');
+    }
+
+    this.container.delete(SubjectType);
+
+    subjectTypes.forEach((subjectType) => {
+      this.container.bind(SubjectType).toClass(SUBJECT_TYPE_REGISTRY[subjectType]).asSingleton();
+    });
+
+    return this;
+  }
+
+  /**
    * Adds the provided Entry under the provided Token to the Identity Provider.
    *
    * @param token Token of the Entry.
@@ -132,7 +187,13 @@ export class IdentityProviderFactory {
    * @returns Instance of the provided Identity Provider.
    */
   public create<T extends IdentityProvider>(provider: Constructor<T>): T {
+    this.checkRequiredEndpoints();
+
     this.container.delete(IdentityProvider);
+
+    if (!this.container.isRegistered(SubjectType)) {
+      this.addSubjectTypes(['public']);
+    }
 
     if ((this.container.get(Settings) as Settings).idTokenSignatureAlgorithms.length !== 0) {
       this.addContainerEntry(IdTokenHandler);
@@ -196,8 +257,20 @@ export class IdentityProviderFactory {
    */
   private addDefaultEntries(): void {
     this.container.bind(DataAccess).toClass(SQLiteDataAccess).asSingleton();
+    this.container.bind(ClientAuthenticationHandler).toSelf().asSingleton();
     this.container.bind(ScopeHandler).toSelf().asSingleton();
     this.container.bind(Logger).toClass(ConsoleLogger).asSingleton();
+  }
+
+  private checkRequiredEndpoints(): void {
+    const requiredEndpoints: Constructor<Endpoint>[] = [AuthorizationEndpoint, InteractionEndpoint];
+    const registeredEndpoints = this.container.getAll(Endpoint) as Constructor<Endpoint>[];
+
+    requiredEndpoints.forEach((requiredEndpoint) => {
+      if (!registeredEndpoints.includes(requiredEndpoint)) {
+        throw new TypeError(`Missing required Endpoint "${requiredEndpoint.name}".`);
+      }
+    });
   }
 
   // #region Helper Methods

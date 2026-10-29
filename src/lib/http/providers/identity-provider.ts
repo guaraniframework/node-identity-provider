@@ -13,6 +13,6 @@ export abstract class IdentityProvider {
    */
   public constructor(
     protected readonly logger: Logger,
-    protected readonly endpoints: Endpoint[],
+    public readonly endpoints: Endpoint[],
   ) {}
 }

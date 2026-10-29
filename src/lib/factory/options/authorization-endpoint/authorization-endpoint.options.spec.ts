@@ -151,8 +151,8 @@ describe('Authorization Endpoint Options', () => {
   });
 
   describe('useDisplays()', () => {
-    it.each(invalidDisplays)('should throw when the provided Displays is invalid.', (pkces) => {
-      expect(() => options.useDisplays(pkces)).toThrowWithMessage(TypeError, 'The provided Displays is invalid.');
+    it.each(invalidDisplays)('should throw when the provided Displays is invalid.', (displays) => {
+      expect(() => options.useDisplays(displays)).toThrowWithMessage(TypeError, 'The provided Displays is invalid.');
     });
 
     it('should register the default Displays in the Identity Provider Factory.', () => {

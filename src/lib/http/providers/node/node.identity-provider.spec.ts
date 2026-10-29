@@ -52,6 +52,7 @@ describe('Node Identity Provider', () => {
 
     provider = new IdentityProviderFactory()
       .addAuthorizationEndpoint()
+      .addInteractionEndpoint()
       .addSettings(settings)
       .add(DatabaseSync, database)
       .add(JsonWebKeySet, jsonWebKeySet)
@@ -87,6 +88,15 @@ describe('Node Identity Provider', () => {
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>(
         expect.objectContaining<OutgoingHttpHeaders>({ location: location.href }),
       );
+    });
+
+    it('should have an Interaction Endpoint.', async () => {
+      const error = new InvalidRequestError('Invalid parameter "interaction_type".');
+
+      const response = await agent.get('/oidc/interaction');
+
+      expect(response.status).toBe(HttpResponseStatus.BadRequest);
+      expect(response.body).toStrictEqual(error.toJSON());
     });
   });
 

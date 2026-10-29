@@ -6,9 +6,9 @@ import { SubjectType } from './subject-type';
 import { SubjectTypeName } from './subject-type-name.type';
 
 /**
- * Subject Type Registry.
+ * Subject Type Registry of the Identity Provider.
  */
-export const subjectTypeRegistry: Record<SubjectTypeName, Constructor<SubjectType>> = {
+export const SUBJECT_TYPE_REGISTRY: Record<SubjectTypeName, Constructor<SubjectType>> = {
   pairwise: PairwiseSubjectType,
   public: PublicSubjectType,
 };

@@ -19,7 +19,12 @@ export { type ClientSecretPostClientAuthenticationParameters } from './lib/clien
 export { NoneClientAuthentication } from './lib/client-authentication/none/none.client-authentication';
 export { type NoneClientAuthenticationParameters } from './lib/client-authentication/none/none.client-authentication.parameters';
 export { PrivateKeyJwtClientAuthentication } from './lib/client-authentication/private-key-jwt/private-key-jwt.client-authentication';
-export { CONTAINER, DEFAULT_MINIMUM_MAX_AGE, DEFAULT_SESSION_COOKIE } from './lib/constants';
+export {
+  CONTAINER,
+  DEFAULT_MINIMUM_MAX_AGE,
+  DEFAULT_SESSION_COOKIE,
+  INTERACTION_CLIENT_AUTHENTICATION,
+} from './lib/constants';
 export { type AuthorizationContext } from './lib/context/authorization/authorization-context';
 export { type CodeAuthorizationContext } from './lib/context/authorization/code/code.authorization-context';
 export { type CodeIdTokenAuthorizationContext } from './lib/context/authorization/code-id-token/code-id-token.authorization-context';
@@ -29,6 +34,21 @@ export { type IdTokenAuthorizationContext } from './lib/context/authorization/id
 export { type IdTokenTokenAuthorizationContext } from './lib/context/authorization/id-token-token/id-token-token.authorization-context';
 export { type NoneAuthorizationContext } from './lib/context/authorization/none/none.authorization-context';
 export { type TokenAuthorizationContext } from './lib/context/authorization/token/token.authorization-context';
+export { type ConsentContextInteractionContext } from './lib/context/interaction/context/consent/consent.context-interaction-context';
+export { type ContextInteractionContext } from './lib/context/interaction/context/context-interaction-context';
+export { type CreateContextInteractionContext } from './lib/context/interaction/context/create/create.context-interaction-context';
+export { type LoginContextInteractionContext } from './lib/context/interaction/context/login/login.context-interaction-context';
+export { type SelectAccountContextInteractionContext } from './lib/context/interaction/context/select-account/select-account.context-interaction-context';
+export { type ConsentDecisionInteractionContext } from './lib/context/interaction/decision/consent/consent.decision-interaction-context';
+export { type ConsentAcceptDecisionInteractionContext } from './lib/context/interaction/decision/consent/consent-accept.decision-interaction-context';
+export { type ConsentDenyDecisionInteractionContext } from './lib/context/interaction/decision/consent/consent-deny.decision-interaction-context';
+export { type CreateDecisionInteractionContext } from './lib/context/interaction/decision/create/create.decision-interaction-context';
+export { type DecisionInteractionContext } from './lib/context/interaction/decision/decision-interaction-context';
+export { type LoginDecisionInteractionContext } from './lib/context/interaction/decision/login/login.decision-interaction-context';
+export { type LoginAcceptDecisionInteractionContext } from './lib/context/interaction/decision/login/login-accept.decision-interaction-context';
+export { type LoginDenyDecisionInteractionContext } from './lib/context/interaction/decision/login/login-deny.decision-interaction-context';
+export { type SelectAccountDecisionInteractionContext } from './lib/context/interaction/decision/select-account/select-account.decision-interaction-context';
+export { type InteractionContext } from './lib/context/interaction/interaction-context';
 export { DataAccess } from './lib/data-access/data-access';
 export { SQLiteDataAccess } from './lib/data-access/sqlite/sqlite.data-access';
 export { Display } from './lib/displays/display';
@@ -52,9 +72,11 @@ export { Session } from './lib/entities/session';
 export { User } from './lib/entities/user';
 export { UserAddress } from './lib/entities/user-address';
 export { AccessDeniedError } from './lib/errors/access-denied/access-denied.error';
+export { AccountSelectionRequiredError } from './lib/errors/account-selection-required/account-selection-required.error';
 export { ConsentRequiredError } from './lib/errors/consent-required/consent-required.error';
 export { ErrorCode } from './lib/errors/error-code.enum';
 export { IdentityProviderError } from './lib/errors/identity-provider.error';
+export { InteractionRequiredError } from './lib/errors/interaction-required/interaction-required.error';
 export { InvalidClientError } from './lib/errors/invalid-client/invalid-client.error';
 export { InvalidRequestError } from './lib/errors/invalid-request/invalid-request.error';
 export { InvalidScopeError } from './lib/errors/invalid-scope/invalid-scope.error';
@@ -63,6 +85,8 @@ export { MethodNotAllowedError } from './lib/errors/method-not-allowed/method-no
 export { NotFoundError } from './lib/errors/not-found/not-found.error';
 export { ServerErrorError } from './lib/errors/server-error/server-error.error';
 export { UnauthorizedClientError } from './lib/errors/unauthorized-client/unauthorized-client.error';
+export { UnmetAuthenticationRequirementsError } from './lib/errors/unmet-authentication-requirements/unmet-authentication-requirements.error';
+export { UnsupportedInteractionTypeError } from './lib/errors/unsupported-interaction-type/unsupported-interaction-type.error';
 export { UnsupportedMediaTypeError } from './lib/errors/unsupported-media-type/unsupported-media-type.error';
 export { UnsupportedResponseTypeError } from './lib/errors/unsupported-response-type/unsupported-response-type.error';
 export { IdentityProviderFactory } from './lib/factory/identity-provider.factory';
@@ -77,8 +101,12 @@ export { HttpResponse } from './lib/http/response/http-response';
 export { HttpResponseStatus } from './lib/http/response/http-response-status.enum';
 export { type HttpRoute } from './lib/http/route/http-route';
 export { type HttpRouteHandler } from './lib/http/route/http-route.handler';
+export { ConsentInteractionType } from './lib/interaction-types/consent/consent.interaction-type';
+export { CreateInteractionType } from './lib/interaction-types/create/create.interaction-type';
 export { InteractionType } from './lib/interaction-types/interaction-type';
 export { type InteractionTypeName } from './lib/interaction-types/interaction-type-name.type';
+export { LoginInteractionType } from './lib/interaction-types/login/login.interaction-type';
+export { SelectAccountInteractionType } from './lib/interaction-types/select-account/select-account.interaction-type';
 export { ConsoleLogger } from './lib/loggers/console/console.logger';
 export { Logger } from './lib/loggers/logger';
 export { LoggerLevel } from './lib/loggers/logger-level.enum';
@@ -172,4 +200,14 @@ export { IdTokenAuthorizationValidator } from './lib/validators/authorization/id
 export { IdTokenTokenAuthorizationValidator } from './lib/validators/authorization/id-token-token/id-token-token.authorization.validator';
 export { NoneAuthorizationValidator } from './lib/validators/authorization/none/none.authorization.validator';
 export { TokenAuthorizationValidator } from './lib/validators/authorization/token/token.authorization.validator';
+export { ConsentContextInteractionValidator } from './lib/validators/interaction/context/consent/consent.context-interaction.validator';
+export { ContextInteractionValidator } from './lib/validators/interaction/context/context-interaction.validator';
+export { CreateContextInteractionValidator } from './lib/validators/interaction/context/create/create.context-interaction.validator';
+export { LoginContextInteractionValidator } from './lib/validators/interaction/context/login/login.context-interaction.validator';
+export { SelectAccountContextInteractionValidator } from './lib/validators/interaction/context/select-account/select-account.context-interaction.validator';
+export { ConsentDecisionInteractionValidator } from './lib/validators/interaction/decision/consent/consent.decision-interaction.validator';
+export { CreateDecisionInteractionValidator } from './lib/validators/interaction/decision/create/create.decision-interaction.validator';
+export { DecisionInteractionValidator } from './lib/validators/interaction/decision/decision-interaction.validator';
+export { LoginDecisionInteractionValidator } from './lib/validators/interaction/decision/login/login.decision-interaction.validator';
+export { SelectAccountDecisionInteractionValidator } from './lib/validators/interaction/decision/select-account/select-account.decision-interaction.validator';
 export { Validator } from './lib/validators/validator';

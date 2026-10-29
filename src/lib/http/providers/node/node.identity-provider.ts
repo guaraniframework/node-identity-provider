@@ -37,7 +37,7 @@ export class NodeIdentityProvider extends IdentityProvider {
   public constructor(
     protected override readonly logger: Logger,
     private readonly settings: Settings,
-    @InjectAll(Endpoint) protected override readonly endpoints: Endpoint[],
+    @InjectAll(Endpoint) public override readonly endpoints: Endpoint[],
   ) {
     super(logger, endpoints);
 

@@ -52,6 +52,16 @@ export abstract class DataAccess {
   ): Promise<AuthorizationCode>;
 
   /**
+   * Creates a Consent for the Client and the User of the Active Login.
+   *
+   * @param scopes Scopes granted to the Client.
+   * @param client Client requesting Authorization.
+   * @param user User that granted Consent.
+   * @returns Created Consent.
+   */
+  public abstract createConsent(scopes: Scope[], client: Client, user: User): Promise<Consent>;
+
+  /**
    * Creates a Grant used to authenticate an User at the Identity Provider.
    *
    * @param parameters Parameters of the Authorization Request.
@@ -86,6 +96,14 @@ export abstract class DataAccess {
   public abstract createSession(): Promise<Session>;
 
   /**
+   * Creates a new User based on the provided data.
+   *
+   * @param data Data of the User to be registered.
+   * @returns Created User.
+   */
+  public abstract createUser(data: NodeJS.Dict<string>): Promise<User>;
+
+  /**
    * Searches the application's storage for a Client containing the provided Identifier.
    *
    * @param id Client Identifier.
@@ -101,6 +119,22 @@ export abstract class DataAccess {
    * @returns Consent based on the provided Client and User.
    */
   public abstract findConsentByClientAndUser(client: Client, user: User): Promise<Consent | null>;
+
+  /**
+   * Searches the application's storage for a Grant containing the provided Consent Challenge.
+   *
+   * @param consentChallenge Consent Challenge of the Grant.
+   * @returns Grant based on the provided Consent Challenge.
+   */
+  public abstract findGrantByConsentChallenge(consentChallenge: string): Promise<Grant | null>;
+
+  /**
+   * Searches the application's storage for a Grant containing the provided Login Challenge.
+   *
+   * @param loginChallenge Login Challenge of the Grant.
+   * @returns Grant based on the provided Login Challenge.
+   */
+  public abstract findGrantByLoginChallenge(loginChallenge: string): Promise<Grant | null>;
 
   /**
    * Gets a JSON Web Key from the Identity Provider based on the provided Key Identifier.
@@ -221,4 +255,25 @@ export abstract class DataAccess {
    * @param grant Grant to be removed.
    */
   public abstract removeGrant(grant: Grant): Promise<void>;
+
+  /**
+   * Persists the provided Grant into the application's storage.
+   *
+   * @param grant Grant to be persisted.
+   */
+  public abstract saveGrant(grant: Grant): Promise<void>;
+
+  /**
+   * Persists the provided Login into the application's storage.
+   *
+   * @param login Login to be persisted.
+   */
+  public abstract saveLogin(login: Login): Promise<void>;
+
+  /**
+   * Persists the provided Session into the application's storage.
+   *
+   * @param session Session to be persisted.
+   */
+  public abstract saveSession(session: Session): Promise<void>;
 }

@@ -23,6 +23,7 @@ import { Scope } from '../../entities/scope';
 import { Session } from '../../entities/session';
 import { User } from '../../entities/user';
 import { InvalidClientError } from '../../errors/invalid-client/invalid-client.error';
+import { InteractionTypeName } from '../../interaction-types/interaction-type-name.type';
 import { Logger } from '../../loggers/logger';
 import { PKCE } from '../../pkces/pkce';
 import { AuthorizationRequest } from '../../requests/authorization/authorization-request';
@@ -237,6 +238,30 @@ describe('SQLite Data Access', () => {
     });
   });
 
+  describe('createConsent()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should create a Consent.', async () => {
+      let consent!: Consent;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+
+      await expect(async () => {
+        consent = await dataAccess.createConsent(scopes, client, user);
+      }).resolves.not.toThrow();
+
+      expect(consent).toBeInstanceOf(Consent);
+      expect(consent.scopes).toStrictEqual(scopes);
+      expect(consent.client).toStrictEqual(client);
+      expect(consent.user).toStrictEqual(user);
+    });
+  });
+
   describe('createGrant()', () => {
     beforeEach(async () => {
       await dataAccess.up();
@@ -342,6 +367,65 @@ describe('SQLite Data Access', () => {
     });
   });
 
+  describe('createUser()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should create a User with minimal parameters.', async () => {
+      let user!: User;
+
+      const data: NodeJS.Dict<string> = {
+        password: 'ultrapassword',
+        given_name: 'Theodore',
+        family_name: 'Simpson',
+        email: 'theo.simpson@email.com',
+        birthdate: '2007-07-23',
+        phone_number: '+1 (212) 555-0123',
+        street_address: '350 5th Ave',
+      };
+
+      await expect(async () => {
+        user = await dataAccess.createUser(data);
+      }).resolves.not.toThrow();
+
+      await expect(dataAccess.findUserById(user.id)).resolves.toStrictEqual<User>(expect.objectContaining<User>(user));
+    });
+
+    it('should create a User with all parameters.', async () => {
+      let user!: User;
+
+      const data: NodeJS.Dict<string> = {
+        password: 'ultrapassword',
+        given_name: 'Theodore',
+        middle_name: 'Earl',
+        family_name: 'Simpson',
+        nickname: 'theo',
+        preferred_username: 'theo.earl',
+        profile: 'https://social.example.com/users/theo',
+        picture: 'https://social.example.com/users/theo/picture.png',
+        website: 'https://theo-blog.example.com',
+        email: 'theo.simpson@email.com',
+        gender: 'male',
+        birthdate: '2007-07-23',
+        zoneinfo: 'America/New_York',
+        locale: 'en-US',
+        phone_number: '+1 (212) 555-0123',
+        locality: 'New York',
+        region: 'NY',
+        postal_code: '10118',
+        country: 'United States',
+      };
+
+      await expect(async () => {
+        user = await dataAccess.createUser(data);
+      }).resolves.not.toThrow();
+
+      await expect(dataAccess.findUserById(user.id)).resolves.toStrictEqual<User>(expect.objectContaining<User>(user));
+    });
+  });
+
   describe('findClientById()', () => {
     beforeEach(async () => {
       await dataAccess.up();
@@ -443,6 +527,178 @@ describe('SQLite Data Access', () => {
           user,
         }),
       );
+    });
+  });
+
+  describe('findGrantByConsentChallenge()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should return null when no Grant is found by the provided Consent Challenge.', async () => {
+      await expect(dataAccess.findGrantByConsentChallenge('00000000-0000-0000-0000-000000000000')).resolves.toBeNull();
+    });
+
+    it('should return the Grant of the provided Consent Challenge.', async () => {
+      let grant!: Grant;
+
+      const parameters: AuthorizationRequest = {
+        response_type: 'code',
+        client_id: 'client_id',
+        redirect_uri: 'https://client.example.com/oidc/callback',
+        scope: 'openid foo bar baz',
+        state: 'client_state',
+        response_mode: 'query',
+      };
+
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const session = await dataAccess.createSession();
+      const { id: grantId, consentChallenge } = await dataAccess.createGrant(parameters, client, session);
+
+      await expect(async () => {
+        grant = (await dataAccess.findGrantByConsentChallenge(consentChallenge))!;
+      }).resolves.not.toThrow();
+
+      expect(grant).toBeInstanceOf(Grant);
+
+      expect(grant.id).toBe(grantId);
+      expect(grant.consentChallenge).toBe(consentChallenge);
+      expect(grant.parameters).toStrictEqual(parameters);
+      expect(grant.client).toStrictEqual(client);
+      expect(grant.session).toStrictEqual(session);
+      expect(grant.consent).toBeNull();
+    });
+
+    it('should return the Grant of the provided Consent Challenge with a Consent.', async () => {
+      let grant!: Grant;
+
+      const consentId = randomUUIDv7();
+
+      const parameters: AuthorizationRequest = {
+        response_type: 'code',
+        client_id: 'client_id',
+        redirect_uri: 'https://client.example.com/oidc/callback',
+        scope: 'openid foo bar baz',
+        state: 'client_state',
+        response_mode: 'query',
+      };
+
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+      const session = await dataAccess.createSession();
+
+      const { id: grantId, consentChallenge } = await dataAccess.createGrant(parameters, client, session);
+
+      const insertConsentSql =
+        "INSERT INTO consents (id, expires_at, client_id, user_id) VALUES ($id, (unixepoch('now', '+120 days')), $client_id, $user_id)";
+
+      const updateGrantSql = 'UPDATE grants SET consent_id = $consent_id WHERE id = $id';
+
+      database
+        .prepare(insertConsentSql)
+        .run({ id: toUUIDBuffer(consentId), client_id: toUUIDBuffer(client.id), user_id: toUUIDBuffer(user.id) });
+
+      database.prepare(updateGrantSql).run({ consent_id: toUUIDBuffer(consentId), id: toUUIDBuffer(grantId) });
+
+      await expect(async () => {
+        grant = (await dataAccess.findGrantByConsentChallenge(consentChallenge))!;
+      }).resolves.not.toThrow();
+
+      expect(grant).toBeInstanceOf(Grant);
+
+      expect(grant.id).toBe(grantId);
+      expect(grant.consentChallenge).toBe(consentChallenge);
+      expect(grant.parameters).toStrictEqual(parameters);
+      expect(grant.client.id).toBe(client.id);
+      expect(grant.session.id).toBe(session.id);
+      expect(grant.consent!.id).toBe(consentId);
+    });
+  });
+
+  describe('findGrantByLoginChallenge()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should return null when no Grant is found by the provided Login Challenge.', async () => {
+      await expect(dataAccess.findGrantByLoginChallenge('00000000-0000-0000-0000-000000000000')).resolves.toBeNull();
+    });
+
+    it('should return the Grant of the provided Login Challenge.', async () => {
+      let grant!: Grant;
+
+      const parameters: AuthorizationRequest = {
+        response_type: 'code',
+        client_id: 'client_id',
+        redirect_uri: 'https://client.example.com/oidc/callback',
+        scope: 'openid foo bar baz',
+        state: 'client_state',
+        response_mode: 'query',
+      };
+
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const session = await dataAccess.createSession();
+      const { id: grantId, loginChallenge } = await dataAccess.createGrant(parameters, client, session);
+
+      await expect(async () => {
+        grant = (await dataAccess.findGrantByLoginChallenge(loginChallenge))!;
+      }).resolves.not.toThrow();
+
+      expect(grant).toBeInstanceOf(Grant);
+
+      expect(grant.id).toBe(grantId);
+      expect(grant.loginChallenge).toBe(loginChallenge);
+      expect(grant.parameters).toStrictEqual(parameters);
+      expect(grant.client).toStrictEqual(client);
+      expect(grant.session).toStrictEqual(session);
+      expect(grant.consent).toBeNull();
+    });
+
+    it('should return the Grant of the provided Login Challenge with a Consent.', async () => {
+      let grant!: Grant;
+
+      const consentId = randomUUIDv7();
+
+      const parameters: AuthorizationRequest = {
+        response_type: 'code',
+        client_id: 'client_id',
+        redirect_uri: 'https://client.example.com/oidc/callback',
+        scope: 'openid foo bar baz',
+        state: 'client_state',
+        response_mode: 'query',
+      };
+
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+      const session = await dataAccess.createSession();
+
+      const { id: grantId, loginChallenge } = await dataAccess.createGrant(parameters, client, session);
+
+      const insertConsentSql =
+        "INSERT INTO consents (id, expires_at, client_id, user_id) VALUES ($id, (unixepoch('now', '+120 days')), $client_id, $user_id)";
+
+      const updateGrantSql = 'UPDATE grants SET consent_id = $consent_id WHERE id = $id';
+
+      database
+        .prepare(insertConsentSql)
+        .run({ id: toUUIDBuffer(consentId), client_id: toUUIDBuffer(client.id), user_id: toUUIDBuffer(user.id) });
+
+      database.prepare(updateGrantSql).run({ consent_id: toUUIDBuffer(consentId), id: toUUIDBuffer(grantId) });
+
+      await expect(async () => {
+        grant = (await dataAccess.findGrantByLoginChallenge(loginChallenge))!;
+      }).resolves.not.toThrow();
+
+      expect(grant).toBeInstanceOf(Grant);
+
+      expect(grant.id).toBe(grantId);
+      expect(grant.loginChallenge).toBe(loginChallenge);
+      expect(grant.parameters).toStrictEqual(parameters);
+      expect(grant.client.id).toBe(client.id);
+      expect(grant.session.id).toBe(session.id);
+      expect(grant.consent!.id).toBe(consentId);
     });
   });
 
@@ -1019,6 +1275,209 @@ describe('SQLite Data Access', () => {
       expect(
         database.prepare('SELECT * FROM grants WHERE id = $id').get({ id: toUUIDBuffer(grant.id) }),
       ).toBeUndefined();
+    });
+  });
+
+  describe('saveGrant()', () => {
+    let parameters!: AuthorizationRequest;
+    let client!: Client;
+    let session!: Session;
+
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+
+      parameters = {
+        response_type: 'code',
+        client_id: 'client_id',
+        redirect_uri: 'https://client.example.com/oidc/callback',
+        scope: 'openid foo bar baz',
+        state: 'client_state',
+        response_mode: 'query',
+      };
+
+      client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      session = await dataAccess.createSession();
+    });
+
+    it('should not update the provided unchanged Grant.', async () => {
+      let grant!: Grant;
+
+      const { loginChallenge } = await dataAccess.createGrant(parameters, client, session);
+
+      await expect(async () => {
+        grant = (await dataAccess.findGrantByLoginChallenge(loginChallenge))!;
+      }).resolves.not.toThrow();
+
+      expect(grant.interactions).toBeArrayOfSize(0);
+      expect(grant.consent).toBeNull();
+
+      await dataAccess.saveGrant(grant);
+
+      await expect(async () => {
+        grant = (await dataAccess.findGrantByLoginChallenge(loginChallenge))!;
+      }).resolves.not.toThrow();
+
+      expect(grant.interactions).toBeArrayOfSize(0);
+      expect(grant.consent).toBeNull();
+    });
+
+    it('should update the provided Grant.', async () => {
+      let grant!: Grant;
+
+      const { loginChallenge } = await dataAccess.createGrant(parameters, client, session);
+
+      await expect(async () => {
+        grant = (await dataAccess.findGrantByLoginChallenge(loginChallenge))!;
+      }).resolves.not.toThrow();
+
+      expect(grant.interactions).toBeArrayOfSize(0);
+      expect(grant.consent).toBeNull();
+
+      const scopes = await dataAccess.getScopes();
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+      const consent = await dataAccess.createConsent(scopes, client, user);
+
+      grant.interactions.push('consent');
+      grant.consent = consent;
+
+      await dataAccess.saveGrant(grant);
+
+      await expect(async () => {
+        grant = (await dataAccess.findGrantByLoginChallenge(loginChallenge))!;
+      }).resolves.not.toThrow();
+
+      expect(grant.interactions).toStrictEqual<InteractionTypeName[]>(['consent']);
+      expect(grant.consent.id).toBe(consent.id);
+    });
+  });
+
+  describe('saveLogin()', () => {
+    let user!: User;
+    let client1!: Client;
+    let client2!: Client;
+    let session!: Session;
+
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+
+      user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+      client1 = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      client2 = (await dataAccess.findClientById('922e0d5e-08ba-4b0d-8068-fde37f2c3604'))!;
+      session = await dataAccess.createSession();
+    });
+
+    it('should not update the provided unchanged Login.', async () => {
+      const login = await dataAccess.createLogin(user, client1, session, [], null);
+
+      expect(
+        database.prepare('SELECT * FROM logins_clients WHERE login_id = $id').all({ id: toUUIDBuffer(login.id) }),
+      ).toStrictEqual<Record<string, SQLOutputValue>[]>(
+        expect.arrayContaining([{ login_id: toUUIDBuffer(login.id), client_id: toUUIDBuffer(client1.id) }]),
+      );
+
+      await expect(dataAccess.saveLogin(login)).resolves.not.toThrow();
+
+      expect(
+        database.prepare('SELECT * FROM logins_clients WHERE login_id = $id').all({ id: toUUIDBuffer(login.id) }),
+      ).toStrictEqual<Record<string, SQLOutputValue>[]>(
+        expect.arrayContaining([{ login_id: toUUIDBuffer(login.id), client_id: toUUIDBuffer(client1.id) }]),
+      );
+    });
+
+    it('should update the provided Login.', async () => {
+      const login = await dataAccess.createLogin(user, client1, session, [], null);
+
+      expect(
+        database.prepare('SELECT * FROM logins_clients WHERE login_id = $id').all({ id: toUUIDBuffer(login.id) }),
+      ).toStrictEqual<Record<string, SQLOutputValue>[]>(
+        expect.arrayContaining([{ login_id: toUUIDBuffer(login.id), client_id: toUUIDBuffer(client1.id) }]),
+      );
+
+      Reflect.set(login, 'clients', [client2]);
+
+      await expect(dataAccess.saveLogin(login)).resolves.not.toThrow();
+
+      expect(
+        database.prepare('SELECT * FROM logins_clients WHERE login_id = $id').all({ id: toUUIDBuffer(login.id) }),
+      ).toStrictEqual<Record<string, SQLOutputValue>[]>(
+        expect.arrayContaining([{ login_id: toUUIDBuffer(login.id), client_id: toUUIDBuffer(client2.id) }]),
+      );
+    });
+  });
+
+  describe('saveSession()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should not update the provided unchanged Session.', async () => {
+      let session!: Session;
+
+      const { id } = await dataAccess.createSession();
+
+      await expect(async () => {
+        session = (await dataAccess.findSessionById(id))!;
+      }).resolves.not.toThrow();
+
+      expect(session.activeLogin).toBeNull();
+      expect(session.logins).toBeArrayOfSize(0);
+      expect(session.grant).toBeNull();
+
+      await dataAccess.saveSession(session);
+
+      await expect(async () => {
+        session = (await dataAccess.findSessionById(id))!;
+      }).resolves.not.toThrow();
+
+      expect(session.activeLogin).toBeNull();
+      expect(session.logins).toBeArrayOfSize(0);
+      expect(session.grant).toBeNull();
+    });
+
+    it('should update the provided Session.', async () => {
+      let session!: Session;
+
+      const { id } = await dataAccess.createSession();
+
+      await expect(async () => {
+        session = (await dataAccess.findSessionById(id))!;
+      }).resolves.not.toThrow();
+
+      expect(session.activeLogin).toBeNull();
+      expect(session.logins).toBeArrayOfSize(0);
+      expect(session.grant).toBeNull();
+
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const login = await dataAccess.createLogin(user, client, session, [], null);
+
+      const parameters: AuthorizationRequest = {
+        response_type: 'code',
+        client_id: 'client_id',
+        redirect_uri: 'https://client.example.com/oidc/callback',
+        scope: 'openid foo bar baz',
+        state: 'client_state',
+        response_mode: 'query',
+      };
+
+      const grant = await dataAccess.createGrant(parameters, client, session);
+
+      session.activeLogin = login;
+      session.logins.push(login);
+      session.grant = grant;
+
+      await dataAccess.saveSession(session);
+
+      await expect(async () => {
+        session = (await dataAccess.findSessionById(id))!;
+      }).resolves.not.toThrow();
+
+      expect(session.activeLogin!.id).toBe(login.id);
+      expect(session.logins[0]!.id).toBe(login.id);
+      expect(session.grant.id).toBe(grant.id);
     });
   });
 
