@@ -1,18 +1,66 @@
 import { Buffer } from 'buffer';
+import { DatabaseSync } from 'node:sqlite';
 import { URL } from 'url';
 
 import { DependencyInjectionContainer, Factory, getContainer, Injectable } from '@guarani/di';
+import { JsonWebKeySet } from '@guarani/jose';
 
 import { CONTAINER } from '../constants';
+import { DataAccess } from '../data-access/data-access';
+import { SQLiteDataAccess } from '../data-access/sqlite/sqlite.data-access';
+import { AuthorizationEndpoint } from '../endpoints/authorization/authorization.endpoint';
 import { Endpoint } from '../endpoints/endpoint';
+import { InteractionEndpoint } from '../endpoints/interaction/interaction.endpoint';
+import { ClientAuthenticationHandler } from '../handlers/client-authentication/client-authentication.handler';
+import { IdTokenHandler } from '../handlers/id-token/id-token.handler';
+import { ScopeHandler } from '../handlers/scope/scope.handler';
+import { IdentityProvider } from '../http/providers/identity-provider';
 import { NodeIdentityProvider } from '../http/providers/node/node.identity-provider';
 import { ConsoleLogger } from '../loggers/console/console.logger';
 import { Logger } from '../loggers/logger';
 import { Settings } from '../settings/settings';
+import { PublicSubjectType } from '../subject-types/public/public.subject-type';
+import { SubjectType } from '../subject-types/subject-type';
 import { IdentityProviderFactory } from './identity-provider.factory';
 import { IdentityProviderFactoryEntry } from './identity-provider-factory.entry';
 
 const invalidTokens: any[] = [undefined, null, true, 1, 1.2, 1n, Buffer.alloc(1), () => {}, {}, []];
+
+const invalidSubjectTypes: any[] = [
+  undefined,
+  null,
+  true,
+  1,
+  1.2,
+  1n,
+  'a',
+  Symbol('a'),
+  Buffer,
+  Buffer.alloc(1),
+  () => 1,
+  {},
+  [],
+  [undefined],
+  [null],
+  [true],
+  [1],
+  [1.2],
+  [1n],
+  [Symbol('a')],
+  [Buffer],
+  [Buffer.alloc(1)],
+  [() => 1],
+  [{}],
+  [[]],
+  [''],
+  ['a'],
+];
+
+const dataAccessEntries: IdentityProviderFactoryEntry<DataAccess>[] = [
+  SQLiteDataAccess,
+  () => Object.create(SQLiteDataAccess.prototype),
+  Object.create(SQLiteDataAccess.prototype),
+];
 
 const loggerEntries: IdentityProviderFactoryEntry<Logger>[] = [
   ConsoleLogger,
@@ -56,11 +104,17 @@ describe('Identity Provider Factory', () => {
     it('should instantiate a new Identity Provider Factory.', () => {
       const container = getContainer(CONTAINER);
 
+      container.bind(JsonWebKeySet).toValue(JsonWebKeySet.prototype);
+      container.bind(DatabaseSync).toValue(DatabaseSync.prototype);
+
       expect(factory['container']).toBe(container);
 
-      expect(container['registry']['bindings'].size).toBe(2);
+      expect(container['registry']['bindings'].size).toBe(7);
 
       expect(container.resolve(DependencyInjectionContainer)).toBe(container);
+      expect(container.resolve(ClientAuthenticationHandler)).toBeInstanceOf(ClientAuthenticationHandler);
+      expect(container.resolve(ScopeHandler)).toBeInstanceOf(ScopeHandler);
+      expect(container.resolve(DataAccess)).toBeInstanceOf(SQLiteDataAccess);
       expect(container.resolve(Logger)).toBeInstanceOf(ConsoleLogger);
     });
   });
@@ -123,6 +177,61 @@ describe('Identity Provider Factory', () => {
     });
   });
 
+  describe('addAuthorizationEndpoint()', () => {
+    it('should add the Authorization Endpoint with the default options to the Identity Provider Factory.', () => {
+      factory['container'].bind(Settings).toValue(Settings.prototype);
+      factory['container'].bind(JsonWebKeySet).toValue(JsonWebKeySet.prototype);
+      factory['container'].bind(DatabaseSync).toValue(DatabaseSync.prototype);
+
+      expect(() => factory.addAuthorizationEndpoint()).not.toThrow();
+      expect(factory['container'].resolve(Endpoint)).toBeInstanceOf(AuthorizationEndpoint);
+    });
+
+    it('should add the Authorization Endpoint with the provided options to the Identity Provider Factory.', () => {
+      factory['container'].bind(Settings).toValue(Settings.prototype);
+      factory['container'].bind(JsonWebKeySet).toValue(JsonWebKeySet.prototype);
+      factory['container'].bind(DatabaseSync).toValue(DatabaseSync.prototype);
+
+      expect(() => factory.addAuthorizationEndpoint((options) => options.build())).not.toThrow();
+      expect(factory['container'].resolve(Endpoint)).toBeInstanceOf(AuthorizationEndpoint);
+    });
+  });
+
+  describe('addDataAccess()', () => {
+    it.each(dataAccessEntries)(
+      'should add the provided Data Access to the Identity Provider Factory.',
+      (dataAccess) => {
+        factory['container'].bind(JsonWebKeySet).toValue(JsonWebKeySet.prototype);
+        factory['container'].bind(DatabaseSync).toValue(DatabaseSync.prototype);
+
+        expect(() => factory.addDataAccess(dataAccess)).not.toThrow();
+        expect(factory['container'].resolve(DataAccess)).toBeInstanceOf(DataAccess);
+      },
+    );
+  });
+
+  describe('addInteractionEndpoint()', () => {
+    it('should add the Interaction Endpoint with the default options to the Identity Provider Factory.', () => {
+      factory['container'].bind(Settings).toValue(Settings.prototype);
+      factory['container'].bind(JsonWebKeySet).toValue(JsonWebKeySet.prototype);
+      factory['container'].bind(DatabaseSync).toValue(DatabaseSync.prototype);
+      factory['container'].bind(SubjectType).toValue(SubjectType.prototype);
+
+      expect(() => factory.addInteractionEndpoint()).not.toThrow();
+      expect(factory['container'].resolve(Endpoint)).toBeInstanceOf(InteractionEndpoint);
+    });
+
+    it('should add the Interaction Endpoint with the provided options to the Identity Provider Factory.', () => {
+      factory['container'].bind(Settings).toValue(Settings.prototype);
+      factory['container'].bind(JsonWebKeySet).toValue(JsonWebKeySet.prototype);
+      factory['container'].bind(DatabaseSync).toValue(DatabaseSync.prototype);
+      factory['container'].bind(SubjectType).toValue(SubjectType.prototype);
+
+      expect(() => factory.addInteractionEndpoint((options) => options.build())).not.toThrow();
+      expect(factory['container'].resolve(Endpoint)).toBeInstanceOf(InteractionEndpoint);
+    });
+  });
+
   describe('addLogger()', () => {
     it.each(loggerEntries)('should add the provided Logger to the Identity Provider Factory.', (logger) => {
       expect(() => factory.addLogger(logger)).not.toThrow();
@@ -144,6 +253,23 @@ describe('Identity Provider Factory', () => {
     });
   });
 
+  describe('addSubjectTypes()', () => {
+    it.each(invalidSubjectTypes)('should throw when the provided Subject Types is invalid.', (subjectTypes) => {
+      expect(() => factory.addSubjectTypes(subjectTypes)).toThrowWithMessage(
+        TypeError,
+        'The provided Subject Types is invalid.',
+      );
+    });
+
+    it('should add the provided Subject Types to the Identity Provider Factory.', () => {
+      expect(() => factory.addSubjectTypes(['public'])).not.toThrow();
+
+      expect(factory['container'].resolveAll(SubjectType)).toStrictEqual<SubjectType[]>([
+        expect.any(PublicSubjectType),
+      ]);
+    });
+  });
+
   describe('add()', () => {
     it('should add the provided Entry under the provided Token.', () => {
       expect(() => factory.add(Buffer, Buffer.alloc(0))).not.toThrow();
@@ -154,9 +280,69 @@ describe('Identity Provider Factory', () => {
   });
 
   describe('create()', () => {
+    it('should throw when missing a required Endpoint.', () => {
+      factory
+        .addInteractionEndpoint()
+        .add(DatabaseSync, Object.create(DatabaseSync.prototype))
+        .add(JsonWebKeySet, Object.create(JsonWebKeySet.prototype));
+
+      expect(() => factory.create(NodeIdentityProvider)).toThrowWithMessage(
+        TypeError,
+        'Missing required Endpoint "AuthorizationEndpoint".',
+      );
+    });
+
     it('should return an instance of the provided Identity Provider.', () => {
-      factory.addSettings(Object.create(Settings.prototype)).add(Endpoint, Object.create(Endpoint.prototype));
-      expect(() => factory.create(NodeIdentityProvider)).not.toThrow();
+      let provider!: IdentityProvider;
+
+      const settings: Settings = Object.assign<Settings, Partial<Settings>>(Object.create(Settings.prototype), {
+        idTokenSignatureAlgorithms: [],
+        idTokenKeyWrapAlgorithms: [],
+        idTokenContentEncryptionAlgorithms: [],
+      });
+
+      factory
+        .addAuthorizationEndpoint()
+        .addInteractionEndpoint()
+        .addSettings(settings)
+        .add(DatabaseSync, Object.create(DatabaseSync.prototype))
+        .add(JsonWebKeySet, Object.create(JsonWebKeySet.prototype));
+
+      expect(() => (provider = factory.create(NodeIdentityProvider))).not.toThrow();
+
+      expect(factory['container'].has(IdTokenHandler)).toBeFalse();
+
+      expect(provider['endpoints']).toStrictEqual<Endpoint[]>([
+        expect.any(AuthorizationEndpoint),
+        expect.any(InteractionEndpoint),
+      ]);
+    });
+
+    it('should return an instance of the provided Identity Provider with ID Token support.', () => {
+      let provider!: IdentityProvider;
+
+      const settings: Settings = Object.assign<Settings, Partial<Settings>>(Object.create(Settings.prototype), {
+        idTokenSignatureAlgorithms: ['ES256'],
+        idTokenKeyWrapAlgorithms: [],
+        idTokenContentEncryptionAlgorithms: [],
+      });
+
+      factory
+        .addAuthorizationEndpoint()
+        .addInteractionEndpoint()
+        .addSettings(settings)
+        .addSubjectTypes(['public'])
+        .add(DatabaseSync, Object.create(DatabaseSync.prototype))
+        .add(JsonWebKeySet, Object.create(JsonWebKeySet.prototype));
+
+      expect(() => (provider = factory.create(NodeIdentityProvider))).not.toThrow();
+
+      expect(factory['container'].has(IdTokenHandler)).toBeTrue();
+
+      expect(provider['endpoints']).toStrictEqual<Endpoint[]>([
+        expect.any(AuthorizationEndpoint),
+        expect.any(InteractionEndpoint),
+      ]);
     });
   });
 });

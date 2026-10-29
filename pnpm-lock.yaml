@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@guarani/di':
-        specifier: ^1.0.2
-        version: 1.0.2
+        specifier: ^1.1.0
+        version: 1.1.0
       '@guarani/jose':
         specifier: ^1.1.2
         version: 1.1.2
@@ -428,8 +428,8 @@ packages:
     resolution: {integrity: sha512-IkO+/KEUvwbVpiURZg+P7zF74z5Jxe0UgJxVni+RtoHQ6IZieXaO02kmadomap/q+l6bc/jdPGGqTjhuZnuz1Q==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
 
-  '@guarani/di@1.0.2':
-    resolution: {integrity: sha512-oitWCCoyKqfEZX0/Dmjd8HR7eQwBKwLFxemX5zMHAhQAxhthIppdLHbCHAS2+5ys5KSXGRW47wDVUyDPNJOlhA==}
+  '@guarani/di@1.1.0':
+    resolution: {integrity: sha512-Wyeo/JM1mSQsqAik/+deIMV9NydtsFmfwpWV1IU2qKZ+1Bsdgvz7JYWuE7i1k46zmmKBY084LwJfgrtHDwn9Hg==}
 
   '@guarani/jose@1.1.2':
     resolution: {integrity: sha512-+LOpfJMPII4yyHzazmUiXiJgkMbPGSDbIFHXYkcOa+zGXtiy/yfi6NRLaFBUx2qrBl/C/iboTZOfylR9VBBblQ==}
@@ -3185,7 +3185,7 @@ snapshots:
       '@eslint/core': 1.2.1
       levn: 0.4.1
 
-  '@guarani/di@1.0.2':
+  '@guarani/di@1.1.0':
     dependencies:
       '@guarani/primitives': 1.1.1
       reflect-metadata: 0.2.2

@@ -1,0 +1,1 @@
+DELETE FROM consents WHERE id = $id;

@@ -1,0 +1,31 @@
+SELECT
+    id,
+    name,
+    type,
+    profile,
+    redirect_uris,
+    response_types,
+    authentication_method,
+    contacts,
+    client_uri,
+    logo_uri,
+    policy_uri,
+    tos_uri,
+    jwks_uri,
+    jwks,
+    sector_identifier_uri,
+    subject_type,
+    id_token_signed_response_alg,
+    id_token_encrypted_response_alg,
+    id_token_encrypted_response_enc,
+    authentication_signing_alg,
+    default_max_age,
+    require_auth_time,
+    default_acr_values,
+    software_id,
+    software_version,
+    created_at,
+    updated_at
+FROM clients
+WHERE
+    id = $id;

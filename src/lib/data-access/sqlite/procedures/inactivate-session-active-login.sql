@@ -1,0 +1,1 @@
+UPDATE sessions SET active_login_id = NULL WHERE id = $id;
