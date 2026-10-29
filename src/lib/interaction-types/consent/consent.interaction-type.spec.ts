@@ -69,12 +69,12 @@ describe('Consent Interaction Type', () => {
     }),
   );
 
-  const client: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), {
+  const client: Client = Object.assign<Client, Partial<Client>>(new Client(), {
     id: 'client_id',
     subjectType: 'public',
   });
 
-  const user: User = Object.assign<User, Partial<User>>(Reflect.construct(User, []), { id: 'user_id' });
+  const user: User = Object.assign<User, Partial<User>>(new User(), { id: 'user_id' });
 
   beforeEach(() => {
     container.bind(Logger).toValue(loggerMock);
@@ -100,7 +100,7 @@ describe('Consent Interaction Type', () => {
   describe('handleContext()', () => {
     let grantParameters: AuthorizationRequest;
 
-    const consent: Consent = Object.assign<Consent, Partial<Consent>>(Reflect.construct(Consent, []), {
+    const consent: Consent = Object.assign<Consent, Partial<Consent>>(new Consent(), {
       id: 'consent_id',
     });
 
@@ -114,15 +114,15 @@ describe('Consent Interaction Type', () => {
     });
 
     it('should return a non-skip Consent Context Interaction Response.', async () => {
-      const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), { id: 'login_id', user });
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), { id: 'login_id', user });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters: grantParameters,
         interactions: [],
@@ -154,15 +154,15 @@ describe('Consent Interaction Type', () => {
     });
 
     it('should return a skip Consent Context Interaction Response.', async () => {
-      const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), { id: 'login_id', user });
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), { id: 'login_id', user });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters: { scope: 'openid profile email phone address' } as AuthorizationRequest,
         interactions: [],
@@ -210,19 +210,19 @@ describe('Consent Interaction Type', () => {
 
     // #region Decision Accept
     it('should return a valid first time Consent Decision Accept Interaction Response.', async () => {
-      const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         clients: [],
         user,
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters: grantParameters,
         interactions: [],
@@ -232,7 +232,7 @@ describe('Consent Interaction Type', () => {
         consent: null,
       });
 
-      const consent: Consent = Object.assign<Consent, Partial<Consent>>(Reflect.construct(Consent, []), {
+      const consent: Consent = Object.assign<Consent, Partial<Consent>>(new Consent(), {
         id: 'consent_id',
       });
 
@@ -266,19 +266,19 @@ describe('Consent Interaction Type', () => {
     });
 
     it('should return a valid first time Consent Decision Accept Interaction Response for a Client previously registered at the Login.', async () => {
-      const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         clients: [client],
         user,
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters: grantParameters,
         interactions: [],
@@ -288,7 +288,7 @@ describe('Consent Interaction Type', () => {
         consent: null,
       });
 
-      const consent: Consent = Object.assign<Consent, Partial<Consent>>(Reflect.construct(Consent, []), {
+      const consent: Consent = Object.assign<Consent, Partial<Consent>>(new Consent(), {
         id: 'consent_id',
       });
 
@@ -320,19 +320,19 @@ describe('Consent Interaction Type', () => {
     });
 
     it('should return a valid first time Consent Decision Accept Interaction Response with an "offline_access" Scope.', async () => {
-      const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         clients: [client],
         user,
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters: grantParameters,
         interactions: [],
@@ -342,7 +342,7 @@ describe('Consent Interaction Type', () => {
         consent: null,
       });
 
-      const consent: Consent = Object.assign<Consent, Partial<Consent>>(Reflect.construct(Consent, []), {
+      const consent: Consent = Object.assign<Consent, Partial<Consent>>(new Consent(), {
         id: 'consent_id',
       });
 
@@ -373,19 +373,19 @@ describe('Consent Interaction Type', () => {
     });
 
     it('should return a valid first time Consent Decision Accept Interaction Response without an "offline_access" Scope.', async () => {
-      const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         clients: [client],
         user,
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters: { ...grantParameters, response_type: 'id_token token' },
         interactions: [],
@@ -395,7 +395,7 @@ describe('Consent Interaction Type', () => {
         consent: null,
       });
 
-      const consent: Consent = Object.assign<Consent, Partial<Consent>>(Reflect.construct(Consent, []), {
+      const consent: Consent = Object.assign<Consent, Partial<Consent>>(new Consent(), {
         id: 'consent_id',
       });
 
@@ -431,23 +431,23 @@ describe('Consent Interaction Type', () => {
     });
 
     it('should return a valid subsequent Consent Decision Accept Interaction Response.', async () => {
-      const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         clients: [client],
         user,
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],
       });
 
-      const consent: Consent = Object.assign<Consent, Partial<Consent>>(Reflect.construct(Consent, []), {
+      const consent: Consent = Object.assign<Consent, Partial<Consent>>(new Consent(), {
         id: 'consent_id',
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters: grantParameters,
         interactions: [],
@@ -484,15 +484,15 @@ describe('Consent Interaction Type', () => {
 
     // #region Decision Deny
     it('should return a Consent Decision Deny Interaction Response.', async () => {
-      const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), { id: 'login_id' });
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), { id: 'login_id' });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters: grantParameters,
         expiresAt: new Date(now + 3600000),

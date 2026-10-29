@@ -207,13 +207,13 @@ describe('ID Token Handler', () => {
 
   const scopes = ['openid', 'email'].map((scope) => Object.assign<Scope, Partial<Scope>>(new Scope(), { name: scope }));
 
-  const signedClient: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), {
+  const signedClient: Client = Object.assign<Client, Partial<Client>>(new Client(), {
     id: 'signed_client_id',
     idTokenSignedResponseAlgorithm: 'RS256',
     idTokenEncryptedResponseKeyWrap: null,
   });
 
-  const nestedClient: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), {
+  const nestedClient: Client = Object.assign<Client, Partial<Client>>(new Client(), {
     id: 'nested_client_id',
     jwks: new JsonWebKeySet([clientRsaKeyWrapJsonWebKey]).toJSON(),
     idTokenSignedResponseAlgorithm: 'ES256',
@@ -441,12 +441,12 @@ describe('ID Token Handler', () => {
 
   describe('generateIdToken()', () => {
     it('should return a signed ID Token with the minimum required Claims.', async () => {
-      const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         createdAt: new Date(),
       });
 
-      const consent: Consent = Object.assign<Consent, Partial<Consent>>(Reflect.construct(Consent, []), {
+      const consent: Consent = Object.assign<Consent, Partial<Consent>>(new Consent(), {
         id: 'consent_id',
         scopes,
         client: signedClient,
@@ -483,27 +483,26 @@ describe('ID Token Handler', () => {
     });
 
     it('should return a signed ID Token with all supported Claims.', async () => {
-      const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         createdAt: new Date(),
         amr: ['pwd', 'sms'],
         acr: 'urn:guarani:acr:2fa',
       });
 
-      const consent: Consent = Object.assign<Consent, Partial<Consent>>(Reflect.construct(Consent, []), {
+      const consent: Consent = Object.assign<Consent, Partial<Consent>>(new Consent(), {
         id: 'consent_id',
         scopes,
         client: signedClient,
         user,
       });
 
-      const accessToken: AccessToken = Object.assign<AccessToken, Partial<AccessToken>>(
-        Reflect.construct(AccessToken, []),
-        { id: 'access_token' },
-      );
+      const accessToken: AccessToken = Object.assign<AccessToken, Partial<AccessToken>>(new AccessToken(), {
+        id: 'access_token',
+      });
 
       const authorizationCode: AuthorizationCode = Object.assign<AuthorizationCode, Partial<AuthorizationCode>>(
-        Reflect.construct(AuthorizationCode, []),
+        new AuthorizationCode(),
         { id: 'authorization_code' },
       );
 
@@ -550,12 +549,12 @@ describe('ID Token Handler', () => {
     });
 
     it('should return a nested ID Token with the minimum required Claims.', async () => {
-      const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         createdAt: new Date(),
       });
 
-      const consent: Consent = Object.assign<Consent, Partial<Consent>>(Reflect.construct(Consent, []), {
+      const consent: Consent = Object.assign<Consent, Partial<Consent>>(new Consent(), {
         id: 'consent_id',
         scopes,
         client: nestedClient,
@@ -598,27 +597,26 @@ describe('ID Token Handler', () => {
     });
 
     it('should return a nested ID Token with all supported Claims.', async () => {
-      const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         createdAt: new Date(),
         amr: ['pwd', 'sms'],
         acr: 'urn:guarani:acr:2fa',
       });
 
-      const consent: Consent = Object.assign<Consent, Partial<Consent>>(Reflect.construct(Consent, []), {
+      const consent: Consent = Object.assign<Consent, Partial<Consent>>(new Consent(), {
         id: 'consent_id',
         scopes,
         client: nestedClient,
         user,
       });
 
-      const accessToken: AccessToken = Object.assign<AccessToken, Partial<AccessToken>>(
-        Reflect.construct(AccessToken, []),
-        { id: 'access_token' },
-      );
+      const accessToken: AccessToken = Object.assign<AccessToken, Partial<AccessToken>>(new AccessToken(), {
+        id: 'access_token',
+      });
 
       const authorizationCode: AuthorizationCode = Object.assign<AuthorizationCode, Partial<AuthorizationCode>>(
-        Reflect.construct(AuthorizationCode, []),
+        new AuthorizationCode(),
         { id: 'authorization_code' },
       );
 
@@ -745,7 +743,7 @@ describe('ID Token Handler', () => {
     });
 
     it('should return false when failing to decode the signed part of the provided nested ID Token.', async () => {
-      const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         createdAt: new Date(),
         user,
@@ -776,7 +774,7 @@ describe('ID Token Handler', () => {
     });
 
     it('should return false when failing to decode the provided signed ID Token.', async () => {
-      const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         createdAt: new Date(),
         user,
@@ -806,7 +804,7 @@ describe('ID Token Handler', () => {
     });
 
     it('should return false when failing to obtain the JSON Web Key represented by the provided Key ID of the nested ID Token.', async () => {
-      const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         createdAt: new Date(),
         user,
@@ -827,7 +825,7 @@ describe('ID Token Handler', () => {
     });
 
     it('should return false when failing to obtain the JSON Web Key represented by the provided Key ID of the signed ID Token.', async () => {
-      const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         createdAt: new Date(),
         user,
@@ -848,7 +846,7 @@ describe('ID Token Handler', () => {
     });
 
     it('should return false when failing to deserialize the signed part of the provided nested ID Token.', async () => {
-      const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         createdAt: new Date(),
         user,
@@ -876,7 +874,7 @@ describe('ID Token Handler', () => {
     });
 
     it('should return false when failing to deserialize the provided signed ID Token.', async () => {
-      const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         createdAt: new Date(),
         user,
@@ -904,7 +902,7 @@ describe('ID Token Handler', () => {
     });
 
     it('should return true when successfully checking the provided nested ID Token.', async () => {
-      const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         createdAt: new Date(),
         user,
@@ -924,7 +922,7 @@ describe('ID Token Handler', () => {
     });
 
     it('should return true when successfully checking the provided signed ID Token.', async () => {
-      const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         createdAt: new Date(),
         user,

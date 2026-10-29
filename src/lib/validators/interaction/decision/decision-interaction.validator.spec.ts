@@ -98,7 +98,7 @@ describe('Decision Interaction Validator', () => {
     it('should return a Decision Interaction Context.', async () => {
       const request = requestFactory();
 
-      const client: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), { id: 'client_id' });
+      const client: Client = Object.assign<Client, Partial<Client>>(new Client(), { id: 'client_id' });
 
       clientAuthenticationHandlerMock.authenticate.mockResolvedValueOnce(client);
 

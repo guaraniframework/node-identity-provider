@@ -24,23 +24,23 @@ describe('ID Token Response Type', () => {
   const loggerMock = jest.mocked(Logger.prototype);
   const idTokenHandlerMock = jest.mocked(IdTokenHandler.prototype);
 
-  const activeLogin: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), { id: 'login_id' });
+  const activeLogin: Login = Object.assign<Login, Partial<Login>>(new Login(), { id: 'login_id' });
 
   const scopes: Scope[] = ['openid', 'foo', 'bar'].map((scope) => {
     return Object.assign<Scope, Partial<Scope>>(new Scope(), { name: scope });
   });
 
-  const consent: Consent = Object.assign<Consent, Partial<Consent>>(Reflect.construct(Consent, []), {
+  const consent: Consent = Object.assign<Consent, Partial<Consent>>(new Consent(), {
     id: 'consent_id',
     scopes,
   });
 
-  const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+  const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
     id: 'grant_id',
     consent,
   });
 
-  const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+  const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
     id: 'session_id',
     activeLogin,
     grant,

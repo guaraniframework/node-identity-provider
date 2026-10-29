@@ -82,7 +82,7 @@ describe('Select Account Context Interaction Validator', () => {
   describe('validate()', () => {
     let parameters: SelectAccountContextInteractionRequest;
 
-    const client: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), { id: 'client_id' });
+    const client: Client = Object.assign<Client, Partial<Client>>(new Client(), { id: 'client_id' });
 
     const requestFactory = (data: Partial<SelectAccountContextInteractionRequest> = {}): HttpRequest => {
       removeNullishValues<SelectAccountContextInteractionRequest>(Object.assign(parameters, data));
@@ -142,11 +142,11 @@ describe('Select Account Context Interaction Validator', () => {
     it('should throw when the Client requests a Grant that was not issued to itself.', async () => {
       const request = requestFactory();
 
-      const anotherClient: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), {
+      const anotherClient: Client = Object.assign<Client, Partial<Client>>(new Client(), {
         id: 'another_client_id',
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         client: anotherClient,
       });
@@ -195,7 +195,7 @@ describe('Select Account Context Interaction Validator', () => {
     it('should return a Select Account Context Interaction Context.', async () => {
       const request = requestFactory();
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         expiresAt: new Date(Date.now() + 300000),
         client,

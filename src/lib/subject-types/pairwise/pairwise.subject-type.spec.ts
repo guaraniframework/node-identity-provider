@@ -19,9 +19,9 @@ describe('Pairwise Subject Type', () => {
     Object.assign<Settings, Partial<Settings>>(Object.create(Settings.prototype), { secretKey: '0123456789abcdef' }),
   );
 
-  const user: User = Object.assign<User, Partial<User>>(Reflect.construct(User, []), { id: 'user_id' });
+  const user: User = Object.assign<User, Partial<User>>(new User(), { id: 'user_id' });
 
-  const client: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), {
+  const client: Client = Object.assign<Client, Partial<Client>>(new Client(), {
     id: 'client_id',
     sectorIdentifierUri: new URL('https://client.example.com/redirect_uris.json'),
     pairwiseSalt: 'f2ad0faed5a636483adc4b5c268b72e3',

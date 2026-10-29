@@ -125,7 +125,7 @@ describe('Consent Decision Interaction Validator', () => {
   describe('validate()', () => {
     let parameters: ConsentDecisionInteractionRequest;
 
-    const client: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), {
+    const client: Client = Object.assign<Client, Partial<Client>>(new Client(), {
       id: 'client_id',
       subjectType: 'public',
     });
@@ -191,11 +191,11 @@ describe('Consent Decision Interaction Validator', () => {
     it('should throw when the Client requests a Grant that was not issued to itself.', async () => {
       const request = requestFactory();
 
-      const anotherClient: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), {
+      const anotherClient: Client = Object.assign<Client, Partial<Client>>(new Client(), {
         id: 'another_client_id',
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         client: anotherClient,
       });

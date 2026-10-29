@@ -456,7 +456,7 @@ describe('JWT Bearer Client Assertion', () => {
       async (ellipticCurveClientAssertion) => {
         const request = requestFactory({ client_assertion: ellipticCurveClientAssertion });
 
-        const client: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), {
+        const client: Client = Object.assign<Client, Partial<Client>>(new Client(), {
           id: 'client_id',
           authenticationMethod: 'client_secret_jwt',
         });
@@ -484,7 +484,7 @@ describe('JWT Bearer Client Assertion', () => {
       async (ellipticCurveClientAssertion) => {
         const request = requestFactory({ client_assertion: ellipticCurveClientAssertion });
 
-        const client: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), {
+        const client: Client = Object.assign<Client, Partial<Client>>(new Client(), {
           id: 'client_id',
           authenticationMethod: 'private_key_jwt',
           authenticationSigningAlgorithm: 'RS256',

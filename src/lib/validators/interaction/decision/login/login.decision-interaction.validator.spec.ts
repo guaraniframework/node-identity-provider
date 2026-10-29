@@ -120,7 +120,7 @@ describe('Login Decision Interaction Validator', () => {
   describe('validate()', () => {
     let parameters: LoginDecisionInteractionRequest;
 
-    const client: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), {
+    const client: Client = Object.assign<Client, Partial<Client>>(new Client(), {
       id: 'client_id',
       subjectType: 'public',
     });
@@ -186,11 +186,11 @@ describe('Login Decision Interaction Validator', () => {
     it('should throw when the Client requests a Grant that was not issued to itself.', async () => {
       const request = requestFactory();
 
-      const anotherClient: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), {
+      const anotherClient: Client = Object.assign<Client, Partial<Client>>(new Client(), {
         id: 'another_client_id',
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         client: anotherClient,
       });
@@ -239,7 +239,7 @@ describe('Login Decision Interaction Validator', () => {
     it.each(invalidDecisions)('should throw when the provided parameter "decision" is invalid.', async (decision) => {
       const request = requestFactory({ decision });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         expiresAt: new Date(Date.now() + 300000),
         client,
@@ -263,7 +263,7 @@ describe('Login Decision Interaction Validator', () => {
     it('should throw when the provided parameter "decision" is unsupported.', async () => {
       const request = requestFactory({ decision: 'unknown' as LoginDecision });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         expiresAt: new Date(Date.now() + 300000),
         client,
@@ -293,7 +293,7 @@ describe('Login Decision Interaction Validator', () => {
           subject_id: subjectId,
         });
 
-        const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+        const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
           id: 'grant_id',
           expiresAt: new Date(Date.now() + 300000),
           client,
@@ -321,7 +321,7 @@ describe('Login Decision Interaction Validator', () => {
         subject_id: 'user_id',
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         expiresAt: new Date(Date.now() + 300000),
         client,
@@ -351,13 +351,13 @@ describe('Login Decision Interaction Validator', () => {
         amr: '',
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         expiresAt: new Date(Date.now() + 300000),
         client,
       });
 
-      const user: User = Object.assign<User, Partial<User>>(Reflect.construct(User, []), { id: 'user_id' });
+      const user: User = Object.assign<User, Partial<User>>(new User(), { id: 'user_id' });
 
       dataAccessMock.findGrantByLoginChallenge.mockResolvedValueOnce(grant);
       dataAccessMock.findUserById.mockResolvedValueOnce(user);
@@ -383,13 +383,13 @@ describe('Login Decision Interaction Validator', () => {
         acr: '',
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         expiresAt: new Date(Date.now() + 300000),
         client,
       });
 
-      const user: User = Object.assign<User, Partial<User>>(Reflect.construct(User, []), { id: 'user_id' });
+      const user: User = Object.assign<User, Partial<User>>(new User(), { id: 'user_id' });
 
       dataAccessMock.findGrantByLoginChallenge.mockResolvedValueOnce(grant);
       dataAccessMock.findUserById.mockResolvedValueOnce(user);
@@ -415,13 +415,13 @@ describe('Login Decision Interaction Validator', () => {
         acr: 'phr',
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         expiresAt: new Date(Date.now() + 300000),
         client,
       });
 
-      const user: User = Object.assign<User, Partial<User>>(Reflect.construct(User, []), { id: 'user_id' });
+      const user: User = Object.assign<User, Partial<User>>(new User(), { id: 'user_id' });
 
       dataAccessMock.findGrantByLoginChallenge.mockResolvedValueOnce(grant);
       dataAccessMock.findUserById.mockResolvedValueOnce(user);
@@ -448,13 +448,13 @@ describe('Login Decision Interaction Validator', () => {
         acr: 'urn:guarani:acr:2fa',
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         expiresAt: new Date(Date.now() + 300000),
         client,
       });
 
-      const user: User = Object.assign<User, Partial<User>>(Reflect.construct(User, []), { id: 'user_id' });
+      const user: User = Object.assign<User, Partial<User>>(new User(), { id: 'user_id' });
 
       dataAccessMock.findGrantByLoginChallenge.mockResolvedValueOnce(grant);
       dataAccessMock.findUserById.mockResolvedValueOnce(user);
@@ -480,13 +480,13 @@ describe('Login Decision Interaction Validator', () => {
         subject_id: 'user_id',
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         expiresAt: new Date(Date.now() + 300000),
         client,
       });
 
-      const user: User = Object.assign<User, Partial<User>>(Reflect.construct(User, []), { id: 'user_id' });
+      const user: User = Object.assign<User, Partial<User>>(new User(), { id: 'user_id' });
 
       dataAccessMock.findGrantByLoginChallenge.mockResolvedValueOnce(grant);
       dataAccessMock.findUserById.mockResolvedValueOnce(user);
@@ -514,7 +514,7 @@ describe('Login Decision Interaction Validator', () => {
         error: errorCode,
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         expiresAt: new Date(Date.now() + 300000),
         client,
@@ -544,7 +544,7 @@ describe('Login Decision Interaction Validator', () => {
           error_description: errorDescription,
         });
 
-        const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+        const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
           id: 'grant_id',
           expiresAt: new Date(Date.now() + 300000),
           client,
@@ -574,7 +574,7 @@ describe('Login Decision Interaction Validator', () => {
         error_uri: errorUri,
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         expiresAt: new Date(Date.now() + 300000),
         client,
@@ -602,13 +602,13 @@ describe('Login Decision Interaction Validator', () => {
         error_description: 'The User refused to authenticate.',
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         expiresAt: new Date(Date.now() + 300000),
         client,
       });
 
-      const user: User = Object.assign<User, Partial<User>>(Reflect.construct(User, []), { id: 'user_id' });
+      const user: User = Object.assign<User, Partial<User>>(new User(), { id: 'user_id' });
 
       const error = new AccessDeniedError('The User refused to authenticate.');
 
@@ -636,13 +636,13 @@ describe('Login Decision Interaction Validator', () => {
         error_uri: 'https://provider.example.com/docs/access_denied',
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         expiresAt: new Date(Date.now() + 300000),
         client,
       });
 
-      const user: User = Object.assign<User, Partial<User>>(Reflect.construct(User, []), { id: 'user_id' });
+      const user: User = Object.assign<User, Partial<User>>(new User(), { id: 'user_id' });
 
       const error = new AccessDeniedError('The User refused to authenticate.').setUri(
         'https://provider.example.com/docs/access_denied',

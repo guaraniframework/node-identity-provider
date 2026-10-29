@@ -113,7 +113,7 @@ describe('Login Interaction Type', () => {
     let grantParameters: AuthorizationRequest;
     let now: number;
 
-    const client: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), { id: 'client_id' });
+    const client: Client = Object.assign<Client, Partial<Client>>(new Client(), { id: 'client_id' });
 
     beforeEach(() => {
       grantParameters = {
@@ -129,13 +129,13 @@ describe('Login Interaction Type', () => {
     it.each(nonSkipPromptAndInteractions)(
       'should return a non-skip Login Context Interaction Response when the Session Active Login is null.',
       async (prompt, interactions) => {
-        const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+        const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
           id: 'session_id',
           activeLogin: null,
           logins: [],
         });
 
-        const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+        const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
           id: 'grant_id',
           parameters: removeNullishValues<AuthorizationRequest>({ ...grantParameters, prompt: prompt! }),
           interactions,
@@ -169,18 +169,18 @@ describe('Login Interaction Type', () => {
     );
 
     it('should return a non-skip Login Context Interaction Response when the Session Active Login is too old.', async () => {
-      const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         createdAt: new Date(now - 7200000),
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [],
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters: { ...grantParameters, max_age: '3600' },
         interactions: [],
@@ -215,15 +215,15 @@ describe('Login Interaction Type', () => {
     it.each(skipPromptAndInteractions)(
       'should return a skip Login Context Interaction Response when the Session Active Login is not null.',
       async (prompt, interactions) => {
-        const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), { id: 'login_id' });
+        const login: Login = Object.assign<Login, Partial<Login>>(new Login(), { id: 'login_id' });
 
-        const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+        const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
           id: 'session_id',
           activeLogin: login,
           logins: [login],
         });
 
-        const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+        const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
           id: 'grant_id',
           parameters: removeNullishValues<AuthorizationRequest>({ ...grantParameters, prompt: prompt! }),
           interactions,
@@ -257,18 +257,18 @@ describe('Login Interaction Type', () => {
     );
 
     it('should return a skip Login Context Interaction Response when the Session Active Login is not too old.', async () => {
-      const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         createdAt: new Date(now - 1800000),
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters: { ...grantParameters, max_age: '3600' },
         interactions: [],
@@ -318,7 +318,7 @@ describe('Login Interaction Type', () => {
 
     // #region Accept Decision
     it('should throw when the User Authentication fails to meet the required Authentication Context Class Reference.', async () => {
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters: grantParameters,
         expiresAt: new Date(now + 3600000),
@@ -350,15 +350,15 @@ describe('Login Interaction Type', () => {
     });
 
     it('should return a first time Login Accept Decision Interaction Response.', async () => {
-      const client: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), { id: 'client_id' });
+      const client: Client = Object.assign<Client, Partial<Client>>(new Client(), { id: 'client_id' });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: null,
         logins: [],
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters: grantParameters,
         interactions: [],
@@ -367,7 +367,7 @@ describe('Login Interaction Type', () => {
         session,
       });
 
-      const user: User = Object.assign<User, Partial<User>>(Reflect.construct(User, []), { id: 'user_id' });
+      const user: User = Object.assign<User, Partial<User>>(new User(), { id: 'user_id' });
 
       const context = {
         grant,
@@ -404,18 +404,18 @@ describe('Login Interaction Type', () => {
     });
 
     it('should return a subsequent Login Accept Decision Interaction Response.', async () => {
-      const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         createdAt: new Date(now - 1800000),
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters: grantParameters,
         interactions: [],
@@ -423,7 +423,7 @@ describe('Login Interaction Type', () => {
         session,
       });
 
-      const user: User = Object.assign<User, Partial<User>>(Reflect.construct(User, []), { id: 'user_id' });
+      const user: User = Object.assign<User, Partial<User>>(new User(), { id: 'user_id' });
 
       const context = {
         grant,
@@ -450,7 +450,7 @@ describe('Login Interaction Type', () => {
 
     // #region Deny Decision
     it('should return a Login Deny Decision Interaction Response.', async () => {
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters: grantParameters,
         expiresAt: new Date(now + 3600000),

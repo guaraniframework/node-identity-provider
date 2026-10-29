@@ -174,14 +174,14 @@ describe('Code & Token Authorization Validator', () => {
         const request = requestFactory({ code_challenge: codeChallenge });
         request.cookies[settingsMock.sessionCookie] = 'session_id';
 
-        const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+        const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
           id: 'grant_id',
           parameters,
           expiresAt: new Date(Date.now() + 86400),
           client,
         });
 
-        const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+        const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
           id: 'session_id',
           grant,
         });
@@ -208,14 +208,14 @@ describe('Code & Token Authorization Validator', () => {
       const request = requestFactory({ code_challenge_method: '' as PKCEName });
       request.cookies[settingsMock.sessionCookie] = 'session_id';
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters,
         expiresAt: new Date(Date.now() + 86400),
         client,
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         grant,
       });
@@ -241,14 +241,14 @@ describe('Code & Token Authorization Validator', () => {
       const request = requestFactory({ code_challenge_method: 'unknown' as PKCEName });
       request.cookies[settingsMock.sessionCookie] = 'session_id';
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters,
         expiresAt: new Date(Date.now() + 86400),
         client,
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         grant,
       });
@@ -274,14 +274,14 @@ describe('Code & Token Authorization Validator', () => {
       const request = requestFactory();
       request.cookies[settingsMock.sessionCookie] = 'session_id';
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters,
         expiresAt: new Date(Date.now() + 86400),
         client,
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         grant,
       });
@@ -316,14 +316,14 @@ describe('Code & Token Authorization Validator', () => {
       const request = requestFactory({ code_challenge_method: undefined as any });
       request.cookies[settingsMock.sessionCookie] = 'session_id';
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters,
         expiresAt: new Date(Date.now() + 86400),
         client,
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         grant,
       });

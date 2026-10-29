@@ -42,40 +42,41 @@ describe('Code & ID Token & Token Response Type', () => {
 
   const pkceMock = jest.mocked(PKCE.prototype);
 
-  const client: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), { id: 'client_id' });
-  const user: User = Object.assign<User, Partial<User>>(Reflect.construct(User, []), { id: 'user_id' });
+  const client: Client = Object.assign<Client, Partial<Client>>(new Client(), { id: 'client_id' });
+  const user: User = Object.assign<User, Partial<User>>(new User(), { id: 'user_id' });
 
-  const activeLogin: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), { id: 'login_id' });
+  const activeLogin: Login = Object.assign<Login, Partial<Login>>(new Login(), { id: 'login_id' });
 
   const scopes: Scope[] = ['openid', 'foo', 'bar'].map((scope) => {
     return Object.assign<Scope, Partial<Scope>>(new Scope(), { name: scope });
   });
 
-  const consent: Consent = Object.assign<Consent, Partial<Consent>>(Reflect.construct(Consent, []), {
+  const consent: Consent = Object.assign<Consent, Partial<Consent>>(new Consent(), {
     id: 'consent_id',
     scopes,
     client,
     user,
   });
 
-  const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+  const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
     id: 'grant_id',
     consent,
   });
 
-  const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+  const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
     id: 'session_id',
     activeLogin,
     grant,
   });
 
-  const accessToken: AccessToken = Object.assign<AccessToken, Partial<AccessToken>>(
-    Reflect.construct(AccessToken, []),
-    { id: 'access_token', scopes, expiresAt: new Date(Date.now() + 3600000) },
-  );
+  const accessToken: AccessToken = Object.assign<AccessToken, Partial<AccessToken>>(new AccessToken(), {
+    id: 'access_token',
+    scopes,
+    expiresAt: new Date(Date.now() + 3600000),
+  });
 
   const authorizationCode: AuthorizationCode = Object.assign<AuthorizationCode, Partial<AuthorizationCode>>(
-    Reflect.construct(AuthorizationCode, []),
+    new AuthorizationCode(),
     { id: 'authorization_code' },
   );
 

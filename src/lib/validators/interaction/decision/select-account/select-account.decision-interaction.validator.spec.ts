@@ -97,7 +97,7 @@ describe('Select Account Decision Interaction Request Validator', () => {
   describe('validate()', () => {
     let parameters: SelectAccountDecisionInteractionRequest;
 
-    const client: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), { id: 'client_id' });
+    const client: Client = Object.assign<Client, Partial<Client>>(new Client(), { id: 'client_id' });
 
     const requestFactory = (data: Partial<SelectAccountDecisionInteractionRequest> = {}): HttpRequest => {
       removeNullishValues<SelectAccountDecisionInteractionRequest>(Object.assign(parameters, data));
@@ -157,11 +157,11 @@ describe('Select Account Decision Interaction Request Validator', () => {
     it('should throw when the Client requests a Grant that was not issued to itself.', async () => {
       const request = requestFactory();
 
-      const anotherClient: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), {
+      const anotherClient: Client = Object.assign<Client, Partial<Client>>(new Client(), {
         id: 'another_client_id',
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         client: anotherClient,
       });
@@ -210,7 +210,7 @@ describe('Select Account Decision Interaction Request Validator', () => {
     it.each(invalidLoginIds)('should throw when the provided parameter "login_id" is invalid.', async (loginId) => {
       const request = requestFactory({ login_id: loginId });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         expiresAt: new Date(Date.now() + 300000),
         client,
@@ -234,16 +234,16 @@ describe('Select Account Decision Interaction Request Validator', () => {
     it('should throw when the Session of the Grant does not have the requested Login.', async () => {
       const request = requestFactory();
 
-      const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'another_login_id',
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         logins: [login],
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         expiresAt: new Date(Date.now() + 300000),
         client,
@@ -268,17 +268,17 @@ describe('Select Account Decision Interaction Request Validator', () => {
     it('should throw when the requested Login is expired.', async () => {
       const request = requestFactory();
 
-      const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         expiresAt: new Date(Date.now() - 300000),
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         logins: [login],
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         expiresAt: new Date(Date.now() + 300000),
         client,
@@ -305,14 +305,14 @@ describe('Select Account Decision Interaction Request Validator', () => {
     it('should return a Select Account Decision Interaction Context.', async () => {
       const request = requestFactory();
 
-      const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), { id: 'login_id' });
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), { id: 'login_id' });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         logins: [login],
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         expiresAt: new Date(Date.now() + 300000),
         client,

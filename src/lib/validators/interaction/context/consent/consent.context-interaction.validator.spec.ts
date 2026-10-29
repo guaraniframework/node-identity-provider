@@ -100,7 +100,7 @@ describe('Consent Context Interaction Validator', () => {
   describe('validate()', () => {
     let parameters: ConsentContextInteractionRequest;
 
-    const client: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), { id: 'client_id' });
+    const client: Client = Object.assign<Client, Partial<Client>>(new Client(), { id: 'client_id' });
 
     const requestFactory = (data: Partial<ConsentContextInteractionRequest> = {}): HttpRequest => {
       removeNullishValues<ConsentContextInteractionRequest>(Object.assign(parameters, data));
@@ -160,7 +160,7 @@ describe('Consent Context Interaction Validator', () => {
     it('should throw when the Client requests a Grant that was not issued to itself.', async () => {
       const request = requestFactory();
 
-      const anotherClient: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), {
+      const anotherClient: Client = Object.assign<Client, Partial<Client>>(new Client(), {
         id: 'another_client_id',
       });
 

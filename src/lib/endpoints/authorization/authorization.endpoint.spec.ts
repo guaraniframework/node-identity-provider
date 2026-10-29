@@ -168,26 +168,26 @@ describe('Authorization Endpoint', () => {
       }),
     );
 
-    const client: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), { id: 'client_id' });
+    const client: Client = Object.assign<Client, Partial<Client>>(new Client(), { id: 'client_id' });
 
-    const login: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+    const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
       id: 'login_id',
       createdAt: new Date(),
       expiresAt: null,
     });
 
-    const consent: Consent = Object.assign<Consent, Partial<Consent>>(Reflect.construct(Consent, []), {
+    const consent: Consent = Object.assign<Consent, Partial<Consent>>(new Consent(), {
       id: 'consent_id',
       expiresAt: null,
     });
 
-    const nonExpiredLogin: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+    const nonExpiredLogin: Login = Object.assign<Login, Partial<Login>>(new Login(), {
       id: 'login_id',
       createdAt: new Date(),
       expiresAt: new Date(Date.now() + 3600000),
     });
 
-    const nonExpiredConsent: Consent = Object.assign<Consent, Partial<Consent>>(Reflect.construct(Consent, []), {
+    const nonExpiredConsent: Consent = Object.assign<Consent, Partial<Consent>>(new Consent(), {
       id: 'login_id',
       expiresAt: new Date(Date.now() + 3600000),
     });
@@ -563,18 +563,18 @@ describe('Authorization Endpoint', () => {
         scope: 'foo bar',
       };
 
-      expiredLogin = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+      expiredLogin = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         expiresAt: new Date(Date.now() - 3600000),
       });
 
-      oldLogin = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+      oldLogin = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         createdAt: new Date(Date.now() - 3600000),
         expiresAt: null,
       });
 
-      expiredConsent = Object.assign<Consent, Partial<Consent>>(Reflect.construct(Consent, []), {
+      expiredConsent = Object.assign<Consent, Partial<Consent>>(new Consent(), {
         id: 'consent_id',
         expiresAt: new Date(Date.now() - 3600000),
       });
@@ -641,7 +641,7 @@ describe('Authorization Endpoint', () => {
 
       const context = { parameters, session: null } as AuthorizationContext;
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
       });
 
@@ -662,12 +662,12 @@ describe('Authorization Endpoint', () => {
     it('should return a Redirect Response to the Registration Page when the Prompt "create" is requested in a new Authorization process.', async () => {
       const request = requestFactory({ prompt: 'create' });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         grant: null,
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         interactions: [],
@@ -697,13 +697,13 @@ describe('Authorization Endpoint', () => {
     it('should return a Redirect Response to the Registration Page when the Prompt "create" is requested and not yet processed.', async () => {
       const request = requestFactory({ prompt: 'create' });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         interactions: [],
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         grant,
       });
@@ -731,13 +731,13 @@ describe('Authorization Endpoint', () => {
     it('should return an Error Response when the Prompt "select_account" is requested in a new Authorization process and no previous Login is found.', async () => {
       const request = requestFactory({ prompt: 'select_account' });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         logins: [],
         grant: null,
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         interactions: [],
@@ -772,13 +772,13 @@ describe('Authorization Endpoint', () => {
     it('should return an Error Response when the Prompt "select_account" is requested and not yet processed and no previous Login is found.', async () => {
       const request = requestFactory({ prompt: 'select_account' });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         interactions: [],
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         logins: [],
         grant,
@@ -810,13 +810,13 @@ describe('Authorization Endpoint', () => {
     it('should return a Redirect Response to the Account Selection Page when the Prompt "select_account" is requested in a new Authorization process.', async () => {
       const request = requestFactory({ prompt: 'select_account' });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         logins: [login],
         grant: null,
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         interactions: [],
@@ -846,13 +846,13 @@ describe('Authorization Endpoint', () => {
     it('should return a Redirect Response to the Account Selection Page when the Prompt "select_account" is requested and not yet processed.', async () => {
       const request = requestFactory({ prompt: 'select_account' });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         interactions: [],
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         logins: [login],
         grant,
@@ -881,14 +881,14 @@ describe('Authorization Endpoint', () => {
     it('should return an Error Response when the Prompt "none" is requested in a new Authorization process and no previous Login is found.', async () => {
       const request = requestFactory({ prompt: 'none' });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: null,
         logins: [],
         grant: null,
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         interactions: [],
@@ -922,13 +922,13 @@ describe('Authorization Endpoint', () => {
     it('should return an Error Response when the Prompt "none" is requested and not yet processed and no previous Login is found.', async () => {
       const request = requestFactory({ prompt: 'none' });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         interactions: [],
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: null,
         logins: [],
@@ -961,14 +961,14 @@ describe('Authorization Endpoint', () => {
     it('should return a Redirect Response to the Login Page while invalidating the Active Login when the Prompt "login" is requested in a new Authorization process.', async () => {
       const request = requestFactory({ prompt: 'login' });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],
         grant: null,
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         interactions: [],
@@ -1007,14 +1007,14 @@ describe('Authorization Endpoint', () => {
     it('should return a Redirect Response to the Login Page when the Prompt "login" is requested in a new Authorization process without an Active Login.', async () => {
       const request = requestFactory({ prompt: 'login' });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: null,
         logins: [],
         grant: null,
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         interactions: [],
@@ -1045,14 +1045,14 @@ describe('Authorization Endpoint', () => {
     it('should return a Redirect Response to the Login Page when the Prompt "login" is not requested in a new Authorization process without an Active Login.', async () => {
       const request = requestFactory({ prompt: 'login' });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: null,
         logins: [],
         grant: null,
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         interactions: [],
@@ -1083,13 +1083,13 @@ describe('Authorization Endpoint', () => {
     it('should return a Redirect Response to the Login Page when the Prompt "login" is requested and not yet processed without an Active Login.', async () => {
       const request = requestFactory({ prompt: 'login' });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         interactions: [],
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: null,
         logins: [],
@@ -1120,13 +1120,13 @@ describe('Authorization Endpoint', () => {
     it('should return a Redirect Response to the Login Page when the Prompt "login" is not requested in an existing Authorization process without an Active Login.', async () => {
       const request = requestFactory({ prompt: 'login' });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         interactions: [],
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: null,
         logins: [],
@@ -1157,13 +1157,13 @@ describe('Authorization Endpoint', () => {
     it('should return a Redirect Response to the Login Page when the Prompt "login" is requested and not yet processed with an Active Login.', async () => {
       const request = requestFactory({ prompt: 'login' });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         interactions: [],
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],
@@ -1202,14 +1202,14 @@ describe('Authorization Endpoint', () => {
     it('should return an Error Response when the Prompt "none" is requested in a new Authorization process with an expired Active Login.', async () => {
       const request = requestFactory({ prompt: 'none' });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: expiredLogin,
         logins: [expiredLogin],
         grant: null,
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         interactions: [],
@@ -1242,13 +1242,13 @@ describe('Authorization Endpoint', () => {
     it('should return an Error Response when the Prompt "none" is requested and not yet processed with an expired Active Login.', async () => {
       const request = requestFactory({ prompt: 'none' });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         interactions: [],
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: expiredLogin,
         logins: [expiredLogin],
@@ -1281,14 +1281,14 @@ describe('Authorization Endpoint', () => {
     it('should return a Redirect Response to the Login Page when the Prompt "none" is not requested in a new Authorization process with an expired Active Login.', async () => {
       const request = requestFactory({ prompt: 'none' });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: expiredLogin,
         logins: [expiredLogin],
         grant: null,
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         interactions: [],
@@ -1318,13 +1318,13 @@ describe('Authorization Endpoint', () => {
     it('should return a Redirect Response to the Login Page when the Prompt "none" is not requested in an existing Authorization process with an expired Active Login.', async () => {
       const request = requestFactory({ prompt: 'none' });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         interactions: [],
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: expiredLogin,
         logins: [expiredLogin],
@@ -1354,14 +1354,14 @@ describe('Authorization Endpoint', () => {
     it('should return an Error Response when the Parameter "max_age" is 0 and the Prompt "none" is requested in a new Authorization process.', async () => {
       const request = requestFactory({ prompt: 'none', max_age: '0' });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],
         grant: null,
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         interactions: [],
@@ -1396,14 +1396,14 @@ describe('Authorization Endpoint', () => {
     it('should return an Error Response when the Parameter "max_age" is not 0 and the Prompt "none" is requested in a new Authorization process with an ancient Active Login.', async () => {
       const request = requestFactory({ prompt: 'none', max_age: '300' });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: oldLogin,
         logins: [oldLogin],
         grant: null,
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         interactions: [],
@@ -1438,14 +1438,14 @@ describe('Authorization Endpoint', () => {
     it('should return a Redirect Response to the Login Page when the Parameter "max_age" is 0 in a new Authorization process.', async () => {
       const request = requestFactory({ max_age: '0' });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],
         grant: null,
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         interactions: [],
@@ -1478,14 +1478,14 @@ describe('Authorization Endpoint', () => {
     it('should return a Redirect Response to the Login Page when the Parameter "max_age" is not 0 in a new Authorization process with an ancient Active Login.', async () => {
       const request = requestFactory({ max_age: '300' });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: oldLogin,
         logins: [oldLogin],
         grant: null,
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         interactions: [],
@@ -1518,13 +1518,13 @@ describe('Authorization Endpoint', () => {
     it('should return an Error Response when the Parameter "max_age" is 0 and the Prompt "none" is requested and not yet processed.', async () => {
       const request = requestFactory({ prompt: 'none', max_age: '0' });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         interactions: [],
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],
@@ -1561,13 +1561,13 @@ describe('Authorization Endpoint', () => {
       async (interaction) => {
         const request = requestFactory({ prompt: 'none', max_age: '0' });
 
-        const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+        const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
           id: 'grant_id',
           loginChallenge: 'login_challenge',
           interactions: [interaction],
         });
 
-        const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+        const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
           id: 'session_id',
           activeLogin: oldLogin,
           logins: [oldLogin],
@@ -1605,13 +1605,13 @@ describe('Authorization Endpoint', () => {
       async (interaction) => {
         const request = requestFactory({ prompt: 'none', max_age: '300' });
 
-        const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+        const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
           id: 'grant_id',
           loginChallenge: 'login_challenge',
           interactions: [interaction],
         });
 
-        const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+        const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
           id: 'session_id',
           activeLogin: oldLogin,
           logins: [oldLogin],
@@ -1647,13 +1647,13 @@ describe('Authorization Endpoint', () => {
     it('should return a Redirect Response to the Login Page when the Parameter "max_age" is 0 and not yet processed.', async () => {
       const request = requestFactory({ max_age: '0' });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         interactions: [],
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],
@@ -1688,13 +1688,13 @@ describe('Authorization Endpoint', () => {
       async (interaction) => {
         const request = requestFactory({ max_age: '0' });
 
-        const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+        const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
           id: 'grant_id',
           loginChallenge: 'login_challenge',
           interactions: [interaction],
         });
 
-        const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+        const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
           id: 'session_id',
           activeLogin: oldLogin,
           logins: [oldLogin],
@@ -1730,13 +1730,13 @@ describe('Authorization Endpoint', () => {
       async (interaction) => {
         const request = requestFactory({ max_age: '300' });
 
-        const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+        const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
           id: 'grant_id',
           loginChallenge: 'login_challenge',
           interactions: [interaction],
         });
 
-        const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+        const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
           id: 'session_id',
           activeLogin: oldLogin,
           logins: [oldLogin],
@@ -1770,14 +1770,14 @@ describe('Authorization Endpoint', () => {
     it('should return an Error Response when the Parameter "id_token_hint" does not correspond to the Authenticated User in a new Authorization process.', async () => {
       const request = requestFactory({ id_token_hint: 'id_token_hint' });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],
         grant: null,
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         interactions: [],
@@ -1813,13 +1813,13 @@ describe('Authorization Endpoint', () => {
     it('should return an Error Response when the Parameter "id_token_hint" does not correspond to the Authenticated User in an ongoing Authorization process.', async () => {
       const request = requestFactory({ id_token_hint: 'id_token_hint' });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         interactions: [],
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],
@@ -1855,14 +1855,14 @@ describe('Authorization Endpoint', () => {
     it('should return an Error Response when the Prompt "none" is requested and no previous Consent is found.', async () => {
       const request = requestFactory({ prompt: 'none' });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         consentChallenge: 'consent_challenge',
         interactions: [],
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],
@@ -1895,14 +1895,14 @@ describe('Authorization Endpoint', () => {
     it('should return a Redirect Response to the Consent Page when no previous Consent is found.', async () => {
       const request = requestFactory();
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         consentChallenge: 'consent_challenge',
         interactions: [],
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],
@@ -1933,14 +1933,14 @@ describe('Authorization Endpoint', () => {
     it('should return a Redirect Response to the Consent Page when the Prompt "consent" is requested and no previous Consent is found.', async () => {
       const request = requestFactory({ prompt: 'consent' });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         consentChallenge: 'consent_challenge',
         interactions: [],
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],
@@ -1971,14 +1971,14 @@ describe('Authorization Endpoint', () => {
     it('should return a Redirect Response to the Consent Page when the Prompt "consent" is requested.', async () => {
       const request = requestFactory({ prompt: 'consent' });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         consentChallenge: 'consent_challenge',
         interactions: [],
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],
@@ -2010,14 +2010,14 @@ describe('Authorization Endpoint', () => {
     it('should return an Error Response when the Prompt "none" is requested for a previous expired Consent.', async () => {
       const request = requestFactory({ prompt: 'none' });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         consentChallenge: 'consent_challenge',
         interactions: [],
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],
@@ -2051,14 +2051,14 @@ describe('Authorization Endpoint', () => {
     it('should return a Redirect Response to the Consent Page for a previous expired Consent.', async () => {
       const request = requestFactory();
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         consentChallenge: 'consent_challenge',
         interactions: [],
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],
@@ -2090,7 +2090,7 @@ describe('Authorization Endpoint', () => {
     it('should return an Error Response in an ongoing Authorization process with an expired Consent.', async () => {
       const request = requestFactory();
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         consentChallenge: 'consent_challenge',
@@ -2098,7 +2098,7 @@ describe('Authorization Endpoint', () => {
         consent: expiredConsent,
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],
@@ -2132,7 +2132,7 @@ describe('Authorization Endpoint', () => {
     it('should return an Error Response when the Prompt "consent" is requested in an ongoing Authorization process with an expired Consent.', async () => {
       const request = requestFactory({ prompt: 'consent' });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         consentChallenge: 'consent_challenge',
@@ -2140,7 +2140,7 @@ describe('Authorization Endpoint', () => {
         consent: expiredConsent,
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],
@@ -2176,7 +2176,7 @@ describe('Authorization Endpoint', () => {
       async (prompts, interactions, login, maxAge, idTokenHint, consent) => {
         const request = requestFactory();
 
-        const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+        const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
           id: 'grant_id',
           loginChallenge: 'login_challenge',
           consentChallenge: 'consent_challenge',
@@ -2184,7 +2184,7 @@ describe('Authorization Endpoint', () => {
           consent: interactions.includes('consent') ? consent : null,
         });
 
-        const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+        const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
           id: 'session_id',
           activeLogin: login,
           logins: [login],
@@ -2234,14 +2234,14 @@ describe('Authorization Endpoint', () => {
     it('should return an Authorization Response with the Authorization Response Issuer Identifier.', async () => {
       const request = requestFactory();
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         loginChallenge: 'login_challenge',
         consentChallenge: 'consent_challenge',
         interactions: [],
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: login,
         logins: [login],

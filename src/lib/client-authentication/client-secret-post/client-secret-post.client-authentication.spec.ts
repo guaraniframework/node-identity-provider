@@ -163,7 +163,7 @@ describe('Client Secret Post Client Authentication', () => {
     it('should throw when the Client has no Secret.', async () => {
       const request = requestFactory();
 
-      const client: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), {
+      const client: Client = Object.assign<Client, Partial<Client>>(new Client(), {
         id: 'client_id',
         secrets: [],
       });
@@ -187,12 +187,11 @@ describe('Client Secret Post Client Authentication', () => {
     it('should throw when the provided Client Secret has a different length than expected.', async () => {
       const request = requestFactory();
 
-      const secret: ClientSecret = Object.assign<ClientSecret, Partial<ClientSecret>>(
-        Reflect.construct(ClientSecret, []),
-        { secret: 'another_client_secret' },
-      );
+      const secret: ClientSecret = Object.assign<ClientSecret, Partial<ClientSecret>>(new ClientSecret(), {
+        secret: 'another_client_secret',
+      });
 
-      const client: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), {
+      const client: Client = Object.assign<Client, Partial<Client>>(new Client(), {
         id: 'client_id',
         secrets: [secret],
       });
@@ -216,12 +215,11 @@ describe('Client Secret Post Client Authentication', () => {
     it('should throw when the provided Client Secret is not valid for the Client.', async () => {
       const request = requestFactory();
 
-      const secret: ClientSecret = Object.assign<ClientSecret, Partial<ClientSecret>>(
-        Reflect.construct(ClientSecret, []),
-        { secret: 'secret_client' },
-      );
+      const secret: ClientSecret = Object.assign<ClientSecret, Partial<ClientSecret>>(new ClientSecret(), {
+        secret: 'secret_client',
+      });
 
-      const client: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), {
+      const client: Client = Object.assign<Client, Partial<Client>>(new Client(), {
         id: 'client_id',
         secrets: [secret],
       });
@@ -245,12 +243,12 @@ describe('Client Secret Post Client Authentication', () => {
     it('should throw when the provided Client Secret is expired.', async () => {
       const request = requestFactory();
 
-      const secret: ClientSecret = Object.assign<ClientSecret, Partial<ClientSecret>>(
-        Reflect.construct(ClientSecret, []),
-        { secret: 'client_secret', expiresAt: new Date(Date.now() - 3600000) },
-      );
+      const secret: ClientSecret = Object.assign<ClientSecret, Partial<ClientSecret>>(new ClientSecret(), {
+        secret: 'client_secret',
+        expiresAt: new Date(Date.now() - 3600000),
+      });
 
-      const client: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), {
+      const client: Client = Object.assign<Client, Partial<Client>>(new Client(), {
         id: 'client_id',
         secrets: [secret],
       });
@@ -274,12 +272,12 @@ describe('Client Secret Post Client Authentication', () => {
     it('should throw when the Client is not allowed to use this Client Authentication Method.', async () => {
       const request = requestFactory();
 
-      const secret: ClientSecret = Object.assign<ClientSecret, Partial<ClientSecret>>(
-        Reflect.construct(ClientSecret, []),
-        { secret: 'client_secret', expiresAt: new Date(Date.now() + 3600000) },
-      );
+      const secret: ClientSecret = Object.assign<ClientSecret, Partial<ClientSecret>>(new ClientSecret(), {
+        secret: 'client_secret',
+        expiresAt: new Date(Date.now() + 3600000),
+      });
 
-      const client: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), {
+      const client: Client = Object.assign<Client, Partial<Client>>(new Client(), {
         id: 'client_id',
         secrets: [secret],
         authenticationMethod: 'none',
@@ -304,12 +302,12 @@ describe('Client Secret Post Client Authentication', () => {
     it('should return the Client based on the provided Client Identifier.', async () => {
       const request = requestFactory();
 
-      const secret: ClientSecret = Object.assign<ClientSecret, Partial<ClientSecret>>(
-        Reflect.construct(ClientSecret, []),
-        { secret: 'client_secret', expiresAt: new Date(Date.now() + 3600000) },
-      );
+      const secret: ClientSecret = Object.assign<ClientSecret, Partial<ClientSecret>>(new ClientSecret(), {
+        secret: 'client_secret',
+        expiresAt: new Date(Date.now() + 3600000),
+      });
 
-      const client: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), {
+      const client: Client = Object.assign<Client, Partial<Client>>(new Client(), {
         id: 'client_id',
         secrets: [secret],
         authenticationMethod: 'client_secret_post',

@@ -78,7 +78,7 @@ describe('Create Interaction Type', () => {
     });
 
     it('should return a non-skip Create Context Interaction Response.', async () => {
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters: grantParameters,
         interactions: [],
@@ -100,7 +100,7 @@ describe('Create Interaction Type', () => {
     });
 
     it('should return a skip Create Context Interaction Response.', async () => {
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters: grantParameters,
         interactions: ['create'],
@@ -122,7 +122,7 @@ describe('Create Interaction Type', () => {
     });
 
     it('should return a Create Context Interaction Response with an empty Context.', async () => {
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters: {} as AuthorizationRequest,
         interactions: ['create'],
@@ -149,14 +149,14 @@ describe('Create Interaction Type', () => {
 
     const grantParameters = { display: 'page', prompt: 'create', ui_locales: 'en-US' } as AuthorizationRequest;
 
-    const client: Client = Object.assign<Client, Partial<Client>>(Reflect.construct(Client, []), { id: 'client_id' });
+    const client: Client = Object.assign<Client, Partial<Client>>(new Client(), { id: 'client_id' });
 
     it('should return a first time Create Decision Interaction Response.', async () => {
-      const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
       });
 
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters: grantParameters,
         interactions: [],
@@ -165,7 +165,7 @@ describe('Create Interaction Type', () => {
         session,
       });
 
-      const user: User = Object.assign<User, Partial<User>>(Reflect.construct(User, []), { id: 'user_id', ...data });
+      const user: User = Object.assign<User, Partial<User>>(new User(), { id: 'user_id', ...data });
 
       const context = { grant, data } as CreateDecisionInteractionContext;
 
@@ -189,7 +189,7 @@ describe('Create Interaction Type', () => {
     });
 
     it('should return a subsequent Create Decision Interaction Response.', async () => {
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters: grantParameters,
         interactions: ['create'],

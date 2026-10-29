@@ -787,7 +787,7 @@ export class SQLiteDataAccess extends DataAccess {
       return null;
     }
 
-    return Object.assign<Consent, Partial<Consent>>(Reflect.construct(Consent, []), {
+    return Object.assign<Consent, Partial<Consent>>(new Consent(), {
       id: toUUIDString(consentParameters['id'] as Uint8Array),
       scopes: this._findConsentScopesByConsentId(toUUIDString(consentParameters['id'] as Uint8Array)),
       createdAt: new Date((consentParameters['created_at']! as number) * 1000),
@@ -805,7 +805,7 @@ export class SQLiteDataAccess extends DataAccess {
       return null;
     }
 
-    return Object.assign<Consent, Partial<Consent>>(Reflect.construct(Consent, []), {
+    return Object.assign<Consent, Partial<Consent>>(new Consent(), {
       id: toUUIDString(consentParameters['id'] as Uint8Array),
       scopes: this._findConsentScopesByConsentId(id),
       createdAt: new Date((consentParameters['created_at']! as number) * 1000),
@@ -905,7 +905,7 @@ export class SQLiteDataAccess extends DataAccess {
       return null;
     }
 
-    return Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+    return Object.assign<Login, Partial<Login>>(new Login(), {
       id: toUUIDString(loginParameters['id'] as Uint8Array),
       amr: jsonParse(loginParameters['amr']!.toString()) as string[],
       acr: loginParameters['acr']?.toString() ?? null,
@@ -935,7 +935,7 @@ export class SQLiteDataAccess extends DataAccess {
     const loginsParameters = this.database.prepare(loginsSql).all({ session_id: toUUIDBuffer(id) });
 
     return loginsParameters.map((loginParameters) => {
-      return Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), {
+      return Object.assign<Login, Partial<Login>>(new Login(), {
         id: toUUIDString(loginParameters['id'] as Uint8Array),
         amr: jsonParse(loginParameters['amr']!.toString()) as string[],
         acr: loginParameters['acr']?.toString() ?? null,
@@ -956,7 +956,7 @@ export class SQLiteDataAccess extends DataAccess {
       return null;
     }
 
-    const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+    const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
       id: toUUIDString(sessionParameters['id'] as Uint8Array),
     });
 
@@ -1071,7 +1071,7 @@ function instantiateClient(
 }
 
 function instantiateGrant(parameters: Record<string, SQLOutputValue>): Grant {
-  return Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+  return Object.assign<Grant, Partial<Grant>>(new Grant(), {
     id: toUUIDString(parameters['id'] as Uint8Array),
     loginChallenge: parameters['login_challenge']!.toString(),
     consentChallenge: parameters['consent_challenge']!.toString(),
@@ -1108,7 +1108,7 @@ function instantiateUser(
     country: userAddressParameters['country']?.toString() ?? null,
   });
 
-  return Object.assign<User, Partial<User>>(Reflect.construct(User, []), {
+  return Object.assign<User, Partial<User>>(new User(), {
     id: toUUIDString(userParameters['id'] as Uint8Array),
     password: userParameters['password']!.toString(),
     name: userParameters['middle_name']

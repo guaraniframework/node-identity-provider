@@ -72,11 +72,11 @@ describe('Select Account Interaction Type', () => {
   describe('handleContext()', () => {
     let grantParameters: AuthorizationRequest;
 
-    const login0: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), { id: 'login0_id' });
-    const login1: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), { id: 'login1_id' });
-    const login2: Login = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), { id: 'login2_id' });
+    const login0: Login = Object.assign<Login, Partial<Login>>(new Login(), { id: 'login0_id' });
+    const login1: Login = Object.assign<Login, Partial<Login>>(new Login(), { id: 'login1_id' });
+    const login2: Login = Object.assign<Login, Partial<Login>>(new Login(), { id: 'login2_id' });
 
-    const session: Session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+    const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
       id: 'session_id',
       logins: [login0, login1, login2],
     });
@@ -86,7 +86,7 @@ describe('Select Account Interaction Type', () => {
     });
 
     it('should return a non-skip Select Account Context Interaction Response.', async () => {
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters: grantParameters,
         interactions: [],
@@ -112,7 +112,7 @@ describe('Select Account Interaction Type', () => {
     });
 
     it('should return a skip Select Account Context Interaction Response.', async () => {
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters: grantParameters,
         interactions: ['select_account'],
@@ -138,7 +138,7 @@ describe('Select Account Interaction Type', () => {
     });
 
     it('should return a Select Account Context Interaction Response with an empty Context.', async () => {
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters: {} as AuthorizationRequest,
         interactions: ['select_account'],
@@ -169,10 +169,10 @@ describe('Select Account Interaction Type', () => {
     let session: Session;
 
     beforeEach(() => {
-      login0 = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), { id: 'login0_id' });
-      login1 = Object.assign<Login, Partial<Login>>(Reflect.construct(Login, []), { id: 'login1_id' });
+      login0 = Object.assign<Login, Partial<Login>>(new Login(), { id: 'login0_id' });
+      login1 = Object.assign<Login, Partial<Login>>(new Login(), { id: 'login1_id' });
 
-      session = Object.assign<Session, Partial<Session>>(Reflect.construct(Session, []), {
+      session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         activeLogin: null,
         logins: [login0, login1],
@@ -180,7 +180,7 @@ describe('Select Account Interaction Type', () => {
     });
 
     it('should return a first time Select Account Decision Interaction Response.', async () => {
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters: grantParameters,
         interactions: [],
@@ -213,7 +213,7 @@ describe('Select Account Interaction Type', () => {
     });
 
     it('should return a subsequent Select Account Decision Interaction Response.', async () => {
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(Reflect.construct(Grant, []), {
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
         parameters: grantParameters,
         interactions: ['select_account'],
