@@ -24,6 +24,7 @@ export {
   DEFAULT_MINIMUM_MAX_AGE,
   DEFAULT_SESSION_COOKIE,
   INTERACTION_CLIENT_AUTHENTICATION,
+  TOKEN_CLIENT_AUTHENTICATION,
 } from './lib/constants';
 export { type AuthorizationContext } from './lib/context/authorization/authorization-context';
 export { type CodeAuthorizationContext } from './lib/context/authorization/code/code.authorization-context';
@@ -49,6 +50,7 @@ export { type LoginAcceptDecisionInteractionContext } from './lib/context/intera
 export { type LoginDenyDecisionInteractionContext } from './lib/context/interaction/decision/login/login-deny.decision-interaction-context';
 export { type SelectAccountDecisionInteractionContext } from './lib/context/interaction/decision/select-account/select-account.decision-interaction-context';
 export { type InteractionContext } from './lib/context/interaction/interaction-context';
+export { type TokenContext } from './lib/context/token/token-context';
 export { DataAccess } from './lib/data-access/data-access';
 export { SQLiteDataAccess } from './lib/data-access/sqlite/sqlite.data-access';
 export { Display } from './lib/displays/display';
@@ -60,6 +62,7 @@ export { WapDisplay } from './lib/displays/wap/wap.display';
 export { AuthorizationEndpoint } from './lib/endpoints/authorization/authorization.endpoint';
 export { Endpoint } from './lib/endpoints/endpoint';
 export { type EndpointName } from './lib/endpoints/endpoint-name.type';
+export { TokenEndpoint } from './lib/endpoints/token/token.endpoint';
 export { AccessToken } from './lib/entities/access-token';
 export { AuthorizationCode } from './lib/entities/authorization-code';
 export { Client } from './lib/entities/client';
@@ -86,10 +89,13 @@ export { NotFoundError } from './lib/errors/not-found/not-found.error';
 export { ServerErrorError } from './lib/errors/server-error/server-error.error';
 export { UnauthorizedClientError } from './lib/errors/unauthorized-client/unauthorized-client.error';
 export { UnmetAuthenticationRequirementsError } from './lib/errors/unmet-authentication-requirements/unmet-authentication-requirements.error';
+export { UnsupportedGrantTypeError } from './lib/errors/unsupported-grant-type/unsupported-grant-type.error';
 export { UnsupportedInteractionTypeError } from './lib/errors/unsupported-interaction-type/unsupported-interaction-type.error';
 export { UnsupportedMediaTypeError } from './lib/errors/unsupported-media-type/unsupported-media-type.error';
 export { UnsupportedResponseTypeError } from './lib/errors/unsupported-response-type/unsupported-response-type.error';
 export { IdentityProviderFactory } from './lib/factory/identity-provider.factory';
+export { GrantType } from './lib/grant-types/grant-type';
+export { type GrantTypeName } from './lib/grant-types/grant-type-name.type';
 export { ClientAuthenticationHandler } from './lib/handlers/client-authentication/client-authentication.handler';
 export { IdTokenHandler } from './lib/handlers/id-token/id-token.handler';
 export { ScopeHandler } from './lib/handlers/scope/scope.handler';
@@ -140,6 +146,7 @@ export { type LoginAcceptDecisionInteractionRequest } from './lib/requests/inter
 export { type LoginDenyDecisionInteractionRequest } from './lib/requests/interaction/decision/login/login-deny.decision-interaction-request';
 export { type SelectAccountDecisionInteractionRequest } from './lib/requests/interaction/decision/select-account/select-account.decision-interaction-request';
 export { type InteractionRequest } from './lib/requests/interaction/interaction-request';
+export { type TokenRequest } from './lib/requests/token/token-request';
 export { FormPostResponseMode } from './lib/response-modes/form-post/form-post.response-mode';
 export { FragmentResponseMode } from './lib/response-modes/fragment/fragment.response-mode';
 export { QueryResponseMode } from './lib/response-modes/query/query.response-mode';
@@ -211,4 +218,5 @@ export { CreateDecisionInteractionValidator } from './lib/validators/interaction
 export { DecisionInteractionValidator } from './lib/validators/interaction/decision/decision-interaction.validator';
 export { LoginDecisionInteractionValidator } from './lib/validators/interaction/decision/login/login.decision-interaction.validator';
 export { SelectAccountDecisionInteractionValidator } from './lib/validators/interaction/decision/select-account/select-account.decision-interaction.validator';
+export { TokenValidator } from './lib/validators/token/token.validator';
 export { Validator } from './lib/validators/validator';

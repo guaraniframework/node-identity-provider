@@ -28,6 +28,7 @@ import { Scope } from '../../entities/scope';
 import { Session } from '../../entities/session';
 import { User } from '../../entities/user';
 import { UserAddress } from '../../entities/user-address';
+import { GrantTypeName } from '../../grant-types/grant-type-name.type';
 import { InteractionTypeName } from '../../interaction-types/interaction-type-name.type';
 import { Logger } from '../../loggers/logger';
 import { PKCE } from '../../pkces/pkce';
@@ -1040,6 +1041,7 @@ function instantiateClient(
     }),
     scopes,
     responseTypes: jsonParse(parameters['response_types']!.toString()) as ResponseTypeName[],
+    grantTypes: jsonParse(parameters['grant_types']!.toString()) as GrantTypeName[],
     authenticationMethod: parameters['authentication_method']!.toString() as ClientAuthenticationName,
     contacts: jsonParse(parameters['contacts']!.toString()) as string[],
     clientUri: parameters['client_uri'] ? new URL(parameters['client_uri'].toString()) : null,

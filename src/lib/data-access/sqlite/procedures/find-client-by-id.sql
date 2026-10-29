@@ -5,6 +5,7 @@ SELECT
     profile,
     redirect_uris,
     response_types,
+    grant_types,
     authentication_method,
     contacts,
     client_uri,

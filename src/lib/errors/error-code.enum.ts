@@ -68,6 +68,11 @@ export enum ErrorCode {
   UnmetAuthenticationRequirements = 'unmet_authentication_requirements',
 
   /**
+   * The Identity Provider does not support the requested Grant Type.
+   */
+  UnsupportedGrantType = 'unsupported_grant_type',
+
+  /**
    * The Identity Provider does not support the requested Interaction Type.
    */
   UnsupportedInteractionType = 'unsupported_interaction_type',

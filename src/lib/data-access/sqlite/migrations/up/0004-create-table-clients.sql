@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS clients (
     profile TEXT NOT NULL,
     redirect_uris TEXT NOT NULL DEFAULT '[]',
     response_types TEXT NOT NULL DEFAULT '[]',
+    grant_types TEXT NOT NULL DEFAULT '[]',
     authentication_method TEXT NOT NULL,
     contacts TEXT NOT NULL DEFAULT '[]',
     client_uri TEXT NULL,

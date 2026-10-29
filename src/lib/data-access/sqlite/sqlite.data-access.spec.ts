@@ -1731,6 +1731,8 @@ describe('SQLite Data Access', () => {
             redirect_uris: '["https://client.example.com/oidc/callback"]',
             response_types:
               '["code","code id_token","code id_token token","code token","id_token","id_token token","none","token"]',
+            grant_types:
+              '["authorization_code","client_credentials","password","refresh_token","urn:ietf:params:oauth:grant-type:device_code","urn:ietf:params:oauth:grant-type:jwt-bearer"]',
             authentication_method: 'client_secret_basic',
             contacts: '[]',
             client_uri: 'https://client.example.com/about',
@@ -1760,6 +1762,7 @@ describe('SQLite Data Access', () => {
             profile: 'native',
             redirect_uris: '["https://client.example.org/oidc/callback"]',
             response_types: '["code"]',
+            grant_types: '["authorization_code","refresh_token"]',
             authentication_method: 'none',
             contacts: '[]',
             client_uri: null,
@@ -1891,12 +1894,6 @@ describe('SQLite Data Access', () => {
     });
   });
 });
-
-// function toUUIDString(data: Uint8Array): string {
-//   return Buffer.from(data)
-//     .toString('hex')
-//     .replace(/^([\d\w]{8})([\d\w]{4})([\d\w]{4})([\d\w]{4})([\d\w]{12})/i, '$1-$2-$3-$4-$5');
-// }
 
 function toUUIDBuffer(data: string): Buffer {
   return Buffer.from(data.replaceAll('-', ''), 'hex');
