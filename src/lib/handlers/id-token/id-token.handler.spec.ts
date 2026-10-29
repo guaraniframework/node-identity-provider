@@ -443,6 +443,7 @@ describe('ID Token Handler', () => {
     it('should return a signed ID Token with the minimum required Claims.', async () => {
       const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
+        amr: [],
         createdAt: new Date(),
       });
 
@@ -551,6 +552,7 @@ describe('ID Token Handler', () => {
     it('should return a nested ID Token with the minimum required Claims.', async () => {
       const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
+        amr: [],
         createdAt: new Date(),
       });
 

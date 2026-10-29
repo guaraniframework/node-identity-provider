@@ -313,7 +313,7 @@ export class IdTokenHandler {
       idTokenClaims.auth_time = Math.ceil(login.createdAt.getTime() / 1000);
     }
 
-    if (Array.isArray(login.amr)) {
+    if (login.amr.length !== 0) {
       idTokenClaims.amr = login.amr;
     }
 
