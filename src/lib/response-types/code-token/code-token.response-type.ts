@@ -54,7 +54,7 @@ export class CodeTokenResponseType extends ResponseType {
       context,
     });
 
-    const { codeChallenge, codeChallengeMethod } = context;
+    const { parameters } = context;
 
     const login = context.session!.activeLogin!;
     const consent = context.session!.grant!.consent!;
@@ -63,12 +63,7 @@ export class CodeTokenResponseType extends ResponseType {
 
     const [accessToken, authorizationCode] = await this.dataAccess.atomic(async () => {
       const accessToken = await this.dataAccess.createAccessToken(scopes, client, user);
-      const authorizationCode = await this.dataAccess.createAuthorizationCode(
-        codeChallenge,
-        codeChallengeMethod,
-        login,
-        consent,
-      );
+      const authorizationCode = await this.dataAccess.createAuthorizationCode(parameters, login, consent);
 
       return [accessToken, authorizationCode];
     });

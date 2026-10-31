@@ -28,6 +28,11 @@ export enum ErrorCode {
   InvalidClient = 'invalid_client',
 
   /**
+   * The provided Authorization Grant is invalid.
+   */
+  InvalidGrant = 'invalid_grant',
+
+  /**
    * The Identity Provider Request is invalid, contains invalid parameters or is otherwise malformed.
    */
   InvalidRequest = 'invalid_request',
@@ -66,6 +71,11 @@ export enum ErrorCode {
    * The Identity Provider was not able to meet the Authentication Requirements of the Client.
    */
   UnmetAuthenticationRequirements = 'unmet_authentication_requirements',
+
+  /**
+   * The Identity Provider does not support the requested Grant Type.
+   */
+  UnsupportedGrantType = 'unsupported_grant_type',
 
   /**
    * The Identity Provider does not support the requested Interaction Type.

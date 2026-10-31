@@ -13,14 +13,12 @@ import { Scope } from '../../entities/scope';
 import { Session } from '../../entities/session';
 import { User } from '../../entities/user';
 import { Logger } from '../../loggers/logger';
-import { PKCE } from '../../pkces/pkce';
 import { ResponseModeName } from '../../response-modes/response-mode-name.type';
 import { CodeTokenAuthorizationResponse } from '../../responses/authorization/code-token/code-token.authorization-response';
 import { ResponseTypeName } from '../response-type-name.type';
 import { CodeTokenResponseType } from './code-token.response-type';
 
 jest.mock('../../loggers/logger');
-jest.mock('../../pkces/pkce');
 
 describe('Code & Token Response Type', () => {
   let responseType: CodeTokenResponseType;
@@ -35,8 +33,6 @@ describe('Code & Token Response Type', () => {
       createAuthorizationCode: jest.fn(),
     }),
   );
-
-  const pkceMock = jest.mocked(PKCE.prototype);
 
   const client: Client = Object.assign<Client, Partial<Client>>(new Client(), { id: 'client_id' });
   const user: User = Object.assign<User, Partial<User>>(new User(), { id: 'user_id' });
@@ -72,6 +68,7 @@ describe('Code & Token Response Type', () => {
 
   const accessToken: AccessToken = Object.assign<AccessToken, Partial<AccessToken>>(new AccessToken(), {
     id: 'access_token',
+    type: 'Bearer',
     scopes,
     expiresAt: new Date(Date.now() + 3600000),
   });
@@ -102,11 +99,7 @@ describe('Code & Token Response Type', () => {
   });
 
   describe('handle()', () => {
-    const context = {
-      codeChallenge: 'qoJXAtQ-gjzfDmoMrHt1a2AFVe1Tn3-HX0VC2_UtezA',
-      codeChallengeMethod: pkceMock as PKCE,
-      session,
-    } as CodeTokenAuthorizationContext;
+    const context = { parameters: {}, session } as CodeTokenAuthorizationContext;
 
     it('should return a Code & Token Authorization Response.', async () => {
       dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());

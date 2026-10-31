@@ -8,6 +8,7 @@ import {
 } from '@guarani/jose';
 
 import { ClientAuthenticationName } from '../client-authentication/client-authentication-name.type';
+import { GrantTypeName } from '../grant-types/grant-type-name.type';
 import { ResponseTypeName } from '../response-types/response-type-name.type';
 import { SubjectTypeName } from '../subject-types/subject-type-name.type';
 import { ApplicationType } from '../types/application-type.type';
@@ -58,6 +59,11 @@ export class Client implements NodeJS.Dict<unknown> {
    * Client Response Types.
    */
   public responseTypes!: ResponseTypeName[];
+
+  /**
+   * Client Grant Types.
+   */
+  public grantTypes!: GrantTypeName[];
 
   /**
    * Client Authentication Methods.
@@ -128,6 +134,11 @@ export class Client implements NodeJS.Dict<unknown> {
    * JSON Web Signature Algorithm used to validate the JWT Bearer Client Assertion.
    */
   public authenticationSigningAlgorithm!: Exclude<DigitalSignatureAlgorithm, 'none'> | null;
+
+  /**
+   * JSON Web Signature Algorithm used to validate the JWT Bearer Grant Assertion.
+   */
+  public jwtBearerGrantSigningAlgorithm!: Exclude<DigitalSignatureAlgorithm, 'none'> | null;
 
   /**
    * Default Maximum Authentication Age.

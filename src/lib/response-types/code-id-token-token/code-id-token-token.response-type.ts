@@ -59,7 +59,7 @@ export class CodeIdTokenTokenResponseType extends ResponseType {
       context,
     });
 
-    const { codeChallenge, codeChallengeMethod, maxAge, nonce } = context;
+    const { maxAge, nonce, parameters } = context;
 
     const login = context.session!.activeLogin!;
     const consent = context.session!.grant!.consent!;
@@ -68,14 +68,7 @@ export class CodeIdTokenTokenResponseType extends ResponseType {
 
     const [accessToken, authorizationCode, idToken] = await this.dataAccess.atomic(async () => {
       const accessToken = await this.dataAccess.createAccessToken(scopes, client, user);
-
-      const authorizationCode = await this.dataAccess.createAuthorizationCode(
-        codeChallenge,
-        codeChallengeMethod,
-        login,
-        consent,
-      );
-
+      const authorizationCode = await this.dataAccess.createAuthorizationCode(parameters, login, consent);
       const idToken = await this.idTokenHandler.generateIdToken(
         login,
         consent,

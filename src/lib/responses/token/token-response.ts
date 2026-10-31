@@ -1,4 +1,4 @@
-import { AccessTokenType } from '../types/access-token-type.type';
+import { AccessTokenType } from '../../types/access-token-type.type';
 
 /**
  * Parameters of the Token Response.

@@ -11,6 +11,7 @@ import { SQLiteDataAccess } from '../data-access/sqlite/sqlite.data-access';
 import { AuthorizationEndpoint } from '../endpoints/authorization/authorization.endpoint';
 import { Endpoint } from '../endpoints/endpoint';
 import { InteractionEndpoint } from '../endpoints/interaction/interaction.endpoint';
+import { TokenEndpoint } from '../endpoints/token/token.endpoint';
 import { ClientAuthenticationHandler } from '../handlers/client-authentication/client-authentication.handler';
 import { IdTokenHandler } from '../handlers/id-token/id-token.handler';
 import { ScopeHandler } from '../handlers/scope/scope.handler';
@@ -18,6 +19,7 @@ import { IdentityProvider } from '../http/providers/identity-provider';
 import { NodeIdentityProvider } from '../http/providers/node/node.identity-provider';
 import { ConsoleLogger } from '../loggers/console/console.logger';
 import { Logger } from '../loggers/logger';
+import { PKCE } from '../pkces/pkce';
 import { Settings } from '../settings/settings';
 import { PublicSubjectType } from '../subject-types/public/public.subject-type';
 import { SubjectType } from '../subject-types/subject-type';
@@ -232,6 +234,28 @@ describe('Identity Provider Factory', () => {
     });
   });
 
+  describe('addTokenEndpoint()', () => {
+    it('should add the Token Endpoint with the default options to the Identity Provider Factory.', () => {
+      factory['container'].bind(Settings).toValue(Settings.prototype);
+      factory['container'].bind(JsonWebKeySet).toValue(JsonWebKeySet.prototype);
+      factory['container'].bind(DatabaseSync).toValue(DatabaseSync.prototype);
+      factory['container'].bind(PKCE).toValue(PKCE.prototype);
+
+      expect(() => factory.addTokenEndpoint()).not.toThrow();
+      expect(factory['container'].resolve(Endpoint)).toBeInstanceOf(TokenEndpoint);
+    });
+
+    it('should add the Token Endpoint with the provided options to the Identity Provider Factory.', () => {
+      factory['container'].bind(Settings).toValue(Settings.prototype);
+      factory['container'].bind(JsonWebKeySet).toValue(JsonWebKeySet.prototype);
+      factory['container'].bind(DatabaseSync).toValue(DatabaseSync.prototype);
+      factory['container'].bind(PKCE).toValue(PKCE.prototype);
+
+      expect(() => factory.addTokenEndpoint((options) => options.build())).not.toThrow();
+      expect(factory['container'].resolve(Endpoint)).toBeInstanceOf(TokenEndpoint);
+    });
+  });
+
   describe('addLogger()', () => {
     it.each(loggerEntries)('should add the provided Logger to the Identity Provider Factory.', (logger) => {
       expect(() => factory.addLogger(logger)).not.toThrow();
@@ -304,6 +328,7 @@ describe('Identity Provider Factory', () => {
       factory
         .addAuthorizationEndpoint()
         .addInteractionEndpoint()
+        .addTokenEndpoint()
         .addSettings(settings)
         .add(DatabaseSync, Object.create(DatabaseSync.prototype))
         .add(JsonWebKeySet, Object.create(JsonWebKeySet.prototype));
@@ -315,6 +340,7 @@ describe('Identity Provider Factory', () => {
       expect(provider['endpoints']).toStrictEqual<Endpoint[]>([
         expect.any(AuthorizationEndpoint),
         expect.any(InteractionEndpoint),
+        expect.any(TokenEndpoint),
       ]);
     });
 
@@ -330,6 +356,7 @@ describe('Identity Provider Factory', () => {
       factory
         .addAuthorizationEndpoint()
         .addInteractionEndpoint()
+        .addTokenEndpoint()
         .addSettings(settings)
         .addSubjectTypes(['public'])
         .add(DatabaseSync, Object.create(DatabaseSync.prototype))
@@ -342,6 +369,7 @@ describe('Identity Provider Factory', () => {
       expect(provider['endpoints']).toStrictEqual<Endpoint[]>([
         expect.any(AuthorizationEndpoint),
         expect.any(InteractionEndpoint),
+        expect.any(TokenEndpoint),
       ]);
     });
   });

@@ -68,18 +68,11 @@ export class CodeResponseType extends ResponseType {
       context,
     });
 
-    const { codeChallenge, codeChallengeMethod } = context;
-
+    const { parameters } = context;
     const login = context.session!.activeLogin!;
     const consent = context.session!.grant!.consent!;
 
-    const authorizationCode = await this.dataAccess.createAuthorizationCode(
-      codeChallenge,
-      codeChallengeMethod,
-      login,
-      consent,
-    );
-
+    const authorizationCode = await this.dataAccess.createAuthorizationCode(parameters, login, consent);
     const response: CodeAuthorizationResponse = { code: authorizationCode.id };
 
     this.logger.debug(`[${this.constructor.name}] Completed handle()`, 'e2a1dcf7-551f-40fb-a723-a5592d1e9041', {

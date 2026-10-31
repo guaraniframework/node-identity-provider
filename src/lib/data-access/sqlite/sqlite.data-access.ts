@@ -24,14 +24,14 @@ import { ClientSecret } from '../../entities/client-secret';
 import { Consent } from '../../entities/consent';
 import { Grant } from '../../entities/grant';
 import { Login } from '../../entities/login';
+import { RefreshToken } from '../../entities/refresh-token';
 import { Scope } from '../../entities/scope';
 import { Session } from '../../entities/session';
 import { User } from '../../entities/user';
 import { UserAddress } from '../../entities/user-address';
+import { GrantTypeName } from '../../grant-types/grant-type-name.type';
 import { InteractionTypeName } from '../../interaction-types/interaction-type-name.type';
 import { Logger } from '../../loggers/logger';
-import { PKCE } from '../../pkces/pkce';
-import { PKCEName } from '../../pkces/pkce-name.type';
 import { AuthorizationRequest } from '../../requests/authorization/authorization-request';
 import { ResponseTypeName } from '../../response-types/response-type-name.type';
 import { SubjectTypeName } from '../../subject-types/subject-type-name.type';
@@ -143,15 +143,13 @@ export class SQLiteDataAccess extends DataAccess {
   /**
    * Creates an Authorization Code to be exchanged by the Client at the Token Endpoint for an Access Token.
    *
-   * @param codeChallenge PKCE Code Challenge.
-   * @param codeChallengeMethod PKCE Code Challenge Method.
+   * @param parameters Parameters of the Authorization Request.
    * @param login Login with the Authentication information of the User.
    * @param consent Consent with the Scopes granted by the User.
    * @returns Created Authorization Code.
    */
   public async createAuthorizationCode(
-    codeChallenge: string,
-    codeChallengeMethod: PKCE,
+    parameters: AuthorizationRequest,
     login: Login,
     consent: Consent,
   ): Promise<AuthorizationCode> {
@@ -160,23 +158,12 @@ export class SQLiteDataAccess extends DataAccess {
     const authorizationCodeSql = this._procedure('create-authorization-code.sql');
     const authorizationCodeParameters = this.database.prepare(authorizationCodeSql).get({
       id: toUUIDBuffer(id),
-      code_challenge: codeChallenge,
-      code_challenge_method: codeChallengeMethod.name,
+      parameters: jsonStringify(parameters),
       login_id: toUUIDBuffer(login.id),
       consent_id: toUUIDBuffer(consent.id),
     })!;
 
-    return Object.assign<AuthorizationCode, AuthorizationCode>(new AuthorizationCode(), {
-      id: toUUIDString(authorizationCodeParameters['id'] as Uint8Array),
-      codeChallenge: authorizationCodeParameters['code_challenge']!.toString(),
-      codeChallengeMethod: authorizationCodeParameters['code_challenge_method']!.toString() as PKCEName,
-      createdAt: new Date((authorizationCodeParameters['created_at'] as number) * 1000),
-      expiresAt: new Date((authorizationCodeParameters['expires_at'] as number) * 1000),
-      revokedAt: null,
-      validAfter: new Date((authorizationCodeParameters['valid_after'] as number) * 1000),
-      login,
-      consent,
-    });
+    return instantiateAuthorizationCode(authorizationCodeParameters, login, consent);
   }
 
   /**
@@ -311,6 +298,36 @@ export class SQLiteDataAccess extends DataAccess {
   }
 
   /**
+   * Creates an Refresh Token for authorized use by the Client.
+   *
+   * @param scopes Scopes granted to the Client.
+   * @param client Client requesting Authorization.
+   * @param user User that granted Authorization.
+   * @returns Created Refresh Token.
+   */
+  public async createRefreshToken(scopes: Scope[], client: Client, user: User): Promise<RefreshToken> {
+    const id = randomUUIDv7();
+
+    const refreshTokenSql = this._procedure('create-refresh-token.sql');
+    const refreshTokenParameters = this.database
+      .prepare(refreshTokenSql)
+      .get({ id: toUUIDBuffer(id), client_id: toUUIDBuffer(client.id), user_id: toUUIDBuffer(user.id) })!;
+
+    const scopesIds = scopes.map((scope) => scope.id);
+
+    const refreshTokenScopesSql = this._procedure('create-refresh-token-scopes.sql').replace(
+      '$data',
+      scopesIds.map(() => '(?, ?)').join(', '),
+    );
+
+    this.database
+      .prepare(refreshTokenScopesSql)
+      .run(...scopesIds.flatMap((scopeId) => [toUUIDBuffer(id), toUUIDBuffer(scopeId)]));
+
+    return instantiateRefreshToken(refreshTokenParameters, scopes, client, user);
+  }
+
+  /**
    * Creates a Session Entity to store the Sessions created at the Device for multi-account.
    *
    * @returns Newly created Session Entity.
@@ -374,6 +391,26 @@ export class SQLiteDataAccess extends DataAccess {
   }
 
   /**
+   * Searches the application's storage for an Access Token containing the provided Identifier.
+   *
+   * @param id Access Token Identifier.
+   * @returns Access Token based on the provided Identifier.
+   */
+  public async findAccessTokenById(id: string): Promise<AccessToken | null> {
+    return this._findAccessTokenById(id);
+  }
+
+  /**
+   * Searches the application's storage for an Authorization Code containing the provided Identifier.
+   *
+   * @param id Authorization Code Identifier.
+   * @returns Authorization Code based on the provided Identifier.
+   */
+  public async findAuthorizationCodeById(id: string): Promise<AuthorizationCode | null> {
+    return this._findAuthorizationCodeById(id);
+  }
+
+  /**
    * Searches the application's storage for a Client containing the provided Identifier.
    *
    * @param id Client Identifier.
@@ -425,6 +462,16 @@ export class SQLiteDataAccess extends DataAccess {
   }
 
   /**
+   * Searches the application's storage for a Refresh Token containing the provided Identifier.
+   *
+   * @param id Refresh Token Identifier.
+   * @returns Refresh Token based on the provided Identifier.
+   */
+  public async findRefreshTokenById(id: string): Promise<RefreshToken | null> {
+    return this._findRefreshTokenById(id);
+  }
+
+  /**
    * Searches the application's storage for a Session containing the provided Identifier.
    *
    * @param id Session Identifier.
@@ -442,6 +489,24 @@ export class SQLiteDataAccess extends DataAccess {
    */
   public async findUserById(id: string): Promise<User | null> {
     return this._findUserById(id);
+  }
+
+  /**
+   * Searches the application's storage for a User containing the provided Username.
+   *
+   * *note: this method only needs to be implemented when using the Resource Owner Password Credentials Grant Type*.
+   *
+   * @param username Username of the User to be fetched.
+   *
+   * *notice: the username does not necessarily mean that a username field has to be defined at the User Entity.
+   * It can mean anything from a username to an email, custom identifier, personal documentation, phone number
+   * or anything that the application uses to identify a single User.*
+   *
+   * @param password Password of the User to be fetched.
+   * @returns User based on the provided Credentials.
+   */
+  public async findUserByResourceOwnerCredentials(username: string, password: string): Promise<User | null> {
+    return this._findUserByResourceOwnerCredentials(username, password);
   }
 
   /**
@@ -473,6 +538,17 @@ export class SQLiteDataAccess extends DataAccess {
    */
   public async getClientWrapJsonWebKey?(client: Client): Promise<JsonWebKey> {
     return await getClientJsonWebKey(client, (jsonWebKey) => jsonWebKey.use === 'enc');
+  }
+
+  /**
+   * Gets the active JWT Bearer Grant Unwrap JSON Web Key of the Identity Provider.
+   *
+   * *Note: This method only needs to be implemented if the Identity Provider supports nested JWT Bearer Grants.*
+   *
+   * @returns Active JWT Bearer Grant Unwrap JSON Web Key of the Identity Provider.
+   */
+  public async getJwtBearerGrantUnwrapJsonWebKey?(): Promise<JsonWebKey> {
+    return this.jsonWebKeySet.get((jsonWebKey) => jsonWebKey.use === 'enc');
   }
 
   /**
@@ -617,6 +693,52 @@ export class SQLiteDataAccess extends DataAccess {
   }
 
   /**
+   * Revokes the provided Authorization Code.
+   *
+   * @param authorizationCode Authorization Code to be revoked.
+   */
+  public async revokeAuthorizationCode(authorizationCode: AuthorizationCode): Promise<void> {
+    const sql = this._procedure('revoke-authorization-code-by-id.sql');
+    this.database.prepare(sql).run({ id: toUUIDBuffer(authorizationCode.id) });
+  }
+
+  /**
+   * Rotates the Refresh Token by creating a new Refresh Token with the same metadata and different Identifier,
+   * and revoking the old Refresh Token.
+   *
+   * *note: this method is only required when supporting Refresh Token Rotation.*
+   *
+   * @param refreshToken Refresh Token provided by the Client.
+   * @returns Rotated Refresh Token with the same metadata as the revoked one.
+   */
+  public async rotateRefreshToken(refreshToken: RefreshToken): Promise<RefreshToken> {
+    const id = randomUUIDv7();
+
+    const refreshTokenSql = this._procedure('rotate-refresh-token.sql')
+      .replace('$old_refresh_token_id', `X'${refreshToken.id.replaceAll('-', '')}'`)
+      .replace('$id', `X'${id.replaceAll('-', '')}'`)
+      .replace('$expires_at', Math.ceil(refreshToken.expiresAt.getTime() / 1000).toString())
+      .replace('$valid_after', "(unixepoch('now'))")
+      .replace('$client_id', `X'${refreshToken.client.id.replaceAll('-', '')}'`)
+      .replace('$user_id', `X'${refreshToken.user.id.replaceAll('-', '')}'`);
+
+    this.database.exec(refreshTokenSql);
+
+    const scopesIds = refreshToken.scopes.map((scope) => scope.id);
+
+    const refreshTokenScopesSql = this._procedure('create-refresh-token-scopes.sql').replace(
+      '$data',
+      scopesIds.map(() => '(?, ?)').join(', '),
+    );
+
+    this.database
+      .prepare(refreshTokenScopesSql)
+      .run(...scopesIds.flatMap((scopeId) => [toUUIDBuffer(id), toUUIDBuffer(scopeId)]));
+
+    return (await this.findRefreshTokenById(id))!;
+  }
+
+  /**
    * Persists the provided Grant into the application's storage.
    *
    * @param grant Grant to be persisted.
@@ -689,6 +811,8 @@ export class SQLiteDataAccess extends DataAccess {
       this.database.exec(file('0013-create-table-consent-scopes.sql'));
       this.database.exec(file('0014-create-table-grants.sql'));
       this.database.exec(file('0015-create-table-authorization-codes.sql'));
+      this.database.exec(file('0016-create-table-refresh-tokens.sql'));
+      this.database.exec(file('0017-create-table-refresh-token-scopes.sql'));
     });
 
     this.logger.debug(`[${this.constructor.name}] Completed up()`, '4eb4b9ca-13eb-4aa5-aee1-0be8338ca9ba', null);
@@ -703,6 +827,8 @@ export class SQLiteDataAccess extends DataAccess {
     const file = (name: string) => fs.readFileSync(path.join(__dirname, 'migrations', 'down', name), 'utf8');
 
     await this.atomic(async () => {
+      this.database.exec(file('0017-drop-table-refresh-token-scopes.sql'));
+      this.database.exec(file('0016-drop-table-refresh-tokens.sql'));
       this.database.exec(file('0015-drop-table-authorization-codes.sql'));
       this.database.exec(file('0014-drop-table-grants.sql'));
       this.database.exec(file('0013-drop-table-consent-scopes.sql'));
@@ -741,6 +867,53 @@ export class SQLiteDataAccess extends DataAccess {
   }
 
   // #region Helper Methods
+  private _findAccessTokenById(id: string): AccessToken | null {
+    const accessTokenSql = this._procedure('find-access-token-by-id.sql');
+    const accessTokenParameters = this.database.prepare(accessTokenSql).get({ id: toUUIDBuffer(id) });
+
+    if (typeof accessTokenParameters === 'undefined') {
+      return null;
+    }
+
+    return Object.assign<AccessToken, Partial<AccessToken>>(new AccessToken(), {
+      id: toUUIDString(accessTokenParameters['id'] as Uint8Array),
+      type: accessTokenParameters['type']!.toString() as AccessTokenType,
+      scopes: this._findAccessTokenScopesByAccessTokenId(id),
+      createdAt: new Date((accessTokenParameters['created_at'] as number) * 1000),
+      expiresAt: new Date((accessTokenParameters['expires_at'] as number) * 1000),
+      revokedAt: accessTokenParameters['revoked_at']
+        ? // istanbul ignore next
+          new Date((accessTokenParameters['revoked_at'] as number) * 1000)
+        : null,
+      validAfter: new Date((accessTokenParameters['valid_after']! as number) * 1000),
+      client: this._findClientById(toUUIDString(accessTokenParameters['client_id'] as Uint8Array))!,
+      user: accessTokenParameters['user_id']
+        ? this._findUserById(toUUIDString(accessTokenParameters['user_id'] as Uint8Array))
+        : null,
+    });
+  }
+
+  private _findAccessTokenScopesByAccessTokenId(accessTokenId: string): Scope[] {
+    const scopesSql = this._procedure('find-access-token-scopes-by-access-token-id.sql');
+    const scopesParameters = this.database.prepare(scopesSql).all({ access_token_id: toUUIDBuffer(accessTokenId) });
+
+    return instantiateScopes(scopesParameters);
+  }
+
+  private _findAuthorizationCodeById(id: string): AuthorizationCode | null {
+    const authorizationCodeSql = this._procedure('find-authorization-code-by-id.sql');
+    const authorizationCodeParameters = this.database.prepare(authorizationCodeSql).get({ id: toUUIDBuffer(id) });
+
+    if (typeof authorizationCodeParameters === 'undefined') {
+      return null;
+    }
+
+    const login = this._findLoginById(toUUIDString(authorizationCodeParameters['login_id'] as Uint8Array), null)!;
+    const consent = this._findConsentById(toUUIDString(authorizationCodeParameters['consent_id'] as Uint8Array))!;
+
+    return instantiateAuthorizationCode(authorizationCodeParameters, login, consent);
+  }
+
   private _findClientById(id: string): Client | null {
     const clientSql = this._procedure('find-client-by-id.sql');
     const clientParameters = this.database.prepare(clientSql).get({ id: toUUIDBuffer(id) });
@@ -801,6 +974,7 @@ export class SQLiteDataAccess extends DataAccess {
     const consentSql = this._procedure('find-consent-by-id.sql');
     const consentParameters = this.database.prepare(consentSql).get({ id: toUUIDBuffer(id) });
 
+    // istanbul ignore next
     if (typeof consentParameters === 'undefined') {
       return null;
     }
@@ -851,6 +1025,7 @@ export class SQLiteDataAccess extends DataAccess {
     const grantSql = this._procedure('find-grant-by-id.sql');
     const grantParameters = this.database.prepare(grantSql).get({ id: toUUIDBuffer(id) });
 
+    // istanbul ignore next
     if (typeof grantParameters === 'undefined') {
       return null;
     }
@@ -897,10 +1072,11 @@ export class SQLiteDataAccess extends DataAccess {
     return grant;
   }
 
-  private _findLoginById(id: string, session: Session): Login | null {
+  private _findLoginById(id: string, session: Session | null): Login | null {
     const loginSql = this._procedure('find-login-by-id.sql');
     const loginParameters = this.database.prepare(loginSql).get({ id: toUUIDBuffer(id) });
 
+    // istanbul ignore next
     if (typeof loginParameters === 'undefined') {
       return null;
     }
@@ -912,7 +1088,7 @@ export class SQLiteDataAccess extends DataAccess {
       createdAt: new Date((loginParameters['created_at']! as number) * 1000),
       expiresAt: loginParameters['expires_at'] ? new Date((loginParameters['expires_at']! as number) * 1000) : null,
       user: this._findUserById(toUUIDString(loginParameters['user_id'] as Uint8Array))!,
-      session,
+      session: session ?? this._findSessionById(toUUIDString(loginParameters['session_id'] as Uint8Array), null, null)!,
       clients: this._findLoginClientsByLoginId(id),
     });
   }
@@ -946,6 +1122,35 @@ export class SQLiteDataAccess extends DataAccess {
         clients: this._findLoginClientsByLoginId(toUUIDString(loginParameters['id'] as Uint8Array)),
       });
     });
+  }
+
+  private _findRefreshTokenById(id: string): RefreshToken | null {
+    const refreshTokenSql = this._procedure('find-refresh-token-by-id.sql');
+    const refreshTokenParameters = this.database.prepare(refreshTokenSql).get({ id: toUUIDBuffer(id) });
+
+    if (typeof refreshTokenParameters === 'undefined') {
+      return null;
+    }
+
+    return Object.assign<RefreshToken, Partial<RefreshToken>>(new RefreshToken(), {
+      id: toUUIDString(refreshTokenParameters['id'] as Uint8Array),
+      scopes: this._findRefreshTokenScopesByRefreshTokenId(id),
+      createdAt: new Date((refreshTokenParameters['created_at'] as number) * 1000),
+      expiresAt: new Date((refreshTokenParameters['expires_at'] as number) * 1000),
+      revokedAt: refreshTokenParameters['revoked_at']
+        ? new Date((refreshTokenParameters['revoked_at'] as number) * 1000)
+        : null,
+      validAfter: new Date((refreshTokenParameters['valid_after']! as number) * 1000),
+      client: this._findClientById(toUUIDString(refreshTokenParameters['client_id'] as Uint8Array))!,
+      user: this._findUserById(toUUIDString(refreshTokenParameters['user_id'] as Uint8Array))!,
+    });
+  }
+
+  private _findRefreshTokenScopesByRefreshTokenId(refreshTokenId: string): Scope[] {
+    const scopesSql = this._procedure('find-refresh-token-scopes-by-refresh-token-id.sql');
+    const scopesParameters = this.database.prepare(scopesSql).all({ refresh_token_id: toUUIDBuffer(refreshTokenId) });
+
+    return instantiateScopes(scopesParameters);
   }
 
   private _findSessionById(id: string, activeLogin: Login | null, grant: Grant | null): Session | null {
@@ -994,6 +1199,19 @@ export class SQLiteDataAccess extends DataAccess {
     return instantiateUser(userParameters, userParameters);
   }
 
+  private _findUserByResourceOwnerCredentials(username: string, password: string): User | null {
+    const userSql = this._procedure('find-user-by-resource-owner-credentials.sql');
+    const userParameters = this.database
+      .prepare(userSql)
+      .get({ email: username, password: createHash('sha256').update(password, 'utf8').digest('base64url') });
+
+    if (typeof userParameters === 'undefined') {
+      return null;
+    }
+
+    return instantiateUser(userParameters, userParameters);
+  }
+
   private _getScopes(): Scope[] {
     const scopesSql = this._procedure('get-scopes.sql');
     const scopesParameters = this.database.prepare(scopesSql).all();
@@ -1024,6 +1242,23 @@ function toUUIDBuffer(data: string): Buffer {
   return Buffer.from(data.replaceAll('-', ''), 'hex');
 }
 
+function instantiateAuthorizationCode(
+  parameters: Record<string, SQLOutputValue>,
+  login: Login,
+  consent: Consent,
+): AuthorizationCode {
+  return Object.assign<AuthorizationCode, AuthorizationCode>(new AuthorizationCode(), {
+    id: toUUIDString(parameters['id'] as Uint8Array),
+    parameters: jsonParse(parameters['parameters']!.toString()),
+    createdAt: new Date((parameters['created_at'] as number) * 1000),
+    expiresAt: new Date((parameters['expires_at'] as number) * 1000),
+    revokedAt: parameters['revoked_at'] ? new Date((parameters['revoked_at'] as number) * 1000) : null,
+    validAfter: new Date((parameters['valid_after'] as number) * 1000),
+    login,
+    consent,
+  });
+}
+
 function instantiateClient(
   parameters: Record<string, SQLOutputValue>,
   secrets: ClientSecret[],
@@ -1040,6 +1275,7 @@ function instantiateClient(
     }),
     scopes,
     responseTypes: jsonParse(parameters['response_types']!.toString()) as ResponseTypeName[],
+    grantTypes: jsonParse(parameters['grant_types']!.toString()) as GrantTypeName[],
     authenticationMethod: parameters['authentication_method']!.toString() as ClientAuthenticationName,
     contacts: jsonParse(parameters['contacts']!.toString()) as string[],
     clientUri: parameters['client_uri'] ? new URL(parameters['client_uri'].toString()) : null,
@@ -1060,6 +1296,8 @@ function instantiateClient(
       (parameters['id_token_encrypted_response_enc']?.toString() as ContentEncryptionAlgorithm) ?? null,
     authenticationSigningAlgorithm:
       (parameters['authentication_signing_alg']?.toString() as Exclude<DigitalSignatureAlgorithm, 'none'>) ?? null,
+    jwtBearerGrantSigningAlgorithm:
+      (parameters['jwt_bearer_grant_signing_alg']?.toString() as Exclude<DigitalSignatureAlgorithm, 'none'>) ?? null,
     defaultMaxAge: (parameters['default_max_age'] as number) ?? null,
     requireAuthTime: parameters['require_auth_time'] === 1,
     defaultAcrValues: jsonParse(parameters['default_acr_values']!.toString()),
@@ -1079,6 +1317,24 @@ function instantiateGrant(parameters: Record<string, SQLOutputValue>): Grant {
     interactions: jsonParse(parameters['interactions']!.toString()) as InteractionTypeName[],
     createdAt: new Date((parameters['created_at']! as number) * 1000),
     expiresAt: new Date((parameters['expires_at']! as number) * 1000),
+  });
+}
+
+function instantiateRefreshToken(
+  parameters: Record<string, SQLOutputValue>,
+  scopes: Scope[],
+  client: Client,
+  user: User,
+): RefreshToken {
+  return Object.assign<RefreshToken, RefreshToken>(new RefreshToken(), {
+    id: toUUIDString(parameters['id'] as Uint8Array),
+    scopes,
+    createdAt: new Date((parameters['created_at'] as number) * 1000),
+    expiresAt: new Date((parameters['expires_at'] as number) * 1000),
+    revokedAt: null,
+    validAfter: new Date((parameters['valid_after'] as number) * 1000),
+    client,
+    user,
   });
 }
 

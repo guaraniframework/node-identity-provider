@@ -6,6 +6,7 @@ import https from 'https';
 import { DatabaseSync, SQLOutputValue } from 'node:sqlite';
 import path from 'path';
 import { PassThrough } from 'stream';
+import { setTimeout } from 'timers/promises';
 
 import { getContainer } from '@guarani/di';
 import { JsonWebKey, JsonWebKeyParameters, JsonWebKeySet, jwks } from '@guarani/jose';
@@ -19,6 +20,7 @@ import { Client } from '../../entities/client';
 import { Consent } from '../../entities/consent';
 import { Grant } from '../../entities/grant';
 import { Login } from '../../entities/login';
+import { RefreshToken } from '../../entities/refresh-token';
 import { Scope } from '../../entities/scope';
 import { Session } from '../../entities/session';
 import { User } from '../../entities/user';
@@ -27,6 +29,7 @@ import { InteractionTypeName } from '../../interaction-types/interaction-type-na
 import { Logger } from '../../loggers/logger';
 import { PKCE } from '../../pkces/pkce';
 import { AuthorizationRequest } from '../../requests/authorization/authorization-request';
+import { CodeAuthorizationRequest } from '../../requests/authorization/code/code.authorization-request';
 import { SQLiteDataAccess } from './sqlite.data-access';
 
 jest.mock('../../loggers/logger');
@@ -183,58 +186,28 @@ describe('SQLite Data Access', () => {
     it('should create an Authorization Code.', async () => {
       let authorizationCode!: AuthorizationCode;
 
-      const loginId = randomUUIDv7();
-      const consentId = randomUUIDv7();
-      const userId = '16907c32-687b-493c-85ba-f41f2c9d4daa';
-      const clientId = 'b1eeace9-2b0c-468e-a444-733befc3b35d';
+      const parameters = {
+        code_challenge: 'code_challenge',
+        code_challenge_method: pkceMock.name,
+      } as CodeAuthorizationRequest;
 
-      const insertLoginSql = 'INSERT INTO logins (id, user_id, session_id) VALUES ($id, $user_id, $session_id)';
-      const insertLoginsClientsSql = 'INSERT INTO logins_clients (login_id, client_id) VALUES ($login_id, $client_id)';
-
-      const insertConsentSql = 'INSERT INTO consents (id, client_id, user_id) VALUES ($id, $client_id, $user_id)';
-      const insertConsentScopes =
-        'INSERT INTO consent_scopes (consent_id, scope_id) SELECT c.id AS consent_id, s.id AS scope_id ' +
-        'FROM scopes AS s JOIN consents AS c WHERE c.id = $consent_id';
-
-      const updateSessionSql = 'UPDATE sessions SET active_login_id = $active_login_id WHERE id = $id';
-
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
       const session = await dataAccess.createSession();
+      const scopes = await dataAccess.getScopes();
 
-      database
-        .prepare(insertLoginSql)
-        .run({ id: toUUIDBuffer(loginId), user_id: toUUIDBuffer(userId), session_id: toUUIDBuffer(session.id) });
-
-      database
-        .prepare(insertLoginsClientsSql)
-        .run({ login_id: toUUIDBuffer(loginId), client_id: toUUIDBuffer(clientId) });
-
-      database
-        .prepare(insertConsentSql)
-        .run({ id: toUUIDBuffer(consentId), client_id: toUUIDBuffer(clientId), user_id: toUUIDBuffer(userId) });
-
-      database.prepare(insertConsentScopes).run({ consent_id: toUUIDBuffer(consentId) });
-      database.prepare(updateSessionSql).run({ active_login_id: toUUIDBuffer(loginId), id: toUUIDBuffer(session.id) });
-
-      const codeChallenge = 'code_challenge';
-      const codeChallengeMethod = pkceMock;
-      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), { id: loginId });
-      const consent: Consent = Object.assign<Consent, Partial<Consent>>(new Consent(), { id: consentId });
+      const login = await dataAccess.createLogin(user, client, session, [], null);
+      const consent = await dataAccess.createConsent(scopes, client, user);
 
       await expect(async () => {
-        authorizationCode = await dataAccess.createAuthorizationCode(
-          codeChallenge,
-          codeChallengeMethod,
-          login,
-          consent,
-        );
+        authorizationCode = await dataAccess.createAuthorizationCode(parameters, login, consent);
       }).resolves.not.toThrow();
 
       expect(authorizationCode).toBeInstanceOf(AuthorizationCode);
 
-      expect(authorizationCode.codeChallenge).toBe(codeChallenge);
-      expect(authorizationCode.codeChallengeMethod).toBe(codeChallengeMethod.name);
-      expect(authorizationCode.login.id).toBe(loginId);
-      expect(authorizationCode.consent.id).toBe(consentId);
+      expect(authorizationCode.parameters).toStrictEqual(parameters);
+      expect(authorizationCode.login.id).toBe(login.id);
+      expect(authorizationCode.consent.id).toBe(consent.id);
     });
   });
 
@@ -346,6 +319,30 @@ describe('SQLite Data Access', () => {
     });
   });
 
+  describe('createRefreshToken()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should create an Refresh Token with a User.', async () => {
+      let accessToken!: RefreshToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user: User = Object.assign<User, Partial<User>>(new User(), { id: '16907c32-687b-493c-85ba-f41f2c9d4daa' });
+
+      await expect(async () => {
+        accessToken = await dataAccess.createRefreshToken(scopes, client, user);
+      }).resolves.not.toThrow();
+
+      expect(accessToken).toBeInstanceOf(RefreshToken);
+      expect(accessToken.scopes).toStrictEqual(scopes);
+      expect(accessToken.client).toStrictEqual(client);
+      expect(accessToken.user).toStrictEqual(user);
+    });
+  });
+
   describe('createSession()', () => {
     beforeEach(async () => {
       await dataAccess.up();
@@ -423,6 +420,96 @@ describe('SQLite Data Access', () => {
       }).resolves.not.toThrow();
 
       await expect(dataAccess.findUserById(user.id)).resolves.toStrictEqual<User>(expect.objectContaining<User>(user));
+    });
+  });
+
+  describe('findAccessTokenById()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should return null when no Access Token is found by the provided Identifier.', async () => {
+      await expect(dataAccess.findAccessTokenById('00000000-0000-0000-0000-000000000000')).resolves.toBeNull();
+    });
+
+    it('should return the Access Token of the provided Identifier without a User.', async () => {
+      let accessToken!: AccessToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+
+      const { id: accessTokenId } = await dataAccess.createAccessToken(scopes, client, null);
+
+      await expect(async () => {
+        accessToken = (await dataAccess.findAccessTokenById(accessTokenId))!;
+      }).resolves.not.toThrow();
+
+      expect(accessToken).toBeInstanceOf(AccessToken);
+      expect(accessToken.id).toBe(accessTokenId);
+      expect(accessToken.client.id).toBe(client.id);
+      expect(accessToken.user).toBeNull();
+    });
+
+    it('should return the Access Token of the provided Identifier with a User.', async () => {
+      let accessToken!: AccessToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+
+      const { id: accessTokenId } = await dataAccess.createAccessToken(scopes, client, user);
+
+      await expect(async () => {
+        accessToken = (await dataAccess.findAccessTokenById(accessTokenId))!;
+      }).resolves.not.toThrow();
+
+      expect(accessToken).toBeInstanceOf(AccessToken);
+      expect(accessToken.id).toBe(accessTokenId);
+      expect(accessToken.client.id).toBe(client.id);
+      expect(accessToken.user!.id).toBe(user.id);
+    });
+  });
+
+  describe('findAuthorizationCodeById()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should return null when no Authorization Code is found by the provided Identifier.', async () => {
+      await expect(dataAccess.findAuthorizationCodeById('00000000-0000-0000-0000-000000000000')).resolves.toBeNull();
+    });
+
+    it('should return the Authorization Code of the provided Identifier.', async () => {
+      let authorizationCode!: AuthorizationCode;
+
+      const parameters = {
+        code_challenge: 'code_challenge',
+        code_challenge_method: pkceMock.name,
+      } as CodeAuthorizationRequest;
+
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const session = await dataAccess.createSession();
+      const scopes = await dataAccess.getScopes();
+
+      const login = await dataAccess.createLogin(user, client, session, [], null);
+      const consent = await dataAccess.createConsent(scopes, client, user);
+
+      database.exec(`UPDATE logins SET expires_at = (unixepoch('now')) WHERE id = X'${login.id.replaceAll('-', '')}'`);
+
+      const { id: authorizationCodeId } = await dataAccess.createAuthorizationCode(parameters, login, consent);
+
+      await expect(async () => {
+        authorizationCode = (await dataAccess.findAuthorizationCodeById(authorizationCodeId))!;
+      }).resolves.not.toThrow();
+
+      expect(authorizationCode).toBeInstanceOf(AuthorizationCode);
+      expect(authorizationCode.id).toBe(authorizationCodeId);
+      expect(authorizationCode.parameters).toStrictEqual(parameters);
+      expect(authorizationCode.login.id).toBe(login.id);
+      expect(authorizationCode.consent.id).toBe(consent.id);
     });
   });
 
@@ -719,6 +806,36 @@ describe('SQLite Data Access', () => {
     });
   });
 
+  describe('findRefreshTokenById()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should return null when no Refresh Token is found by the provided Identifier.', async () => {
+      await expect(dataAccess.findRefreshTokenById('00000000-0000-0000-0000-000000000000')).resolves.toBeNull();
+    });
+
+    it('should return the Refresh Token of the provided Identifier.', async () => {
+      let refreshToken!: RefreshToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+
+      const { id: refreshTokenId } = await dataAccess.createRefreshToken(scopes, client, user);
+
+      await expect(async () => {
+        refreshToken = (await dataAccess.findRefreshTokenById(refreshTokenId))!;
+      }).resolves.not.toThrow();
+
+      expect(refreshToken).toBeInstanceOf(RefreshToken);
+      expect(refreshToken.id).toBe(refreshTokenId);
+      expect(refreshToken.client.id).toBe(client.id);
+      expect(refreshToken.user.id).toBe(user.id);
+    });
+  });
+
   describe('findSessionById()', () => {
     beforeEach(async () => {
       await dataAccess.up();
@@ -928,6 +1045,31 @@ describe('SQLite Data Access', () => {
     });
   });
 
+  describe('findUserByResourceOwnerCredentials()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should return null when no User is found by the provided Identifier.', async () => {
+      await expect(dataAccess.findUserByResourceOwnerCredentials('foo', 'bar')).resolves.toBeNull();
+    });
+
+    it('should return the User of the provided Identifier.', async () => {
+      await expect(
+        dataAccess.findUserByResourceOwnerCredentials('john.doe@email.com', 'secretpassword'),
+      ).resolves.toStrictEqual<User>(
+        expect.objectContaining<Partial<User>>({ id: '16907c32-687b-493c-85ba-f41f2c9d4daa' }),
+      );
+
+      await expect(
+        dataAccess.findUserByResourceOwnerCredentials('joe.don@email.com', 'secret_password'),
+      ).resolves.toStrictEqual<User>(
+        expect.objectContaining<Partial<User>>({ id: '5abe9a9c-c868-4f12-8c76-f34dec7e1cc0' }),
+      );
+    });
+  });
+
   describe('getClientAssertionSignJsonWebKey()', () => {
     beforeEach(async () => {
       await dataAccess.up();
@@ -1015,6 +1157,17 @@ describe('SQLite Data Access', () => {
 
       expect(jsonWebKey).toBeInstanceOf(JsonWebKey);
       expect(jsonWebKey.parameters).toStrictEqual(clientJsonWebKeyParameters);
+    });
+  });
+
+  describe('getJwtBearerGrantUnwrapJsonWebKey()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should return the JWT Bearer Grant Unwrap JSON Web Key of the Identity Provider.', async () => {
+      await expect(dataAccess.getJwtBearerGrantUnwrapJsonWebKey!()).resolves.toBe(jsonWebKeySet.keys[1]!);
     });
   });
 
@@ -1278,6 +1431,77 @@ describe('SQLite Data Access', () => {
     });
   });
 
+  describe('revokeAuthorizationCode()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should revoke the provided Authorization Code.', async () => {
+      let authorizationCode!: AuthorizationCode;
+
+      const parameters = {
+        code_challenge: 'code_challenge',
+        code_challenge_method: pkceMock.name,
+      } as CodeAuthorizationRequest;
+
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const session = await dataAccess.createSession();
+      const scopes = await dataAccess.getScopes();
+
+      const login = await dataAccess.createLogin(user, client, session, [], null);
+      const consent = await dataAccess.createConsent(scopes, client, user);
+
+      authorizationCode = await dataAccess.createAuthorizationCode(parameters, login, consent);
+      expect(authorizationCode.revokedAt).toBeNull();
+
+      await expect(dataAccess.revokeAuthorizationCode(authorizationCode)).resolves.not.toThrow();
+
+      authorizationCode = (await dataAccess.findAuthorizationCodeById(authorizationCode.id))!;
+      expect(authorizationCode.revokedAt).toBeDate();
+    });
+  });
+
+  describe('rotateRefreshToken()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should rotate the old Refresh Token.', async () => {
+      let newRefreshToken!: RefreshToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+
+      const oldRefreshToken = await dataAccess.createRefreshToken(scopes, client, user);
+
+      await setTimeout(1000);
+
+      await expect(async () => {
+        newRefreshToken = await dataAccess.rotateRefreshToken(oldRefreshToken);
+      }).resolves.not.toThrow();
+
+      expect(newRefreshToken).toBeInstanceOf(RefreshToken);
+
+      expect(newRefreshToken.id).not.toBe(oldRefreshToken.id);
+      expect(newRefreshToken.scopes).toStrictEqual<Scope[]>(expect.arrayContaining<Scope>(oldRefreshToken.scopes));
+      expect(newRefreshToken.createdAt.getTime()).toBeGreaterThan(oldRefreshToken.createdAt.getTime());
+      expect(newRefreshToken.expiresAt.getTime()).toBe(oldRefreshToken.expiresAt.getTime());
+      expect(newRefreshToken.validAfter.getTime()).toBe(newRefreshToken.validAfter.getTime());
+      expect(newRefreshToken.client.id).toBe(oldRefreshToken.client.id);
+      expect(newRefreshToken.user.id).toBe(oldRefreshToken.user.id);
+
+      await expect(async () => {
+        return (await dataAccess.findRefreshTokenById(oldRefreshToken.id))!.revokedAt;
+      }).resolves.toBeDate();
+
+      expect(newRefreshToken.revokedAt).toBeNull();
+    });
+  });
+
   describe('saveGrant()', () => {
     let parameters!: AuthorizationRequest;
     let client!: Client;
@@ -1502,6 +1726,8 @@ describe('SQLite Data Access', () => {
       expect(databaseExecSpy).toHaveBeenCalledWith(file('0013-create-table-consent-scopes.sql'));
       expect(databaseExecSpy).toHaveBeenCalledWith(file('0014-create-table-grants.sql'));
       expect(databaseExecSpy).toHaveBeenCalledWith(file('0015-create-table-authorization-codes.sql'));
+      expect(databaseExecSpy).toHaveBeenCalledWith(file('0016-create-table-refresh-tokens.sql'));
+      expect(databaseExecSpy).toHaveBeenCalledWith(file('0017-create-table-refresh-token-scopes.sql'));
 
       expect(
         database
@@ -1524,6 +1750,8 @@ describe('SQLite Data Access', () => {
         'consent_scopes',
         'grants',
         'authorization_codes',
+        'refresh_tokens',
+        'refresh_token_scopes',
       ]);
     });
   });
@@ -1536,6 +1764,8 @@ describe('SQLite Data Access', () => {
 
       await expect(dataAccess.down()).resolves.not.toThrow();
 
+      expect(databaseExecSpy).toHaveBeenCalledWith(file('0017-drop-table-refresh-token-scopes.sql'));
+      expect(databaseExecSpy).toHaveBeenCalledWith(file('0016-drop-table-refresh-tokens.sql'));
       expect(databaseExecSpy).toHaveBeenCalledWith(file('0015-drop-table-authorization-codes.sql'));
       expect(databaseExecSpy).toHaveBeenCalledWith(file('0014-drop-table-grants.sql'));
       expect(databaseExecSpy).toHaveBeenCalledWith(file('0013-drop-table-consent-scopes.sql'));
@@ -1731,6 +1961,8 @@ describe('SQLite Data Access', () => {
             redirect_uris: '["https://client.example.com/oidc/callback"]',
             response_types:
               '["code","code id_token","code id_token token","code token","id_token","id_token token","none","token"]',
+            grant_types:
+              '["authorization_code","client_credentials","password","refresh_token","urn:ietf:params:oauth:grant-type:device_code","urn:ietf:params:oauth:grant-type:jwt-bearer"]',
             authentication_method: 'client_secret_basic',
             contacts: '[]',
             client_uri: 'https://client.example.com/about',
@@ -1744,7 +1976,8 @@ describe('SQLite Data Access', () => {
             id_token_signed_response_alg: 'ES256',
             id_token_encrypted_response_alg: 'RSA-OAEP',
             id_token_encrypted_response_enc: 'A128GCM',
-            authentication_signing_alg: null,
+            authentication_signing_alg: 'ES256',
+            jwt_bearer_grant_signing_alg: 'ES256',
             default_max_age: 7776000,
             require_auth_time: 1,
             default_acr_values: '["urn:guarani:acr:2fa"]',
@@ -1760,6 +1993,7 @@ describe('SQLite Data Access', () => {
             profile: 'native',
             redirect_uris: '["https://client.example.org/oidc/callback"]',
             response_types: '["code"]',
+            grant_types: '["authorization_code","refresh_token"]',
             authentication_method: 'none',
             contacts: '[]',
             client_uri: null,
@@ -1774,6 +2008,7 @@ describe('SQLite Data Access', () => {
             id_token_encrypted_response_alg: null,
             id_token_encrypted_response_enc: null,
             authentication_signing_alg: null,
+            jwt_bearer_grant_signing_alg: null,
             default_max_age: null,
             require_auth_time: 0,
             default_acr_values: '["urn:guarani:acr:2fa"]',
@@ -1891,12 +2126,6 @@ describe('SQLite Data Access', () => {
     });
   });
 });
-
-// function toUUIDString(data: Uint8Array): string {
-//   return Buffer.from(data)
-//     .toString('hex')
-//     .replace(/^([\d\w]{8})([\d\w]{4})([\d\w]{4})([\d\w]{4})([\d\w]{12})/i, '$1-$2-$3-$4-$5');
-// }
 
 function toUUIDBuffer(data: string): Buffer {
   return Buffer.from(data.replaceAll('-', ''), 'hex');

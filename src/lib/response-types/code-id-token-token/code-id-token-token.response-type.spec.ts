@@ -14,7 +14,6 @@ import { Session } from '../../entities/session';
 import { User } from '../../entities/user';
 import { IdTokenHandler } from '../../handlers/id-token/id-token.handler';
 import { Logger } from '../../loggers/logger';
-import { PKCE } from '../../pkces/pkce';
 import { ResponseModeName } from '../../response-modes/response-mode-name.type';
 import { CodeIdTokenTokenAuthorizationResponse } from '../../responses/authorization/code-id-token-token/code-id-token-token.authorization-response';
 import { ResponseTypeName } from '../response-type-name.type';
@@ -22,7 +21,6 @@ import { CodeIdTokenTokenResponseType } from './code-id-token-token.response-typ
 
 jest.mock('../../handlers/id-token/id-token.handler');
 jest.mock('../../loggers/logger');
-jest.mock('../../pkces/pkce');
 
 describe('Code & ID Token & Token Response Type', () => {
   let responseType: CodeIdTokenTokenResponseType;
@@ -39,8 +37,6 @@ describe('Code & ID Token & Token Response Type', () => {
   );
 
   const idTokenHandlerMock = jest.mocked(IdTokenHandler.prototype);
-
-  const pkceMock = jest.mocked(PKCE.prototype);
 
   const client: Client = Object.assign<Client, Partial<Client>>(new Client(), { id: 'client_id' });
   const user: User = Object.assign<User, Partial<User>>(new User(), { id: 'user_id' });
@@ -71,6 +67,7 @@ describe('Code & ID Token & Token Response Type', () => {
 
   const accessToken: AccessToken = Object.assign<AccessToken, Partial<AccessToken>>(new AccessToken(), {
     id: 'access_token',
+    type: 'Bearer',
     scopes,
     expiresAt: new Date(Date.now() + 3600000),
   });
@@ -108,13 +105,7 @@ describe('Code & ID Token & Token Response Type', () => {
 
   describe('handle()', () => {
     it('should return a Code & ID Token & Token Authorization Response.', async () => {
-      const context = {
-        codeChallenge: 'code_challenge',
-        codeChallengeMethod: pkceMock as PKCE,
-        nonce: 'nonce',
-        maxAge: 300,
-        session,
-      } as CodeIdTokenTokenAuthorizationContext;
+      const context = { parameters: {}, nonce: 'nonce', maxAge: 300, session } as CodeIdTokenTokenAuthorizationContext;
 
       dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
       dataAccessMock.createAccessToken.mockResolvedValueOnce(accessToken);
@@ -139,11 +130,7 @@ describe('Code & ID Token & Token Response Type', () => {
     });
 
     it('should return a Code & ID Token & Token Authorization Response with default Generate ID Token Options.', async () => {
-      const context = {
-        codeChallenge: 'code_challenge',
-        codeChallengeMethod: pkceMock as PKCE,
-        session,
-      } as CodeIdTokenTokenAuthorizationContext;
+      const context = { parameters: {}, session } as CodeIdTokenTokenAuthorizationContext;
 
       dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
       dataAccessMock.createAccessToken.mockResolvedValueOnce(accessToken);

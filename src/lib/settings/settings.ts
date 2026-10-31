@@ -43,19 +43,34 @@ export class Settings {
   public readonly idTokenContentEncryptionAlgorithms: ContentEncryptionAlgorithm[];
 
   /**
-   * JSON Web Signature Digital Signature Algorithms for ID Token Signature registered at the Identity Provider.
+   * JSON Web Signature Digital Signature Algorithms for JWT Bearer Client Assertion Signature registered at the Identity Provider.
    */
   public readonly clientAuthenticationSigningAlgorithms: Exclude<DigitalSignatureAlgorithm, 'none'>[];
 
   /**
-   * JSON Web Encryption Key Wrap Algorithms for ID Token Encryption registered at the Identity Provider.
+   * JSON Web Encryption Key Wrap Algorithms for JWT Bearer Client Assertion Encryption registered at the Identity Provider.
    */
   public readonly clientAuthenticationEncryptionKeyWrapAlgorithms: KeyManagementAlgorithm[];
 
   /**
-   * JSON Web Encryption Content Encryption Algorithms for ID Token Encryption registered at the Identity Provider.
+   * JSON Web Encryption Content Encryption Algorithms for JWT Bearer Client Assertion Encryption registered at the Identity Provider.
    */
   public readonly clientAuthenticationEncryptionContentEncryptionAlgorithms: ContentEncryptionAlgorithm[];
+
+  /**
+   * JSON Web Signature Digital Signature Algorithms for JWT Bearer Assertion Signature registered at the Identity Provider.
+   */
+  public readonly jwtBearerGrantSigningAlgorithms: Exclude<DigitalSignatureAlgorithm, 'none'>[];
+
+  /**
+   * JSON Web Encryption Key Wrap Algorithms for JWT Bearer Assertion Encryption registered at the Identity Provider.
+   */
+  public readonly jwtBearerGrantEncryptionKeyWrapAlgorithms: KeyManagementAlgorithm[];
+
+  /**
+   * JSON Web Encryption Content Encryption Algorithms for JWT Bearer Assertion Encryption registered at the Identity Provider.
+   */
+  public readonly jwtBearerGrantEncryptionContentEncryptionAlgorithms: ContentEncryptionAlgorithm[];
 
   /**
    * UI Locales registered at the Identity Provider.
@@ -87,6 +102,13 @@ export class Settings {
   public readonly enableAuthorizationResponseIssuerIdentifier: boolean;
 
   /**
+   * Enables Refresh Token Rotation on the Authorization Server.
+   *
+   * @default false
+   */
+  public readonly enableRefreshTokenRotation: boolean;
+
+  /**
    * Name of the Session Cookie.
    *
    * @default "guarani"
@@ -114,15 +136,21 @@ export class Settings {
       this.getClientAuthenticationEncryptionKeyWrapAlgorithms(parameters);
     this.clientAuthenticationEncryptionContentEncryptionAlgorithms =
       this.getClientAuthenticationEncryptionContentEncryptionAlgorithms(parameters);
+    this.jwtBearerGrantSigningAlgorithms = this.getJwtBearerGrantSigningAlgorithms(parameters);
+    this.jwtBearerGrantEncryptionKeyWrapAlgorithms = this.getJwtBearerGrantEncryptionKeyWrapAlgorithms(parameters);
+    this.jwtBearerGrantEncryptionContentEncryptionAlgorithms =
+      this.getJwtBearerGrantEncryptionContentEncryptionAlgorithms(parameters);
     this.uiLocales = this.getUiLocales(parameters);
     this.acrValues = this.getAcrValues(parameters);
     this.interactions = this.getInteractions(parameters);
     this.minimumMaxAge = this.getMinimumMaxAge(parameters);
     this.enableAuthorizationResponseIssuerIdentifier = this.getEnableAuthorizationResponseIssuerIdentifier(parameters);
+    this.enableRefreshTokenRotation = this.getEnableRefreshTokenRotation(parameters);
     this.sessionCookie = this.getSessionCookie(parameters);
 
     this.checkIdTokenAlgorithms();
     this.checkClientAuthenticationAlgorithms();
+    this.checkJwtBearerGrantAlgorithms();
   }
 
   /**
@@ -294,6 +322,77 @@ export class Settings {
   }
 
   /**
+   * Checks and returns the provied JWT Bearer Grant Signing Algorithms or an empty array.
+   *
+   * @param parameters Parameters of the Settings.
+   * @throws {TypeError} The provided JWT Bearer Grant Signing Algorithms is invalid.
+   * @returns Provided JWT Bearer Grant Signing Algorithms.
+   */
+  private getJwtBearerGrantSigningAlgorithms(
+    parameters: SettingsParameters,
+  ): Exclude<DigitalSignatureAlgorithm, 'none'>[] {
+    if (
+      'jwtBearerGrantSigningAlgorithms' in parameters &&
+      (!Array.isArray(parameters.jwtBearerGrantSigningAlgorithms) ||
+        parameters.jwtBearerGrantSigningAlgorithms.length === 0 ||
+        parameters.jwtBearerGrantSigningAlgorithms.includes('none' as any) ||
+        parameters.jwtBearerGrantSigningAlgorithms.some((algorithm) => {
+          return !JsonWebSignatureHeader.digitalSignatureAlgorithms.includes(algorithm);
+        }))
+    ) {
+      throw new TypeError('The provided JWT Bearer Grant Signing Algorithms is invalid.');
+    }
+
+    return parameters.jwtBearerGrantSigningAlgorithms ?? [];
+  }
+
+  /**
+   * Checks and returns the provied JWT Bearer Grant Encryption Key Wrap Algorithms or an empty array.
+   *
+   * @param parameters Parameters of the Settings.
+   * @throws {TypeError} The provided JWT Bearer Grant Encryption Key Wrap Algorithms is invalid.
+   * @returns Provided JWT Bearer Grant Encryption Key Wrap Algorithms.
+   */
+  private getJwtBearerGrantEncryptionKeyWrapAlgorithms(parameters: SettingsParameters): KeyManagementAlgorithm[] {
+    if (
+      'jwtBearerGrantEncryptionKeyWrapAlgorithms' in parameters &&
+      (!Array.isArray(parameters.jwtBearerGrantEncryptionKeyWrapAlgorithms) ||
+        parameters.jwtBearerGrantEncryptionKeyWrapAlgorithms.length === 0 ||
+        parameters.jwtBearerGrantEncryptionKeyWrapAlgorithms.some((algorithm) => {
+          return !JsonWebEncryptionHeader.keyManagementAlgorithms.includes(algorithm);
+        }))
+    ) {
+      throw new TypeError('The provided JWT Bearer Grant Encryption Key Wrap Algorithms is invalid.');
+    }
+
+    return parameters.jwtBearerGrantEncryptionKeyWrapAlgorithms ?? [];
+  }
+
+  /**
+   * Checks and returns the provied JWT Bearer Grant Encryption Content Encryption Algorithms or an empty array.
+   *
+   * @param parameters Parameters of the Settings.
+   * @throws {TypeError} The provided JWT Bearer Grant Encryption Content Encryption Algorithms is invalid.
+   * @returns Provided JWT Bearer Grant Encryption Content Encryption Algorithms.
+   */
+  private getJwtBearerGrantEncryptionContentEncryptionAlgorithms(
+    parameters: SettingsParameters,
+  ): ContentEncryptionAlgorithm[] {
+    if (
+      'jwtBearerGrantEncryptionContentEncryptionAlgorithms' in parameters &&
+      (!Array.isArray(parameters.jwtBearerGrantEncryptionContentEncryptionAlgorithms) ||
+        parameters.jwtBearerGrantEncryptionContentEncryptionAlgorithms.length === 0 ||
+        parameters.jwtBearerGrantEncryptionContentEncryptionAlgorithms.some((algorithm) => {
+          return !JsonWebEncryptionHeader.contentEncryptionAlgorithms.includes(algorithm);
+        }))
+    ) {
+      throw new TypeError('The provided JWT Bearer Grant Encryption Content Encryption Algorithms is invalid.');
+    }
+
+    return parameters.jwtBearerGrantEncryptionContentEncryptionAlgorithms ?? [];
+  }
+
+  /**
    * Checks and returns the provided UI Locales or an empty array.
    *
    * @param parameters Parameters of the Settings.
@@ -387,6 +486,21 @@ export class Settings {
   }
 
   /**
+   * Checks and returns the provided Enable Refresh Token Rotation.
+   *
+   * @param parameters Parameters of the Settings.
+   * @throws {TypeError} The provided Enable Refresh Token Rotation is invalid.
+   * @returns Provided Enable Refresh Token Rotation.
+   */
+  private getEnableRefreshTokenRotation(parameters: SettingsParameters): boolean {
+    if ('enableRefreshTokenRotation' in parameters && typeof parameters.enableRefreshTokenRotation !== 'boolean') {
+      throw new TypeError('The provided Enable Refresh Token Rotation is invalid.');
+    }
+
+    return parameters.enableRefreshTokenRotation ?? false;
+  }
+
+  /**
    * Checks and returns the provided Session Cookie or the Default Session Cookie.
    *
    * @param parameters Parameters of the Settings.
@@ -462,6 +576,43 @@ export class Settings {
       if (keyWrapEnabled && !contentEncryptionEnabled) {
         throw new TypeError(
           'Missing required Client Authentication Content Encryption Algorithms when using Client Authentication Encryption.',
+        );
+      }
+    }
+  }
+
+  /**
+   * Checks if the combination of provided JWT Bearer Grant Algorithms is valid.
+   *
+   * @throws {TypeError} The provided combination of JWT Bearer Grant Algorithms is invalid.
+   */
+  private checkJwtBearerGrantAlgorithms(): void {
+    const signatureEnabled = this.jwtBearerGrantSigningAlgorithms.length !== 0;
+    const keyWrapEnabled = this.jwtBearerGrantEncryptionKeyWrapAlgorithms.length !== 0;
+    const contentEncryptionEnabled = this.jwtBearerGrantEncryptionContentEncryptionAlgorithms.length !== 0;
+
+    if (!signatureEnabled) {
+      if (keyWrapEnabled) {
+        throw new TypeError(
+          'Missing required JWT Bearer Grant Signature Algorithms when using JWT Bearer Grant Encryption.',
+        );
+      }
+
+      if (contentEncryptionEnabled) {
+        throw new TypeError(
+          'Missing required JWT Bearer Grant Signature Algorithms when using JWT Bearer Grant Encryption.',
+        );
+      }
+    } else {
+      if (!keyWrapEnabled && contentEncryptionEnabled) {
+        throw new TypeError(
+          'Missing required JWT Bearer Grant Key Wrap Algorithms when using JWT Bearer Grant Encryption.',
+        );
+      }
+
+      if (keyWrapEnabled && !contentEncryptionEnabled) {
+        throw new TypeError(
+          'Missing required JWT Bearer Grant Content Encryption Algorithms when using JWT Bearer Grant Encryption.',
         );
       }
     }

@@ -12,14 +12,12 @@ import { Scope } from '../../entities/scope';
 import { Session } from '../../entities/session';
 import { User } from '../../entities/user';
 import { Logger } from '../../loggers/logger';
-import { PKCE } from '../../pkces/pkce';
 import { ResponseModeName } from '../../response-modes/response-mode-name.type';
 import { CodeAuthorizationResponse } from '../../responses/authorization/code/code.authorization-response';
 import { ResponseTypeName } from '../response-type-name.type';
 import { CodeResponseType } from './code.response-type';
 
 jest.mock('../../loggers/logger');
-jest.mock('../../pkces/pkce');
 
 describe('Code Response Type', () => {
   let responseType: CodeResponseType;
@@ -32,8 +30,6 @@ describe('Code Response Type', () => {
       createAuthorizationCode: jest.fn(),
     }),
   );
-
-  const pkceMock = jest.mocked(PKCE.prototype);
 
   const client: Client = Object.assign<Client, Partial<Client>>(new Client(), { id: 'client_id' });
   const user: User = Object.assign<User, Partial<User>>(new User(), { id: 'user_id' });
@@ -93,11 +89,7 @@ describe('Code Response Type', () => {
   });
 
   describe('handle()', () => {
-    const context = {
-      codeChallenge: 'code_challenge',
-      codeChallengeMethod: pkceMock as PKCE,
-      session,
-    } as CodeAuthorizationContext;
+    const context = { parameters: {}, session } as CodeAuthorizationContext;
 
     it('should return a Code Authorization Response.', async () => {
       dataAccessMock.createAuthorizationCode.mockResolvedValueOnce(authorizationCode);
