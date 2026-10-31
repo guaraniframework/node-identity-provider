@@ -20,6 +20,7 @@ SELECT
     id_token_encrypted_response_alg,
     id_token_encrypted_response_enc,
     authentication_signing_alg,
+    jwt_bearer_grant_signing_alg,
     default_max_age,
     require_auth_time,
     default_acr_values,

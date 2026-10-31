@@ -65,6 +65,7 @@ describe('ID Token & Token Response Type', () => {
 
   const accessToken: AccessToken = Object.assign<AccessToken, Partial<AccessToken>>(new AccessToken(), {
     id: 'access_token',
+    type: 'Bearer',
     scopes,
     expiresAt: new Date(Date.now() + 3600000),
   });

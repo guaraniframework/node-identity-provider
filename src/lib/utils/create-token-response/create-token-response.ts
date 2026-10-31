@@ -1,5 +1,5 @@
 import { AccessToken } from '../../entities/access-token';
-import { TokenResponse } from '../../responses/token-response';
+import { TokenResponse } from '../../responses/token/token-response';
 
 /**
  * Returns a formatted Token Response based on the provided Access Token.
@@ -10,7 +10,7 @@ import { TokenResponse } from '../../responses/token-response';
 export function createTokenResponse<T extends TokenResponse>(accessToken: AccessToken): T {
   return {
     access_token: accessToken.id,
-    token_type: 'Bearer',
+    token_type: accessToken.type,
     expires_in: Math.ceil((accessToken.expiresAt.getTime() - Date.now()) / 1000),
     scope: accessToken.scopes.map((scope) => scope.name).join(' '),
   } as T;

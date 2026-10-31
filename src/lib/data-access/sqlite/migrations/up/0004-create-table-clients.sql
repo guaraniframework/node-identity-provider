@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS clients (
     id_token_encrypted_response_alg TEXT NULL,
     id_token_encrypted_response_enc TEXT NULL,
     authentication_signing_alg TEXT NULL,
+    jwt_bearer_grant_signing_alg TEXT NULL,
     default_max_age INTEGER NULL,
     require_auth_time INTEGER NOT NULL DEFAULT 0 CHECK (require_auth_time IN (0, 1)),
     default_acr_values TEXT NOT NULL DEFAULT '[]',

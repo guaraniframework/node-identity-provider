@@ -1,6 +1,6 @@
 import { AccessToken } from '../../entities/access-token';
 import { Scope } from '../../entities/scope';
-import { TokenResponse } from '../../responses/token-response';
+import { TokenResponse } from '../../responses/token/token-response';
 import { createTokenResponse } from './create-token-response';
 
 describe('createTokenResponse()', () => {
@@ -9,6 +9,7 @@ describe('createTokenResponse()', () => {
       createTokenResponse(
         Object.assign<AccessToken, Partial<AccessToken>>(new AccessToken(), {
           id: 'access_token',
+          type: 'Bearer',
           scopes: ['foo', 'bar'].map((scope) => Object.assign<Scope, Partial<Scope>>(new Scope(), { name: scope })),
           expiresAt: new Date(Date.now() + 3600000),
         }),

@@ -34,19 +34,34 @@ export interface SettingsParameters {
   readonly idTokenContentEncryptionAlgorithms?: ContentEncryptionAlgorithm[];
 
   /**
-   * JSON Web Signature Digital Signature Algorithms for ID Token Signature registered at the Identity Provider.
+   * JSON Web Signature Digital Signature Algorithms for JWT Bearer Client Assertion Signature registered at the Identity Provider.
    */
   readonly clientAuthenticationSigningAlgorithms?: Exclude<DigitalSignatureAlgorithm, 'none'>[];
 
   /**
-   * JSON Web Encryption Key Wrap Algorithms for ID Token Encryption registered at the Identity Provider.
+   * JSON Web Encryption Key Wrap Algorithms for JWT Bearer Client Assertion Encryption registered at the Identity Provider.
    */
   readonly clientAuthenticationEncryptionKeyWrapAlgorithms?: KeyManagementAlgorithm[];
 
   /**
-   * JSON Web Encryption Content Encryption Algorithms for ID Token Encryption registered at the Identity Provider.
+   * JSON Web Encryption Content Encryption Algorithms for JWT Bearer Client Assertion Encryption registered at the Identity Provider.
    */
   readonly clientAuthenticationEncryptionContentEncryptionAlgorithms?: ContentEncryptionAlgorithm[];
+
+  /**
+   * JSON Web Signature Digital Signature Algorithms for JWT Bearer Assertion Signature registered at the Identity Provider.
+   */
+  readonly jwtBearerGrantSigningAlgorithms?: Exclude<DigitalSignatureAlgorithm, 'none'>[];
+
+  /**
+   * JSON Web Encryption Key Wrap Algorithms for JWT Bearer Assertion Encryption registered at the Identity Provider.
+   */
+  readonly jwtBearerGrantEncryptionKeyWrapAlgorithms?: KeyManagementAlgorithm[];
+
+  /**
+   * JSON Web Encryption Content Encryption Algorithms for JWT Bearer Assertion Encryption registered at the Identity Provider.
+   */
+  readonly jwtBearerGrantEncryptionContentEncryptionAlgorithms?: ContentEncryptionAlgorithm[];
 
   /**
    * UI Locales registered at the Identity Provider.
@@ -80,6 +95,13 @@ export interface SettingsParameters {
    * @default false
    */
   readonly enableAuthorizationResponseIssuerIdentifier?: boolean;
+
+  /**
+   * Enables Refresh Token Rotation on the Identity Provider.
+   *
+   * @default false
+   */
+  readonly enableRefreshTokenRotation?: boolean;
 
   /**
    * Name of the Session Cookie.

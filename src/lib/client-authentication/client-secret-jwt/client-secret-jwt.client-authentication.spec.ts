@@ -193,18 +193,13 @@ describe('Client Secret JWT Client Authentication', () => {
         dataAccessMock.getClientAssertionUnwrapJsonWebKey!.mockResolvedValueOnce(unwrapJsonWebKey);
         dataAccessMock.findClientById.mockResolvedValueOnce(client);
 
-        const error = new InvalidClientError('Failed to authenticate the Client.');
+        const error = new InvalidClientError('The Client Secret is expired.');
         await expect(clientAuthentication.getClient(request)).rejects.toThrowWithMessage(
           InvalidClientError,
           error.description,
         );
 
-        expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
-          '[ClientSecretJwtClientAuthentication] The Client Secret is expired',
-          '20cad821-ca2d-4b04-a5d8-a6644e93f98e',
-          { client_id: client.id },
-          error,
-        );
+        expect(loggerMock.error).not.toHaveBeenCalled();
       },
     );
 

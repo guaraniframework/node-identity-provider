@@ -1,12 +1,12 @@
 import { Injectable } from '@guarani/di';
-import { DigitalSignatureAlgorithm, JsonWebKey, jwk } from '@guarani/jose';
+import { DigitalSignatureAlgorithm, JsonWebKey } from '@guarani/jose';
 
 import { JwtBearerClientAssertion } from '../../client-assertions/jwt-bearer/jwt-bearer.client-assertion';
 import { DataAccess } from '../../data-access/data-access';
 import { Client } from '../../entities/client';
-import { InvalidClientError } from '../../errors/invalid-client/invalid-client.error';
 import { Logger } from '../../loggers/logger';
 import { Settings } from '../../settings/settings';
+import { getClientSecretAsJsonWebKey } from '../../utils/get-client-secret-as-jsonwebkey/get-client-secret-as-jsonwebkey';
 import { ClientAuthenticationName } from '../client-authentication-name.type';
 
 /**
@@ -47,38 +47,6 @@ export class ClientSecretJwtClientAuthentication extends JwtBearerClientAssertio
    * @returns Client Secret as a JSON Web Key.
    */
   protected async getClientAssertionClientSignJsonWebKey(client: Client): Promise<JsonWebKey> {
-    this.logger.debug(
-      `[${this.constructor.name}] Called getClientAssertionClientSignJsonWebKey()`,
-      '9262eedc-c5e5-4ebf-a50a-297b92a8f34e',
-      { client_id: client.id },
-    );
-
-    const clientSecret = client.secrets[0]!;
-
-    if (new Date() > clientSecret.expiresAt) {
-      const error = new InvalidClientError('Failed to authenticate the Client.');
-
-      this.logger.error(
-        `[${this.constructor.name}] The Client Secret is expired`,
-        '20cad821-ca2d-4b04-a5d8-a6644e93f98e',
-        { client_id: client.id },
-        error,
-      );
-
-      throw error;
-    }
-
-    const jsonWebKey = await jwk.create({
-      kty: 'oct',
-      k: Buffer.from(clientSecret.secret, 'utf8').toString('base64url'),
-    });
-
-    this.logger.debug(
-      `[${this.constructor.name}] Completed getClientAssertionClientSignJsonWebKey()`,
-      '5bd942b9-16c4-4743-b9ca-307587eed769',
-      { client_id: client.id, jwk: jsonWebKey },
-    );
-
-    return jsonWebKey;
+    return await getClientSecretAsJsonWebKey(client);
   }
 }

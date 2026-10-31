@@ -28,6 +28,11 @@ export enum ErrorCode {
   InvalidClient = 'invalid_client',
 
   /**
+   * The provided Authorization Grant is invalid.
+   */
+  InvalidGrant = 'invalid_grant',
+
+  /**
    * The Identity Provider Request is invalid, contains invalid parameters or is otherwise malformed.
    */
   InvalidRequest = 'invalid_request',

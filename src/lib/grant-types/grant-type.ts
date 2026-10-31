@@ -1,5 +1,5 @@
 import { TokenContext } from '../context/token/token-context';
-import { TokenResponse } from '../responses/token-response';
+import { TokenResponse } from '../responses/token/token-response';
 import { GrantTypeName } from './grant-type-name.type';
 
 /**

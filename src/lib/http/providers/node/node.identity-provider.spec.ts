@@ -53,6 +53,7 @@ describe('Node Identity Provider', () => {
     provider = new IdentityProviderFactory()
       .addAuthorizationEndpoint()
       .addInteractionEndpoint()
+      .addTokenEndpoint()
       .addSettings(settings)
       .add(DatabaseSync, database)
       .add(JsonWebKeySet, jsonWebKeySet)
@@ -94,6 +95,15 @@ describe('Node Identity Provider', () => {
       const error = new InvalidRequestError('Invalid parameter "interaction_type".');
 
       const response = await agent.get('/oidc/interaction');
+
+      expect(response.status).toBe(HttpResponseStatus.BadRequest);
+      expect(response.body).toStrictEqual(error.toJSON());
+    });
+
+    it('should have a Token Endpoint.', async () => {
+      const error = new InvalidRequestError('Invalid parameter "grant_type".');
+
+      const response = await agent.post('/oidc/token').set('Content-Type', 'application/x-www-form-urlencoded');
 
       expect(response.status).toBe(HttpResponseStatus.BadRequest);
       expect(response.body).toStrictEqual(error.toJSON());

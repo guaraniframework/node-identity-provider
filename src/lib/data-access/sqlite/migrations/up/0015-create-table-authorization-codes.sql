@@ -1,9 +1,6 @@
 CREATE TABLE IF NOT EXISTS authorization_codes (
     id BLOB NOT NULL PRIMARY KEY,
-    code_challenge TEXT NOT NULL UNIQUE,
-    code_challenge_method TEXT NOT NULL CHECK (
-        code_challenge_method IN ('S256', 'plain')
-    ),
+    parameters TEXT NOT NULL,
     created_at INTEGER NOT NULL DEFAULT (unixepoch('now')),
     expires_at INTEGER NOT NULL DEFAULT (
         unixepoch('now', '+5 minutes')

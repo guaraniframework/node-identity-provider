@@ -1,4 +1,4 @@
-import { PKCEName } from '../pkces/pkce-name.type';
+import { AuthorizationRequest } from '../requests/authorization/authorization-request';
 import { Consent } from './consent';
 import { Login } from './login';
 
@@ -12,14 +12,9 @@ export class AuthorizationCode implements NodeJS.Dict<unknown> {
   public readonly id!: string;
 
   /**
-   * PKCE Code Challenge.
+   * Authorization Request Parameters.
    */
-  public readonly codeChallenge!: string;
-
-  /**
-   * PKCE Code Challenge Method.
-   */
-  public readonly codeChallengeMethod!: PKCEName;
+  public readonly parameters!: AuthorizationRequest;
 
   /**
    * Authorization Code Creation Date.

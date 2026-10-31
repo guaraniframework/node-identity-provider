@@ -136,6 +136,11 @@ export class Client implements NodeJS.Dict<unknown> {
   public authenticationSigningAlgorithm!: Exclude<DigitalSignatureAlgorithm, 'none'> | null;
 
   /**
+   * JSON Web Signature Algorithm used to validate the JWT Bearer Grant Assertion.
+   */
+  public jwtBearerGrantSigningAlgorithm!: Exclude<DigitalSignatureAlgorithm, 'none'> | null;
+
+  /**
    * Default Maximum Authentication Age.
    */
   public defaultMaxAge!: number | null;

@@ -236,6 +236,97 @@ const invalidAuthenticationEncryptionContentEncryptionAlgorithms: any[] = [
   ['ES256'],
 ];
 
+const invalidJwtBearerGrantSigningAlgorithms: any[] = [
+  undefined,
+  null,
+  true,
+  1,
+  1.2,
+  1n,
+  'a',
+  Symbol('a'),
+  Buffer,
+  Buffer.alloc(1),
+  () => {},
+  {},
+  [],
+  [undefined],
+  [null],
+  [true],
+  [1],
+  [1.2],
+  [1n],
+  [Symbol('a')],
+  [Buffer],
+  [Buffer.alloc(1)],
+  [() => {}],
+  [{}],
+  [[]],
+  ['none'],
+  [''],
+  ['RSA-OAEP'],
+];
+
+const invalidJwtBearerGrantEncryptionKeyWrapAlgorithms: any[] = [
+  undefined,
+  null,
+  true,
+  1,
+  1.2,
+  1n,
+  'a',
+  Symbol('a'),
+  Buffer,
+  Buffer.alloc(1),
+  () => {},
+  {},
+  [],
+  [undefined],
+  [null],
+  [true],
+  [1],
+  [1.2],
+  [1n],
+  [Symbol('a')],
+  [Buffer],
+  [Buffer.alloc(1)],
+  [() => {}],
+  [{}],
+  [[]],
+  [''],
+  ['A128GCM'],
+];
+
+const invalidJwtBearerGrantEncryptionContentEncryptionAlgorithms: any[] = [
+  undefined,
+  null,
+  true,
+  1,
+  1.2,
+  1n,
+  'a',
+  Symbol('a'),
+  Buffer,
+  Buffer.alloc(1),
+  () => {},
+  {},
+  [],
+  [undefined],
+  [null],
+  [true],
+  [1],
+  [1.2],
+  [1n],
+  [Symbol('a')],
+  [Buffer],
+  [Buffer.alloc(1)],
+  [() => {}],
+  [{}],
+  [[]],
+  [''],
+  ['ES256'],
+];
+
 const invalidUiLocales: any[] = [
   undefined,
   null,
@@ -341,6 +432,21 @@ const invalidEnableAuthorizationResponseIssuerIdentifiers: any[] = [
   [],
 ];
 
+const invalidEnableRefreshTokenRotations: any[] = [
+  undefined,
+  null,
+  1,
+  1.2,
+  1n,
+  'a',
+  Symbol('a'),
+  Buffer,
+  Buffer.alloc(1),
+  () => {},
+  {},
+  [],
+];
+
 const invalidSessionCookies: any[] = [
   undefined,
   null,
@@ -371,6 +477,9 @@ describe('Settings', () => {
         clientAuthenticationSigningAlgorithms: ['ES256'],
         clientAuthenticationEncryptionKeyWrapAlgorithms: ['RSA-OAEP'],
         clientAuthenticationEncryptionContentEncryptionAlgorithms: ['A128GCM'],
+        jwtBearerGrantSigningAlgorithms: ['ES256'],
+        jwtBearerGrantEncryptionKeyWrapAlgorithms: ['RSA-OAEP'],
+        jwtBearerGrantEncryptionContentEncryptionAlgorithms: ['A128GCM'],
         uiLocales: ['en-US'],
         acrValues: ['urn:guarani:acr:1fa', 'urn:guarani:acr:2fa'],
         interactions: {
@@ -382,6 +491,7 @@ describe('Settings', () => {
         },
         minimumMaxAge: 86400,
         enableAuthorizationResponseIssuerIdentifier: true,
+        enableRefreshTokenRotation: true,
         sessionCookie: '_session',
       };
     });
@@ -471,6 +581,37 @@ describe('Settings', () => {
       },
     );
 
+    it.each(invalidJwtBearerGrantSigningAlgorithms)(
+      'should throw when the provided JWT Bearer Grant Signing Algorithms is invalid.',
+      (jwtBearerGrantSigningAlgorithms) => {
+        expect(() => new Settings({ ...parameters, jwtBearerGrantSigningAlgorithms })).toThrowWithMessage(
+          TypeError,
+          'The provided JWT Bearer Grant Signing Algorithms is invalid.',
+        );
+      },
+    );
+
+    it.each(invalidJwtBearerGrantEncryptionKeyWrapAlgorithms)(
+      'should throw when the provided JWT Bearer Grant Encryption Key Wrap Algorithms is invalid.',
+      (jwtBearerGrantEncryptionKeyWrapAlgorithms) => {
+        expect(() => {
+          return new Settings({ ...parameters, jwtBearerGrantEncryptionKeyWrapAlgorithms });
+        }).toThrowWithMessage(TypeError, 'The provided JWT Bearer Grant Encryption Key Wrap Algorithms is invalid.');
+      },
+    );
+
+    it.each(invalidJwtBearerGrantEncryptionContentEncryptionAlgorithms)(
+      'should throw when the provided JWT Bearer Grant Encryption Content Encryption Algorithms is invalid.',
+      (jwtBearerGrantEncryptionContentEncryptionAlgorithms) => {
+        expect(() => {
+          return new Settings({ ...parameters, jwtBearerGrantEncryptionContentEncryptionAlgorithms });
+        }).toThrowWithMessage(
+          TypeError,
+          'The provided JWT Bearer Grant Encryption Content Encryption Algorithms is invalid.',
+        );
+      },
+    );
+
     it.each(invalidUiLocales)('should throw when the provided UI Locales is invalid.', (uiLocales) => {
       expect(() => new Settings({ ...parameters, uiLocales })).toThrowWithMessage(
         TypeError,
@@ -511,6 +652,16 @@ describe('Settings', () => {
         expect(() => new Settings({ ...parameters, enableAuthorizationResponseIssuerIdentifier })).toThrowWithMessage(
           TypeError,
           'The provided Enable Authorization Response Issuer Identifier is invalid.',
+        );
+      },
+    );
+
+    it.each(invalidEnableRefreshTokenRotations)(
+      'should throw when the provided Enable Refresh Token Rotation is invalid.',
+      (enableRefreshTokenRotation) => {
+        expect(() => new Settings({ ...parameters, enableRefreshTokenRotation })).toThrowWithMessage(
+          TypeError,
+          'The provided Enable Refresh Token Rotation is invalid.',
         );
       },
     );
@@ -598,6 +749,44 @@ describe('Settings', () => {
       );
     });
 
+    it('should throw when not providing a JWT Bearer Grant Signature Algorithm and providing a JWT Bearer Grant Key Wrap Algorithm.', () => {
+      Reflect.deleteProperty(parameters, 'jwtBearerGrantSigningAlgorithms');
+      Reflect.deleteProperty(parameters, 'jwtBearerGrantEncryptionContentEncryptionAlgorithms');
+
+      expect(() => new Settings(parameters)).toThrowWithMessage(
+        TypeError,
+        'Missing required JWT Bearer Grant Signature Algorithms when using JWT Bearer Grant Encryption.',
+      );
+    });
+
+    it('should throw when not providing a JWT Bearer Grant Signature Algorithm and providing a JWT Bearer Grant Content Encryption Algorithm.', () => {
+      Reflect.deleteProperty(parameters, 'jwtBearerGrantSigningAlgorithms');
+      Reflect.deleteProperty(parameters, 'jwtBearerGrantEncryptionKeyWrapAlgorithms');
+
+      expect(() => new Settings(parameters)).toThrowWithMessage(
+        TypeError,
+        'Missing required JWT Bearer Grant Signature Algorithms when using JWT Bearer Grant Encryption.',
+      );
+    });
+
+    it('should throw when not providing a JWT Bearer Grant Key Wrap Algorithm and providing a JWT Bearer Grant Content Encryption Algorithm.', () => {
+      Reflect.deleteProperty(parameters, 'jwtBearerGrantEncryptionKeyWrapAlgorithms');
+
+      expect(() => new Settings(parameters)).toThrowWithMessage(
+        TypeError,
+        'Missing required JWT Bearer Grant Key Wrap Algorithms when using JWT Bearer Grant Encryption.',
+      );
+    });
+
+    it('should throw when not providing a JWT Bearer Grant Content Encryption Algorithm and providing a JWT Bearer Grant Key Wrap Algorithm.', () => {
+      Reflect.deleteProperty(parameters, 'jwtBearerGrantEncryptionContentEncryptionAlgorithms');
+
+      expect(() => new Settings(parameters)).toThrowWithMessage(
+        TypeError,
+        'Missing required JWT Bearer Grant Content Encryption Algorithms when using JWT Bearer Grant Encryption.',
+      );
+    });
+
     it('should instantiate a new Settings with the provided values.', () => {
       let settings!: Settings;
 
@@ -615,6 +804,9 @@ describe('Settings', () => {
           clientAuthenticationSigningAlgorithms: ['ES256'],
           clientAuthenticationEncryptionKeyWrapAlgorithms: ['RSA-OAEP'],
           clientAuthenticationEncryptionContentEncryptionAlgorithms: ['A128GCM'],
+          jwtBearerGrantSigningAlgorithms: ['ES256'],
+          jwtBearerGrantEncryptionKeyWrapAlgorithms: ['RSA-OAEP'],
+          jwtBearerGrantEncryptionContentEncryptionAlgorithms: ['A128GCM'],
           uiLocales: ['en-US'],
           acrValues: ['urn:guarani:acr:1fa', 'urn:guarani:acr:2fa'],
           interactions: expect.objectContaining<Partial<InteractionsSettings>>({
@@ -626,6 +818,7 @@ describe('Settings', () => {
           }),
           minimumMaxAge: 86400,
           enableAuthorizationResponseIssuerIdentifier: true,
+          enableRefreshTokenRotation: true,
           sessionCookie: '_session',
         }),
       );
@@ -660,6 +853,9 @@ describe('Settings', () => {
           clientAuthenticationSigningAlgorithms: [],
           clientAuthenticationEncryptionKeyWrapAlgorithms: [],
           clientAuthenticationEncryptionContentEncryptionAlgorithms: [],
+          jwtBearerGrantSigningAlgorithms: [],
+          jwtBearerGrantEncryptionKeyWrapAlgorithms: [],
+          jwtBearerGrantEncryptionContentEncryptionAlgorithms: [],
           uiLocales: [],
           acrValues: [],
           interactions: expect.objectContaining<Partial<InteractionsSettings>>({
@@ -671,6 +867,7 @@ describe('Settings', () => {
           }),
           minimumMaxAge: DEFAULT_MINIMUM_MAX_AGE,
           enableAuthorizationResponseIssuerIdentifier: false,
+          enableRefreshTokenRotation: false,
           sessionCookie: DEFAULT_SESSION_COOKIE,
         }),
       );

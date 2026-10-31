@@ -19,7 +19,7 @@ import { HttpResponseStatus } from '../../http/response/http-response-status.enu
 import { HttpRoute } from '../../http/route/http-route';
 import { Logger } from '../../loggers/logger';
 import { TokenRequest } from '../../requests/token/token-request';
-import { TokenResponse } from '../../responses/token-response';
+import { TokenResponse } from '../../responses/token/token-response';
 import { TokenValidator } from '../../validators/token/token.validator';
 import { EndpointName } from '../endpoint-name.type';
 import { TokenEndpoint } from './token.endpoint';

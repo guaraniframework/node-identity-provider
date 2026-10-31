@@ -45,6 +45,7 @@ export function createTestProvider(): NodeIdentityProvider {
       options.useResponseModes(['fragment', 'query']).useResponseTypes(['code', 'id_token']);
     })
     .addInteractionEndpoint()
+    .addTokenEndpoint()
     .addLogger(Object.assign(new ConsoleLogger(LoggerLevel.ERROR)))
     .addSettings(settings)
     .addSubjectTypes(['pairwise', 'public'])
