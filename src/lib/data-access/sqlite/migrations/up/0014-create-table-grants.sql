@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS grants (
         unixepoch('now', '+5 minutes')
     ),
     client_id BLOB NOT NULL,
-    session_id BLOB NOT NULL,
+    session_id BLOB NOT NULL UNIQUE,
     consent_id BLOB NULL,
     FOREIGN KEY (client_id) REFERENCES clients (id) ON DELETE CASCADE,
     FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE,

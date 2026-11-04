@@ -1,0 +1,49 @@
+{% extends "../base.njk" %}
+
+{% block customcss %}
+  <link rel="stylesheet" href="/static/css/auth/account-selection.css">
+{% endblock %}
+
+{% block content %}
+  <div class="container-fluid d-flex justify-content-center align-items-center min-vh-100">
+    <div class="form-widget">
+      <div class="d-flex flex-column justify-content-center align-items-center">
+        <h4>Account Selection</h4>
+      </div>
+
+      <form action="/auth/account-selection" method="post">
+        <input type="hidden" name="login_challenge" value="{{ login_challenge }}"/>
+
+        <ul class="list-group">
+        {% for login in logins %}
+        {% set user = login.user %}
+          <li class="list-group-item">
+            <div class="card mb-3">
+              <div class="row g-0">
+                <div class="col-md-4 d-flex flex-column align-items-center text-center">
+                  <img src="{{ user.picture or '/static/img/avatar.svg' }}" class="rounder-circle user-avatar" alt="User Profile Picture"/>
+                </div>
+                <div class="col-md-8 d-flex flex-column justify-content-center">
+                  <div class="card-body">
+                    <div class="row g-0">
+                      <div class="col-10">
+                        <h6 class="card-title">{{ user.name }}</h6>
+                        <p class="card-text">{{ user.email }}</p>
+                      </div>
+                      <div class="col-2 d-flex flex-column align-items-center justify-content-center text-center">
+                        <button type="submit" name="login_id" value="{{ login.id }}" class="btn btn-widget">
+                          <i class="fa-solid fa-right-to-bracket"></i>
+                        </buttom>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </li>
+        {% endfor %}
+        </ul>
+      </form>
+    </div>
+  </div>
+{% endblock %}

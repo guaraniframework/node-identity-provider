@@ -1,0 +1,24 @@
+{% extends "../base.njk" %}
+
+{% block customcss %}
+  <link rel="stylesheet" href="/static/css/auth/logout.css">
+{% endblock %}
+
+{% block content %}
+  <div class="container-fluid d-flex justify-content-center align-items-center min-vh-100">
+    <div class="form-widget">
+      <div class="d-flex flex-column justify-content-center align-items-center">
+        <h5>Do you want to logout?</h5>
+      </div>
+
+      <form action="/auth/logout" method="post">
+        <input type="hidden" name="logout_challenge" value="{{ logout_challenge }}"/>
+
+        <div class="form-group mt-4 d-flex flex-row">
+          <button type="submit" name="decision" class="btn btn-widget w-100" value="accept">Yes</button>
+          <button type="submit" name="decision" class="btn btn-light w-100" value="deny">No</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

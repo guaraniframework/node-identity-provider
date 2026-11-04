@@ -111,6 +111,7 @@ export { RefreshTokenGrantType } from './lib/grant-types/refresh-token/refresh-t
 export { ClientAuthenticationHandler } from './lib/handlers/client-authentication/client-authentication.handler';
 export { IdTokenHandler } from './lib/handlers/id-token/id-token.handler';
 export { ScopeHandler } from './lib/handlers/scope/scope.handler';
+export { ExpressIdentityProvider } from './lib/http/providers/express/express.identity-provider';
 export { IdentityProvider } from './lib/http/providers/identity-provider';
 export { NodeIdentityProvider } from './lib/http/providers/node/node.identity-provider';
 export { HttpRequest } from './lib/http/request/http-request';

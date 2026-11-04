@@ -1,0 +1,170 @@
+{% extends "../base.njk" %}
+
+{% block customcss %}
+  <link rel="stylesheet" href="/static/css/_partials/navbar.css">
+  <link rel="stylesheet" href="/static/css/profile/edit.css">
+{% endblock %}
+
+{% block content %}
+  {% set user = request.user %}
+
+  <div class="container-fluid p-0">
+    {% include "../_partials/navbar.njk" %}
+
+    <div class="d-flex justify-content-center align-items-center mt-5">
+      <div class="container">
+        <div class="row">
+          <div class="col-12 mb-3">
+            <nav class="breadcrumb-widget" aria-label="breadcrumb">
+              <div class="d-flex align-items-center h-100">
+                <ol class="breadcrumb">
+                  <li class="breadcrumb-item">
+                    <a href="/">Home</a>
+                  </li>
+                  <li class="breadcrumb-item">
+                    <a href="/profile">Profile</a>
+                  </li>
+                  <li class="breadcrumb-item active" aria-current="page">Edit Profile</li>
+                </ol>
+              </div>
+            </nav>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-12 col-md-4 mb-4">
+            <div class="card">
+              <div class="card-body">
+                <div class="d-flex flex-column align-items-center text-center">
+                  <img src="{{ user.picture or '/static/img/avatar.svg' }}" alt="User Avatar" class="rounded-circle user-avatar"/>
+
+                  <div class="mt-3">
+                    <h4>{{ user.name }}</h4>
+                    {% if user.address %}
+                      <p class="text-muted font-size-sm">{{ user.address.formatted }}</p>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-8 mb-4">
+            <div class="card">
+              <div class="card-body">
+                <form action="{{ request.originalUrl }}" method="post" onsubmit="removeEmptyEntries(this)">
+
+                  <div class="row">
+                    <div class="col-12 col-lg-4 mt-3">
+                      <label for="given-name" class="form-label text-muted">Given Name*</label>
+                      <div class="d-flex align-items-center ps-2 input-group-widget">
+                        <input type="text" name="given_name" id="given-name" class="form-control input-text-widget" placeholder="Given Name" value="{{ user.givenName }}" required/>
+                      </div>
+                    </div>
+
+                    <div class="col-12 col-lg-4 mt-3">
+                      <label for="middle-name" class="form-label text-muted">Middle Name</label>
+                      <div class="d-flex align-items-center ps-2 input-group-widget">
+                        <input type="text" name="middle_name" id="middle-name" class="form-control input-text-widget" placeholder="Middle Name" value="{{ user.middleName }}"/>
+                      </div>
+                    </div>
+
+                    <div class="col-12 col-lg-4 mt-3">
+                      <label for="family-name" class="form-label text-muted">Family Name*</label>
+                      <div class="d-flex align-items-center ps-2 input-group-widget">
+                        <input type="text" name="family_name" id="family-name" class="form-control input-text-widget" placeholder="Family Name" value="{{ user.familyName }}" required/>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-12 col-lg-6 mt-3">
+                      <label for="email" class="form-label text-muted">Email*</label>
+                      <div class="d-flex align-items-center ps-2 input-group-widget">
+                        <input type="email" name="email" id="email" class="form-control input-text-widget" aria-describedby="email-help" placeholder="Email" value="{{ user.email }}" required/>
+                      </div>
+                      <div id="email-help" class="form-text">Example: user@email.com</div>
+                    </div>
+
+                    <div class="col-12 col-lg-6 mt-3">
+                      <label for="phone-number" class="form-label text-muted">Phone Number*</label>
+                      <div class="d-flex align-items-center ps-2 input-group-widget">
+                        <input type="text" name="phone_number" id="phone-number" class="form-control input-text-widget" aria-describedby="phone-number-help" placeholder="Phone Number" value="{{ user.phoneNumber }}" required/>
+                      </div>
+                      <div id="phone-number-help" class="form-text">Example: +15551234567</div>
+                    </div>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-12 col-lg-6 mt-3">
+                      <label for="birthdate" class="form-label text-muted">Birthdate*</label>
+                      <div class="d-flex align-items-center ps-2 input-group-widget">
+                        <input type="date" name="birthdate" id="birthdate" class="form-control input-text-widget" value="{{ user.birthdate }}" required/>
+                      </div>
+                    </div>
+
+                    <div class="col-12 col-lg-6 mt-3">
+                      <label for="gender" class="form-label text-muted">Gender</label>
+                      <div class="d-flex align-items-center ps-2 input-group-widget">
+                        <select name="gender" class="form-select input-select-widget">
+                          <option value="" {% if not user.gender %}selected{% endif %}>Select</option>
+                          <option value="male" {% if user.gender === "male" %}selected{% endif %}>Male</option>
+                          <option value="female" {% if user.gender === "female" %}selected{% endif %}>Female</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="d-flex justify-content-center mt-5">
+                    <div class="col-12 col-md-3">
+                      <button type="submit" class="btn btn-widget w-100">Save</button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 start-50 translate-middle-x p-3">
+      {% for message in success %}
+        <div class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+          <div class="d-flex">
+            <div class="toast-body">{{ message }}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+          </div>
+        </div>
+      {% endfor %}
+
+      {% for message in errors %}
+        <div class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+          <div class="d-flex">
+            <div class="toast-body">{{ message }}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}
+
+{% block customjs %}
+  <script type="text/javascript">
+    function removeEmptyEntries(form) {
+      form.addEventListener('formdata', function (event) {
+        let formData = event.formData;
+        for (const [name, value] of Array.from(formData.entries())) {
+          if (value === '') {
+            formData.delete(name);
+          }
+        }
+      });
+    }
+
+    document
+      .querySelectorAll('.toast')
+      .forEach((element) => bootstrap.Toast.getOrCreateInstance(element).show());
+  </script>
+{% endblock %}

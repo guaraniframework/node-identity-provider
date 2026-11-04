@@ -54,9 +54,9 @@ export class SQLiteDataAccess extends DataAccess {
    * @param jsonWebKeySet JSON Web Key Set of the Identity Provider.
    */
   public constructor(
-    private readonly logger: Logger,
-    private readonly database: DatabaseSync,
-    private readonly jsonWebKeySet: JsonWebKeySet,
+    protected readonly logger: Logger,
+    protected readonly database: DatabaseSync,
+    protected readonly jsonWebKeySet: JsonWebKeySet,
   ) {
     super();
 
@@ -112,9 +112,11 @@ export class SQLiteDataAccess extends DataAccess {
     const id = randomUUIDv7();
 
     const accessTokenSql = this._procedure('create-access-token.sql');
-    const accessTokenParameters = this.database
-      .prepare(accessTokenSql)
-      .get({ id: toUUIDBuffer(id), client_id: toUUIDBuffer(client.id), user_id: user ? toUUIDBuffer(user.id) : null })!;
+    const accessTokenParameters = this.database.prepare(accessTokenSql).get({
+      id: this._toUUIDBuffer(id),
+      client_id: this._toUUIDBuffer(client.id),
+      user_id: user ? this._toUUIDBuffer(user.id) : null,
+    })!;
 
     const scopesIds = scopes.map((scope) => scope.id);
 
@@ -125,10 +127,10 @@ export class SQLiteDataAccess extends DataAccess {
 
     this.database
       .prepare(accessTokenScopesSql)
-      .run(...scopesIds.flatMap((scopeId) => [toUUIDBuffer(id), toUUIDBuffer(scopeId)]));
+      .run(...scopesIds.flatMap((scopeId) => [this._toUUIDBuffer(id), this._toUUIDBuffer(scopeId)]));
 
     return Object.assign<AccessToken, AccessToken>(new AccessToken(), {
-      id: toUUIDString(accessTokenParameters['id'] as Uint8Array),
+      id: this._toUUIDString(accessTokenParameters['id'] as Uint8Array),
       type: accessTokenParameters['type'] as AccessTokenType,
       scopes,
       createdAt: new Date((accessTokenParameters['created_at'] as number) * 1000),
@@ -157,13 +159,13 @@ export class SQLiteDataAccess extends DataAccess {
 
     const authorizationCodeSql = this._procedure('create-authorization-code.sql');
     const authorizationCodeParameters = this.database.prepare(authorizationCodeSql).get({
-      id: toUUIDBuffer(id),
+      id: this._toUUIDBuffer(id),
       parameters: jsonStringify(parameters),
-      login_id: toUUIDBuffer(login.id),
-      consent_id: toUUIDBuffer(consent.id),
+      login_id: this._toUUIDBuffer(login.id),
+      consent_id: this._toUUIDBuffer(consent.id),
     })!;
 
-    return instantiateAuthorizationCode(authorizationCodeParameters, login, consent);
+    return this._instantiateAuthorizationCode(authorizationCodeParameters, login, consent);
   }
 
   /**
@@ -178,9 +180,11 @@ export class SQLiteDataAccess extends DataAccess {
     const id = randomUUIDv7();
 
     const consentSql = this._procedure('create-consent.sql');
-    const consentParameters = this.database
-      .prepare(consentSql)
-      .get({ id: toUUIDBuffer(id), client_id: toUUIDBuffer(client.id), user_id: toUUIDBuffer(user.id) })!;
+    const consentParameters = this.database.prepare(consentSql).get({
+      id: this._toUUIDBuffer(id),
+      client_id: this._toUUIDBuffer(client.id),
+      user_id: this._toUUIDBuffer(user.id),
+    })!;
 
     const scopesIds = scopes.map((scope) => scope.id);
 
@@ -191,7 +195,7 @@ export class SQLiteDataAccess extends DataAccess {
 
     this.database
       .prepare(consentScopesSql)
-      .run(...scopesIds.flatMap((scopeId) => [toUUIDBuffer(id), toUUIDBuffer(scopeId)]));
+      .run(...scopesIds.flatMap((scopeId) => [this._toUUIDBuffer(id), this._toUUIDBuffer(scopeId)]));
 
     return Object.assign<Consent, Consent>(new Consent(), {
       id,
@@ -218,16 +222,16 @@ export class SQLiteDataAccess extends DataAccess {
 
     const grantSql = this._procedure('create-grant.sql');
     const grantParameters = this.database.prepare(grantSql).get({
-      id: toUUIDBuffer(id),
+      id: this._toUUIDBuffer(id),
       login_challenge: loginChallenge,
       consent_challenge: consentChallenge,
       parameters: jsonStringify(parameters),
-      client_id: toUUIDBuffer(client.id),
-      session_id: toUUIDBuffer(session.id),
+      client_id: this._toUUIDBuffer(client.id),
+      session_id: this._toUUIDBuffer(session.id),
     })!;
 
     const grant = Object.assign<Grant, Grant>(new Grant(), {
-      id: toUUIDString(grantParameters['id'] as Uint8Array),
+      id: this._toUUIDString(grantParameters['id'] as Uint8Array),
       loginChallenge: grantParameters['login_challenge']!.toString(),
       consentChallenge: grantParameters['consent_challenge']!.toString(),
       parameters: jsonParse(grantParameters['parameters']!.toString()) as AuthorizationRequest,
@@ -242,7 +246,9 @@ export class SQLiteDataAccess extends DataAccess {
     session.grant = grant;
 
     const sessionSql = this._procedure('set-session-grant.sql');
-    this.database.prepare(sessionSql).run({ grant_id: toUUIDBuffer(grant.id), id: toUUIDBuffer(session.id) });
+    this.database
+      .prepare(sessionSql)
+      .run({ grant_id: this._toUUIDBuffer(grant.id), id: this._toUUIDBuffer(session.id) });
 
     return grant;
   }
@@ -267,21 +273,25 @@ export class SQLiteDataAccess extends DataAccess {
 
     const loginSql = this._procedure('create-login.sql');
     const loginParameters = this.database.prepare(loginSql).get({
-      id: toUUIDBuffer(id),
+      id: this._toUUIDBuffer(id),
       amr: jsonStringify(amr),
       acr,
-      user_id: toUUIDBuffer(user.id),
-      session_id: toUUIDBuffer(session.id),
+      user_id: this._toUUIDBuffer(user.id),
+      session_id: this._toUUIDBuffer(session.id),
     })!;
 
     const loginClientSql = this._procedure('set-login-client.sql');
-    this.database.prepare(loginClientSql).run({ login_id: toUUIDBuffer(id), client_id: toUUIDBuffer(client.id) });
+    this.database
+      .prepare(loginClientSql)
+      .run({ login_id: this._toUUIDBuffer(id), client_id: this._toUUIDBuffer(client.id) });
 
     const sessionSql = this._procedure('set-session-active-login.sql');
-    this.database.prepare(sessionSql).run({ active_login_id: toUUIDBuffer(id), id: toUUIDBuffer(session.id) });
+    this.database
+      .prepare(sessionSql)
+      .run({ active_login_id: this._toUUIDBuffer(id), id: this._toUUIDBuffer(session.id) });
 
     const login = Object.assign<Login, Login>(new Login(), {
-      id: toUUIDString(loginParameters['id'] as Uint8Array),
+      id: this._toUUIDString(loginParameters['id'] as Uint8Array),
       amr: jsonParse(loginParameters['amr']!.toString()) as string[],
       acr: loginParameters['acr']?.toString() ?? null,
       createdAt: new Date((loginParameters['created_at'] as number) * 1000),
@@ -309,9 +319,11 @@ export class SQLiteDataAccess extends DataAccess {
     const id = randomUUIDv7();
 
     const refreshTokenSql = this._procedure('create-refresh-token.sql');
-    const refreshTokenParameters = this.database
-      .prepare(refreshTokenSql)
-      .get({ id: toUUIDBuffer(id), client_id: toUUIDBuffer(client.id), user_id: toUUIDBuffer(user.id) })!;
+    const refreshTokenParameters = this.database.prepare(refreshTokenSql).get({
+      id: this._toUUIDBuffer(id),
+      client_id: this._toUUIDBuffer(client.id),
+      user_id: this._toUUIDBuffer(user.id),
+    })!;
 
     const scopesIds = scopes.map((scope) => scope.id);
 
@@ -322,9 +334,9 @@ export class SQLiteDataAccess extends DataAccess {
 
     this.database
       .prepare(refreshTokenScopesSql)
-      .run(...scopesIds.flatMap((scopeId) => [toUUIDBuffer(id), toUUIDBuffer(scopeId)]));
+      .run(...scopesIds.flatMap((scopeId) => [this._toUUIDBuffer(id), this._toUUIDBuffer(scopeId)]));
 
-    return instantiateRefreshToken(refreshTokenParameters, scopes, client, user);
+    return this._instantiateRefreshToken(refreshTokenParameters, scopes, client, user);
   }
 
   /**
@@ -336,10 +348,10 @@ export class SQLiteDataAccess extends DataAccess {
     const id = randomUUIDv7();
 
     const sessionSql = this._procedure('create-session.sql');
-    const sessionParameters = this.database.prepare(sessionSql).get({ id: toUUIDBuffer(id) })!;
+    const sessionParameters = this.database.prepare(sessionSql).get({ id: this._toUUIDBuffer(id) })!;
 
     return Object.assign<Session, Session>(new Session(), {
-      id: toUUIDString(sessionParameters['id'] as Uint8Array),
+      id: this._toUUIDString(sessionParameters['id'] as Uint8Array),
       activeLogin: null,
       logins: [],
       grant: null,
@@ -358,7 +370,7 @@ export class SQLiteDataAccess extends DataAccess {
 
     const userSql = this._procedure('create-user.sql');
     const userParameters = this.database.prepare(userSql).get({
-      id: toUUIDBuffer(userId),
+      id: this._toUUIDBuffer(userId),
       password: createHash('sha256').update(data['password']!, 'utf8').digest('base64url'),
       given_name: data['given_name']!,
       middle_name: data['middle_name'] ?? null,
@@ -378,16 +390,19 @@ export class SQLiteDataAccess extends DataAccess {
 
     const userAddressSql = this._procedure('create-user-address.sql');
     const userAddressParameters = this.database.prepare(userAddressSql).get({
-      id: toUUIDBuffer(userAddressId),
+      id: this._toUUIDBuffer(userAddressId),
       street_address: data['street_address'] ?? null,
       locality: data['locality'] ?? null,
       region: data['region'] ?? null,
       postal_code: data['postal_code'] ?? null,
       country: data['country'] ?? null,
-      user_id: toUUIDBuffer(userId),
+      user_id: this._toUUIDBuffer(userId),
     })!;
 
-    return instantiateUser(userParameters, { ...userAddressParameters, address_id: userAddressParameters['id']! });
+    return this._instantiateUser(userParameters, {
+      ...userAddressParameters,
+      address_id: userAddressParameters['id']!,
+    });
   }
 
   /**
@@ -652,7 +667,7 @@ export class SQLiteDataAccess extends DataAccess {
    */
   public async inactivateSessionActiveLogin(session: Session): Promise<void> {
     const sql = this._procedure('inactivate-session-active-login.sql');
-    this.database.prepare(sql).run({ id: toUUIDBuffer(session.id) });
+    this.database.prepare(sql).run({ id: this._toUUIDBuffer(session.id) });
   }
 
   /**
@@ -663,7 +678,7 @@ export class SQLiteDataAccess extends DataAccess {
    */
   public async logout(login: Login, session: Session): Promise<void> {
     const sql = this._procedure('logout.sql');
-    this.database.prepare(sql).run({ id: toUUIDBuffer(login.id) });
+    this.database.prepare(sql).run({ id: this._toUUIDBuffer(login.id) });
 
     Reflect.set(
       session,
@@ -679,7 +694,7 @@ export class SQLiteDataAccess extends DataAccess {
    */
   public async removeConsent(consent: Consent): Promise<void> {
     const sql = this._procedure('remove-consent-by-id.sql');
-    this.database.prepare(sql).run({ id: toUUIDBuffer(consent.id) });
+    this.database.prepare(sql).run({ id: this._toUUIDBuffer(consent.id) });
   }
 
   /**
@@ -689,7 +704,7 @@ export class SQLiteDataAccess extends DataAccess {
    */
   public async removeGrant(grant: Grant): Promise<void> {
     const sql = this._procedure('remove-grant-by-id.sql');
-    this.database.prepare(sql).run({ id: toUUIDBuffer(grant.id) });
+    this.database.prepare(sql).run({ id: this._toUUIDBuffer(grant.id) });
   }
 
   /**
@@ -699,7 +714,7 @@ export class SQLiteDataAccess extends DataAccess {
    */
   public async revokeAuthorizationCode(authorizationCode: AuthorizationCode): Promise<void> {
     const sql = this._procedure('revoke-authorization-code-by-id.sql');
-    this.database.prepare(sql).run({ id: toUUIDBuffer(authorizationCode.id) });
+    this.database.prepare(sql).run({ id: this._toUUIDBuffer(authorizationCode.id) });
   }
 
   /**
@@ -733,7 +748,7 @@ export class SQLiteDataAccess extends DataAccess {
 
     this.database
       .prepare(refreshTokenScopesSql)
-      .run(...scopesIds.flatMap((scopeId) => [toUUIDBuffer(id), toUUIDBuffer(scopeId)]));
+      .run(...scopesIds.flatMap((scopeId) => [this._toUUIDBuffer(id), this._toUUIDBuffer(scopeId)]));
 
     return (await this.findRefreshTokenById(id))!;
   }
@@ -748,8 +763,8 @@ export class SQLiteDataAccess extends DataAccess {
 
     this.database.prepare(sql).run({
       interactions: jsonStringify(grant.interactions),
-      consent_id: grant.consent ? toUUIDBuffer(grant.consent.id) : null,
-      id: toUUIDBuffer(grant.id),
+      consent_id: grant.consent ? this._toUUIDBuffer(grant.consent.id) : null,
+      id: this._toUUIDBuffer(grant.id),
     });
   }
 
@@ -781,9 +796,9 @@ export class SQLiteDataAccess extends DataAccess {
     const sql = this._procedure('save-session.sql');
 
     this.database.prepare(sql).run({
-      active_login_id: session.activeLogin ? toUUIDBuffer(session.activeLogin.id) : null,
-      grant_id: session.grant ? toUUIDBuffer(session.grant.id) : null,
-      id: toUUIDBuffer(session.id),
+      active_login_id: session.activeLogin ? this._toUUIDBuffer(session.activeLogin.id) : null,
+      grant_id: session.grant ? this._toUUIDBuffer(session.grant.id) : null,
+      id: this._toUUIDBuffer(session.id),
     });
   }
 
@@ -867,16 +882,16 @@ export class SQLiteDataAccess extends DataAccess {
   }
 
   // #region Helper Methods
-  private _findAccessTokenById(id: string): AccessToken | null {
+  protected _findAccessTokenById(id: string): AccessToken | null {
     const accessTokenSql = this._procedure('find-access-token-by-id.sql');
-    const accessTokenParameters = this.database.prepare(accessTokenSql).get({ id: toUUIDBuffer(id) });
+    const accessTokenParameters = this.database.prepare(accessTokenSql).get({ id: this._toUUIDBuffer(id) });
 
     if (typeof accessTokenParameters === 'undefined') {
       return null;
     }
 
     return Object.assign<AccessToken, Partial<AccessToken>>(new AccessToken(), {
-      id: toUUIDString(accessTokenParameters['id'] as Uint8Array),
+      id: this._toUUIDString(accessTokenParameters['id'] as Uint8Array),
       type: accessTokenParameters['type']!.toString() as AccessTokenType,
       scopes: this._findAccessTokenScopesByAccessTokenId(id),
       createdAt: new Date((accessTokenParameters['created_at'] as number) * 1000),
@@ -886,63 +901,67 @@ export class SQLiteDataAccess extends DataAccess {
           new Date((accessTokenParameters['revoked_at'] as number) * 1000)
         : null,
       validAfter: new Date((accessTokenParameters['valid_after']! as number) * 1000),
-      client: this._findClientById(toUUIDString(accessTokenParameters['client_id'] as Uint8Array))!,
+      client: this._findClientById(this._toUUIDString(accessTokenParameters['client_id'] as Uint8Array))!,
       user: accessTokenParameters['user_id']
-        ? this._findUserById(toUUIDString(accessTokenParameters['user_id'] as Uint8Array))
+        ? this._findUserById(this._toUUIDString(accessTokenParameters['user_id'] as Uint8Array))
         : null,
     });
   }
 
-  private _findAccessTokenScopesByAccessTokenId(accessTokenId: string): Scope[] {
+  protected _findAccessTokenScopesByAccessTokenId(accessTokenId: string): Scope[] {
     const scopesSql = this._procedure('find-access-token-scopes-by-access-token-id.sql');
-    const scopesParameters = this.database.prepare(scopesSql).all({ access_token_id: toUUIDBuffer(accessTokenId) });
+    const scopesParameters = this.database
+      .prepare(scopesSql)
+      .all({ access_token_id: this._toUUIDBuffer(accessTokenId) });
 
-    return instantiateScopes(scopesParameters);
+    return this._instantiateScopes(scopesParameters);
   }
 
-  private _findAuthorizationCodeById(id: string): AuthorizationCode | null {
+  protected _findAuthorizationCodeById(id: string): AuthorizationCode | null {
     const authorizationCodeSql = this._procedure('find-authorization-code-by-id.sql');
-    const authorizationCodeParameters = this.database.prepare(authorizationCodeSql).get({ id: toUUIDBuffer(id) });
+    const authorizationCodeParameters = this.database.prepare(authorizationCodeSql).get({ id: this._toUUIDBuffer(id) });
 
     if (typeof authorizationCodeParameters === 'undefined') {
       return null;
     }
 
-    const login = this._findLoginById(toUUIDString(authorizationCodeParameters['login_id'] as Uint8Array), null)!;
-    const consent = this._findConsentById(toUUIDString(authorizationCodeParameters['consent_id'] as Uint8Array))!;
+    const login = this._findLoginById(this._toUUIDString(authorizationCodeParameters['login_id'] as Uint8Array), null)!;
+    const consent = this._findConsentById(this._toUUIDString(authorizationCodeParameters['consent_id'] as Uint8Array))!;
 
-    return instantiateAuthorizationCode(authorizationCodeParameters, login, consent);
+    return this._instantiateAuthorizationCode(authorizationCodeParameters, login, consent);
   }
 
-  private _findClientById(id: string): Client | null {
+  protected _findClientById(id: string): Client | null {
     const clientSql = this._procedure('find-client-by-id.sql');
-    const clientParameters = this.database.prepare(clientSql).get({ id: toUUIDBuffer(id) });
+    const clientParameters = this.database.prepare(clientSql).get({ id: this._toUUIDBuffer(id) });
 
     if (typeof clientParameters === 'undefined') {
       return null;
     }
 
-    return instantiateClient(
+    return this._instantiateClient(
       clientParameters,
       this._findClientSecretsByClientId(id),
       this._findClientScopesByClientId(id),
     );
   }
 
-  private _findClientScopesByClientId(clientId: string): Scope[] {
+  protected _findClientScopesByClientId(clientId: string): Scope[] {
     const scopesSql = this._procedure('find-client-scopes-by-client-id.sql');
-    const scopesParameters = this.database.prepare(scopesSql).all({ client_id: toUUIDBuffer(clientId) });
+    const scopesParameters = this.database.prepare(scopesSql).all({ client_id: this._toUUIDBuffer(clientId) });
 
-    return instantiateScopes(scopesParameters);
+    return this._instantiateScopes(scopesParameters);
   }
 
-  private _findClientSecretsByClientId(clientId: string): ClientSecret[] {
+  protected _findClientSecretsByClientId(clientId: string): ClientSecret[] {
     const clientSecretsSql = this._procedure('find-client-secrets-by-client-id.sql');
-    const clientSecretsParameters = this.database.prepare(clientSecretsSql).all({ client_id: toUUIDBuffer(clientId) });
+    const clientSecretsParameters = this.database
+      .prepare(clientSecretsSql)
+      .all({ client_id: this._toUUIDBuffer(clientId) });
 
     return clientSecretsParameters.map((clientSecretParameters) => {
       return Object.assign<ClientSecret, ClientSecret>(new ClientSecret(), {
-        id: toUUIDString(clientSecretParameters['id']! as Uint8Array),
+        id: this._toUUIDString(clientSecretParameters['id']! as Uint8Array),
         secret: Buffer.from(clientSecretParameters['secret']! as Uint8Array).toString('base64url'),
         createdAt: new Date((clientSecretParameters['created_at']! as number) * 1000),
         expiresAt: new Date((clientSecretParameters['expires_at']! as number) * 1000),
@@ -950,29 +969,29 @@ export class SQLiteDataAccess extends DataAccess {
     });
   }
 
-  private _findConsentByClientAndUser(client: Client, user: User): Consent | null {
+  protected _findConsentByClientAndUser(client: Client, user: User): Consent | null {
     const consentSql = this._procedure('find-consent-by-client-id-and-user-id.sql');
     const consentParameters = this.database
       .prepare(consentSql)
-      .get({ client_id: toUUIDBuffer(client.id), user_id: toUUIDBuffer(user.id) });
+      .get({ client_id: this._toUUIDBuffer(client.id), user_id: this._toUUIDBuffer(user.id) });
 
     if (typeof consentParameters === 'undefined') {
       return null;
     }
 
     return Object.assign<Consent, Partial<Consent>>(new Consent(), {
-      id: toUUIDString(consentParameters['id'] as Uint8Array),
-      scopes: this._findConsentScopesByConsentId(toUUIDString(consentParameters['id'] as Uint8Array)),
+      id: this._toUUIDString(consentParameters['id'] as Uint8Array),
+      scopes: this._findConsentScopesByConsentId(this._toUUIDString(consentParameters['id'] as Uint8Array)),
       createdAt: new Date((consentParameters['created_at']! as number) * 1000),
       expiresAt: consentParameters['expires_at'] ? new Date((consentParameters['expires_at']! as number) * 1000) : null,
-      client: this._findClientById(toUUIDString(consentParameters['client_id'] as Uint8Array))!,
-      user: this._findUserById(toUUIDString(consentParameters['user_id'] as Uint8Array))!,
+      client: this._findClientById(this._toUUIDString(consentParameters['client_id'] as Uint8Array))!,
+      user: this._findUserById(this._toUUIDString(consentParameters['user_id'] as Uint8Array))!,
     });
   }
 
-  private _findConsentById(id: string): Consent | null {
+  protected _findConsentById(id: string): Consent | null {
     const consentSql = this._procedure('find-consent-by-id.sql');
-    const consentParameters = this.database.prepare(consentSql).get({ id: toUUIDBuffer(id) });
+    const consentParameters = this.database.prepare(consentSql).get({ id: this._toUUIDBuffer(id) });
 
     // istanbul ignore next
     if (typeof consentParameters === 'undefined') {
@@ -980,23 +999,23 @@ export class SQLiteDataAccess extends DataAccess {
     }
 
     return Object.assign<Consent, Partial<Consent>>(new Consent(), {
-      id: toUUIDString(consentParameters['id'] as Uint8Array),
+      id: this._toUUIDString(consentParameters['id'] as Uint8Array),
       scopes: this._findConsentScopesByConsentId(id),
       createdAt: new Date((consentParameters['created_at']! as number) * 1000),
       expiresAt: consentParameters['expires_at'] ? new Date((consentParameters['expires_at']! as number) * 1000) : null,
-      client: this._findClientById(toUUIDString(consentParameters['client_id'] as Uint8Array))!,
-      user: this._findUserById(toUUIDString(consentParameters['user_id'] as Uint8Array))!,
+      client: this._findClientById(this._toUUIDString(consentParameters['client_id'] as Uint8Array))!,
+      user: this._findUserById(this._toUUIDString(consentParameters['user_id'] as Uint8Array))!,
     });
   }
 
-  private _findConsentScopesByConsentId(consentId: string): Scope[] {
+  protected _findConsentScopesByConsentId(consentId: string): Scope[] {
     const scopesSql = this._procedure('find-consent-scopes-by-consent-id.sql');
-    const scopesParameters = this.database.prepare(scopesSql).all({ consent_id: toUUIDBuffer(consentId) });
+    const scopesParameters = this.database.prepare(scopesSql).all({ consent_id: this._toUUIDBuffer(consentId) });
 
-    return instantiateScopes(scopesParameters);
+    return this._instantiateScopes(scopesParameters);
   }
 
-  private _findGrantByConsentChallenge(consentChallenge: string, session: Session | null): Grant | null {
+  protected _findGrantByConsentChallenge(consentChallenge: string, session: Session | null): Grant | null {
     const grantSql = this._procedure('find-grant-by-consent-challenge.sql');
     const grantParameters = this.database.prepare(grantSql).get({ consent_challenge: consentChallenge });
 
@@ -1004,14 +1023,14 @@ export class SQLiteDataAccess extends DataAccess {
       return null;
     }
 
-    const grant = instantiateGrant(grantParameters);
+    const grant = this._instantiateGrant(grantParameters);
 
-    const client = this._findClientById(toUUIDString(grantParameters['client_id'] as Uint8Array))!;
+    const client = this._findClientById(this._toUUIDString(grantParameters['client_id'] as Uint8Array))!;
 
-    session ??= this._findSessionById(toUUIDString(grantParameters['session_id'] as Uint8Array), null, grant)!;
+    session ??= this._findSessionById(this._toUUIDString(grantParameters['session_id'] as Uint8Array), null, grant)!;
 
     const consent = grantParameters['consent_id']
-      ? this._findConsentById(toUUIDString(grantParameters['consent_id'] as Uint8Array))
+      ? this._findConsentById(this._toUUIDString(grantParameters['consent_id'] as Uint8Array))
       : null;
 
     Reflect.set(grant, 'client', client);
@@ -1021,23 +1040,23 @@ export class SQLiteDataAccess extends DataAccess {
     return grant;
   }
 
-  private _findGrantById(id: string, session: Session): Grant | null {
+  protected _findGrantById(id: string, session: Session): Grant | null {
     const grantSql = this._procedure('find-grant-by-id.sql');
-    const grantParameters = this.database.prepare(grantSql).get({ id: toUUIDBuffer(id) });
+    const grantParameters = this.database.prepare(grantSql).get({ id: this._toUUIDBuffer(id) });
 
     // istanbul ignore next
     if (typeof grantParameters === 'undefined') {
       return null;
     }
 
-    const grant = instantiateGrant(grantParameters);
+    const grant = this._instantiateGrant(grantParameters);
 
-    const client = this._findClientById(toUUIDString(grantParameters['client_id'] as Uint8Array))!;
+    const client = this._findClientById(this._toUUIDString(grantParameters['client_id'] as Uint8Array))!;
 
-    session ??= this._findSessionById(toUUIDString(grantParameters['session_id'] as Uint8Array), null, grant)!;
+    session ??= this._findSessionById(this._toUUIDString(grantParameters['session_id'] as Uint8Array), null, grant)!;
 
     const consent = grantParameters['consent_id']
-      ? this._findConsentById(toUUIDString(grantParameters['consent_id'] as Uint8Array))
+      ? this._findConsentById(this._toUUIDString(grantParameters['consent_id'] as Uint8Array))
       : null;
 
     Reflect.set(grant, 'client', client);
@@ -1047,7 +1066,7 @@ export class SQLiteDataAccess extends DataAccess {
     return grant;
   }
 
-  private _findGrantByLoginChallenge(loginChallenge: string, session: Session | null): Grant | null {
+  protected _findGrantByLoginChallenge(loginChallenge: string, session: Session | null): Grant | null {
     const grantSql = this._procedure('find-grant-by-login-challenge.sql');
     const grantParameters = this.database.prepare(grantSql).get({ login_challenge: loginChallenge });
 
@@ -1055,14 +1074,14 @@ export class SQLiteDataAccess extends DataAccess {
       return null;
     }
 
-    const grant = instantiateGrant(grantParameters);
+    const grant = this._instantiateGrant(grantParameters);
 
-    const client = this._findClientById(toUUIDString(grantParameters['client_id'] as Uint8Array))!;
+    const client = this._findClientById(this._toUUIDString(grantParameters['client_id'] as Uint8Array))!;
 
-    session ??= this._findSessionById(toUUIDString(grantParameters['session_id'] as Uint8Array), null, grant)!;
+    session ??= this._findSessionById(this._toUUIDString(grantParameters['session_id'] as Uint8Array), null, grant)!;
 
     const consent = grantParameters['consent_id']
-      ? this._findConsentById(toUUIDString(grantParameters['consent_id'] as Uint8Array))
+      ? this._findConsentById(this._toUUIDString(grantParameters['consent_id'] as Uint8Array))
       : null;
 
     Reflect.set(grant, 'client', client);
@@ -1072,68 +1091,63 @@ export class SQLiteDataAccess extends DataAccess {
     return grant;
   }
 
-  private _findLoginById(id: string, session: Session | null): Login | null {
+  protected _findLoginById(id: string, session: Session | null): Login | null {
     const loginSql = this._procedure('find-login-by-id.sql');
-    const loginParameters = this.database.prepare(loginSql).get({ id: toUUIDBuffer(id) });
+    const loginParameters = this.database.prepare(loginSql).get({ id: this._toUUIDBuffer(id) });
 
     // istanbul ignore next
     if (typeof loginParameters === 'undefined') {
       return null;
     }
 
-    return Object.assign<Login, Partial<Login>>(new Login(), {
-      id: toUUIDString(loginParameters['id'] as Uint8Array),
-      amr: jsonParse(loginParameters['amr']!.toString()) as string[],
-      acr: loginParameters['acr']?.toString() ?? null,
-      createdAt: new Date((loginParameters['created_at']! as number) * 1000),
-      expiresAt: loginParameters['expires_at'] ? new Date((loginParameters['expires_at']! as number) * 1000) : null,
-      user: this._findUserById(toUUIDString(loginParameters['user_id'] as Uint8Array))!,
-      session: session ?? this._findSessionById(toUUIDString(loginParameters['session_id'] as Uint8Array), null, null)!,
-      clients: this._findLoginClientsByLoginId(id),
-    });
+    const user = this._findUserById(this._toUUIDString(loginParameters['user_id'] as Uint8Array))!;
+    session ??= this._findSessionById(this._toUUIDString(loginParameters['session_id'] as Uint8Array), null, null)!;
+    const clients = this._findLoginClientsByLoginId(id);
+
+    return this._instantiateLogin(loginParameters, user, session, clients);
   }
 
-  private _findLoginClientsByLoginId(id: string): Client[] {
+  protected _findLoginClientsByLoginId(id: string): Client[] {
     const clientsSql = this._procedure('find-login-clients-by-login-id.sql');
-    const clientsParameters = this.database.prepare(clientsSql).all({ login_id: toUUIDBuffer(id) });
+    const clientsParameters = this.database.prepare(clientsSql).all({ login_id: this._toUUIDBuffer(id) });
 
     return clientsParameters.map((clientParameters) =>
-      instantiateClient(
+      this._instantiateClient(
         clientParameters,
-        this._findClientSecretsByClientId(toUUIDString(clientParameters['id'] as Uint8Array)),
-        this._findClientScopesByClientId(toUUIDString(clientParameters['id'] as Uint8Array)),
+        this._findClientSecretsByClientId(this._toUUIDString(clientParameters['id'] as Uint8Array)),
+        this._findClientScopesByClientId(this._toUUIDString(clientParameters['id'] as Uint8Array)),
       ),
     );
   }
 
-  private _findLoginsBySessionId(id: string, session: Session): Login[] {
+  protected _findLoginsBySessionId(id: string, session: Session): Login[] {
     const loginsSql = this._procedure('find-logins-by-session-id.sql');
-    const loginsParameters = this.database.prepare(loginsSql).all({ session_id: toUUIDBuffer(id) });
+    const loginsParameters = this.database.prepare(loginsSql).all({ session_id: this._toUUIDBuffer(id) });
 
     return loginsParameters.map((loginParameters) => {
       return Object.assign<Login, Partial<Login>>(new Login(), {
-        id: toUUIDString(loginParameters['id'] as Uint8Array),
+        id: this._toUUIDString(loginParameters['id'] as Uint8Array),
         amr: jsonParse(loginParameters['amr']!.toString()) as string[],
         acr: loginParameters['acr']?.toString() ?? null,
         createdAt: new Date((loginParameters['created_at']! as number) * 1000),
         expiresAt: loginParameters['expires_at'] ? new Date((loginParameters['expires_at']! as number) * 1000) : null,
-        user: this._findUserById(toUUIDString(loginParameters['user_id'] as Uint8Array))!,
+        user: this._findUserById(this._toUUIDString(loginParameters['user_id'] as Uint8Array))!,
         session,
-        clients: this._findLoginClientsByLoginId(toUUIDString(loginParameters['id'] as Uint8Array)),
+        clients: this._findLoginClientsByLoginId(this._toUUIDString(loginParameters['id'] as Uint8Array)),
       });
     });
   }
 
-  private _findRefreshTokenById(id: string): RefreshToken | null {
+  protected _findRefreshTokenById(id: string): RefreshToken | null {
     const refreshTokenSql = this._procedure('find-refresh-token-by-id.sql');
-    const refreshTokenParameters = this.database.prepare(refreshTokenSql).get({ id: toUUIDBuffer(id) });
+    const refreshTokenParameters = this.database.prepare(refreshTokenSql).get({ id: this._toUUIDBuffer(id) });
 
     if (typeof refreshTokenParameters === 'undefined') {
       return null;
     }
 
     return Object.assign<RefreshToken, Partial<RefreshToken>>(new RefreshToken(), {
-      id: toUUIDString(refreshTokenParameters['id'] as Uint8Array),
+      id: this._toUUIDString(refreshTokenParameters['id'] as Uint8Array),
       scopes: this._findRefreshTokenScopesByRefreshTokenId(id),
       createdAt: new Date((refreshTokenParameters['created_at'] as number) * 1000),
       expiresAt: new Date((refreshTokenParameters['expires_at'] as number) * 1000),
@@ -1141,28 +1155,30 @@ export class SQLiteDataAccess extends DataAccess {
         ? new Date((refreshTokenParameters['revoked_at'] as number) * 1000)
         : null,
       validAfter: new Date((refreshTokenParameters['valid_after']! as number) * 1000),
-      client: this._findClientById(toUUIDString(refreshTokenParameters['client_id'] as Uint8Array))!,
-      user: this._findUserById(toUUIDString(refreshTokenParameters['user_id'] as Uint8Array))!,
+      client: this._findClientById(this._toUUIDString(refreshTokenParameters['client_id'] as Uint8Array))!,
+      user: this._findUserById(this._toUUIDString(refreshTokenParameters['user_id'] as Uint8Array))!,
     });
   }
 
-  private _findRefreshTokenScopesByRefreshTokenId(refreshTokenId: string): Scope[] {
+  protected _findRefreshTokenScopesByRefreshTokenId(refreshTokenId: string): Scope[] {
     const scopesSql = this._procedure('find-refresh-token-scopes-by-refresh-token-id.sql');
-    const scopesParameters = this.database.prepare(scopesSql).all({ refresh_token_id: toUUIDBuffer(refreshTokenId) });
+    const scopesParameters = this.database
+      .prepare(scopesSql)
+      .all({ refresh_token_id: this._toUUIDBuffer(refreshTokenId) });
 
-    return instantiateScopes(scopesParameters);
+    return this._instantiateScopes(scopesParameters);
   }
 
-  private _findSessionById(id: string, activeLogin: Login | null, grant: Grant | null): Session | null {
+  protected _findSessionById(id: string, activeLogin: Login | null, grant: Grant | null): Session | null {
     const sessionSql = this._procedure('find-session-by-id.sql');
-    const sessionParameters = this.database.prepare(sessionSql).get({ id: toUUIDBuffer(id) });
+    const sessionParameters = this.database.prepare(sessionSql).get({ id: this._toUUIDBuffer(id) });
 
     if (typeof sessionParameters === 'undefined') {
       return null;
     }
 
     const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
-      id: toUUIDString(sessionParameters['id'] as Uint8Array),
+      id: this._toUUIDString(sessionParameters['id'] as Uint8Array),
     });
 
     Reflect.set(
@@ -1170,7 +1186,7 @@ export class SQLiteDataAccess extends DataAccess {
       'activeLogin',
       activeLogin ??
         (sessionParameters['active_login_id']
-          ? this._findLoginById(toUUIDString(sessionParameters['active_login_id'] as Uint8Array), session)
+          ? this._findLoginById(this._toUUIDString(sessionParameters['active_login_id'] as Uint8Array), session)
           : null),
     );
 
@@ -1179,7 +1195,7 @@ export class SQLiteDataAccess extends DataAccess {
       'grant',
       grant ??
         (sessionParameters['grant_id']
-          ? this._findGrantById(toUUIDString(sessionParameters['grant_id'] as Uint8Array), session)
+          ? this._findGrantById(this._toUUIDString(sessionParameters['grant_id'] as Uint8Array), session)
           : null),
     );
 
@@ -1188,18 +1204,18 @@ export class SQLiteDataAccess extends DataAccess {
     return session;
   }
 
-  private _findUserById(id: string): User | null {
+  protected _findUserById(id: string): User | null {
     const userSql = this._procedure('find-user-by-id.sql');
-    const userParameters = this.database.prepare(userSql).get({ id: toUUIDBuffer(id) });
+    const userParameters = this.database.prepare(userSql).get({ id: this._toUUIDBuffer(id) });
 
     if (typeof userParameters === 'undefined') {
       return null;
     }
 
-    return instantiateUser(userParameters, userParameters);
+    return this._instantiateUser(userParameters, userParameters);
   }
 
-  private _findUserByResourceOwnerCredentials(username: string, password: string): User | null {
+  protected _findUserByResourceOwnerCredentials(username: string, password: string): User | null {
     const userSql = this._procedure('find-user-by-resource-owner-credentials.sql');
     const userParameters = this.database
       .prepare(userSql)
@@ -1209,185 +1225,203 @@ export class SQLiteDataAccess extends DataAccess {
       return null;
     }
 
-    return instantiateUser(userParameters, userParameters);
+    return this._instantiateUser(userParameters, userParameters);
   }
 
-  private _getScopes(): Scope[] {
+  protected _getScopes(): Scope[] {
     const scopesSql = this._procedure('get-scopes.sql');
     const scopesParameters = this.database.prepare(scopesSql).all();
 
-    return instantiateScopes(scopesParameters);
+    return this._instantiateScopes(scopesParameters);
   }
 
-  private _getScopesByName(scopes: string[]): Scope[] {
+  protected _getScopesByName(scopes: string[]): Scope[] {
     const scopesSql = this._procedure('get-scopes-by-name.sql').replace('$scopes', scopes.map(() => '?').join(','));
     const scopesParameters = this.database.prepare(scopesSql).all(...scopes);
 
-    return instantiateScopes(scopesParameters);
+    return this._instantiateScopes(scopesParameters);
   }
 
-  private _procedure(name: string): string {
+  protected _procedure(name: string): string {
     return fs.readFileSync(path.join(__dirname, 'procedures', name), 'utf8');
   }
-  // #endregion
-}
 
-function toUUIDString(data: Uint8Array): string {
-  return Buffer.from(data)
-    .toString('hex')
-    .replace(/^([\d\w]{8})([\d\w]{4})([\d\w]{4})([\d\w]{4})([\d\w]{12})/i, '$1-$2-$3-$4-$5');
-}
+  protected _toUUIDString(data: Uint8Array): string {
+    return Buffer.from(data)
+      .toString('hex')
+      .replace(/^([\d\w]{8})([\d\w]{4})([\d\w]{4})([\d\w]{4})([\d\w]{12})/i, '$1-$2-$3-$4-$5');
+  }
 
-function toUUIDBuffer(data: string): Buffer {
-  return Buffer.from(data.replaceAll('-', ''), 'hex');
-}
+  protected _toUUIDBuffer(data: string): Buffer {
+    return Buffer.from(data.replaceAll('-', ''), 'hex');
+  }
 
-function instantiateAuthorizationCode(
-  parameters: Record<string, SQLOutputValue>,
-  login: Login,
-  consent: Consent,
-): AuthorizationCode {
-  return Object.assign<AuthorizationCode, AuthorizationCode>(new AuthorizationCode(), {
-    id: toUUIDString(parameters['id'] as Uint8Array),
-    parameters: jsonParse(parameters['parameters']!.toString()),
-    createdAt: new Date((parameters['created_at'] as number) * 1000),
-    expiresAt: new Date((parameters['expires_at'] as number) * 1000),
-    revokedAt: parameters['revoked_at'] ? new Date((parameters['revoked_at'] as number) * 1000) : null,
-    validAfter: new Date((parameters['valid_after'] as number) * 1000),
-    login,
-    consent,
-  });
-}
-
-function instantiateClient(
-  parameters: Record<string, SQLOutputValue>,
-  secrets: ClientSecret[],
-  scopes: Scope[],
-): Client {
-  return Object.assign<Client, Client>(new Client(), {
-    id: toUUIDString(parameters['id']! as Uint8Array),
-    secrets,
-    name: parameters['name']!.toString(),
-    type: parameters['type']!.toString() as ClientType,
-    profile: parameters['profile']!.toString() as ApplicationType,
-    redirectUris: (jsonParse(parameters['redirect_uris']!.toString()) as string[]).map((redirectUri) => {
-      return new URL(redirectUri);
-    }),
-    scopes,
-    responseTypes: jsonParse(parameters['response_types']!.toString()) as ResponseTypeName[],
-    grantTypes: jsonParse(parameters['grant_types']!.toString()) as GrantTypeName[],
-    authenticationMethod: parameters['authentication_method']!.toString() as ClientAuthenticationName,
-    contacts: jsonParse(parameters['contacts']!.toString()) as string[],
-    clientUri: parameters['client_uri'] ? new URL(parameters['client_uri'].toString()) : null,
-    logoUri: parameters['logo_uri'] ? new URL(parameters['logo_uri'].toString()) : null,
-    policyUri: parameters['policy_uri'] ? new URL(parameters['policy_uri'].toString()) : null,
-    tosUri: parameters['tos_uri'] ? new URL(parameters['tos_uri'].toString()) : null,
-    jwksUri: parameters['jwks_uri'] ? new URL(parameters['jwks_uri'].toString()) : null,
-    jwks: parameters['jwks'] ? jsonParse(parameters['jwks'].toString()) : null,
-    sectorIdentifierUri: parameters['sector_identifier_uri']
-      ? new URL(parameters['sector_identifier_uri'].toString())
-      : null,
-    subjectType: parameters['subject_type']!.toString() as SubjectTypeName,
-    idTokenSignedResponseAlgorithm:
-      (parameters['id_token_signed_response_alg']?.toString() as Exclude<DigitalSignatureAlgorithm, 'none'>) ?? null,
-    idTokenEncryptedResponseKeyWrap:
-      (parameters['id_token_encrypted_response_alg']?.toString() as KeyManagementAlgorithm) ?? null,
-    idTokenEncryptedResponseContentEncryption:
-      (parameters['id_token_encrypted_response_enc']?.toString() as ContentEncryptionAlgorithm) ?? null,
-    authenticationSigningAlgorithm:
-      (parameters['authentication_signing_alg']?.toString() as Exclude<DigitalSignatureAlgorithm, 'none'>) ?? null,
-    jwtBearerGrantSigningAlgorithm:
-      (parameters['jwt_bearer_grant_signing_alg']?.toString() as Exclude<DigitalSignatureAlgorithm, 'none'>) ?? null,
-    defaultMaxAge: (parameters['default_max_age'] as number) ?? null,
-    requireAuthTime: parameters['require_auth_time'] === 1,
-    defaultAcrValues: jsonParse(parameters['default_acr_values']!.toString()),
-    softwareId: parameters['software_id']?.toString() ?? null,
-    softwareVersion: parameters['software_version']?.toString() ?? null,
-    createdAt: new Date((parameters['created_at']! as number) * 1000),
-    updatedAt: new Date((parameters['updated_at']! as number) * 1000),
-  });
-}
-
-function instantiateGrant(parameters: Record<string, SQLOutputValue>): Grant {
-  return Object.assign<Grant, Partial<Grant>>(new Grant(), {
-    id: toUUIDString(parameters['id'] as Uint8Array),
-    loginChallenge: parameters['login_challenge']!.toString(),
-    consentChallenge: parameters['consent_challenge']!.toString(),
-    parameters: jsonParse(parameters['parameters']!.toString()) as AuthorizationRequest,
-    interactions: jsonParse(parameters['interactions']!.toString()) as InteractionTypeName[],
-    createdAt: new Date((parameters['created_at']! as number) * 1000),
-    expiresAt: new Date((parameters['expires_at']! as number) * 1000),
-  });
-}
-
-function instantiateRefreshToken(
-  parameters: Record<string, SQLOutputValue>,
-  scopes: Scope[],
-  client: Client,
-  user: User,
-): RefreshToken {
-  return Object.assign<RefreshToken, RefreshToken>(new RefreshToken(), {
-    id: toUUIDString(parameters['id'] as Uint8Array),
-    scopes,
-    createdAt: new Date((parameters['created_at'] as number) * 1000),
-    expiresAt: new Date((parameters['expires_at'] as number) * 1000),
-    revokedAt: null,
-    validAfter: new Date((parameters['valid_after'] as number) * 1000),
-    client,
-    user,
-  });
-}
-
-function instantiateScopes(parameters: Record<string, SQLOutputValue>[]): Scope[] {
-  return parameters.map((scope) => {
-    return Object.assign<Scope, Scope>(new Scope(), {
-      id: toUUIDString(scope['id']! as Uint8Array),
-      name: scope['name']!.toString(),
-      description: scope['description']?.toString() ?? null,
-      createdAt: new Date((scope['created_at']! as number) * 1000),
-      updatedAt: new Date((scope['updated_at']! as number) * 1000),
+  protected _instantiateAuthorizationCode(
+    parameters: Record<string, SQLOutputValue>,
+    login: Login,
+    consent: Consent,
+  ): AuthorizationCode {
+    return Object.assign<AuthorizationCode, AuthorizationCode>(new AuthorizationCode(), {
+      id: this._toUUIDString(parameters['id'] as Uint8Array),
+      parameters: jsonParse(parameters['parameters']!.toString()),
+      createdAt: new Date((parameters['created_at'] as number) * 1000),
+      expiresAt: new Date((parameters['expires_at'] as number) * 1000),
+      revokedAt: parameters['revoked_at'] ? new Date((parameters['revoked_at'] as number) * 1000) : null,
+      validAfter: new Date((parameters['valid_after'] as number) * 1000),
+      login,
+      consent,
     });
-  });
-}
+  }
 
-function instantiateUser(
-  userParameters: Record<string, SQLOutputValue>,
-  userAddressParameters: Record<string, SQLOutputValue>,
-): User {
-  const address: UserAddress = Object.assign<UserAddress, UserAddress>(new UserAddress(), {
-    id: toUUIDString(userAddressParameters['address_id'] as Uint8Array),
-    formatted: null,
-    streetAddress: userAddressParameters['street_address']?.toString() ?? null,
-    locality: userAddressParameters['locality']?.toString() ?? null,
-    region: userAddressParameters['region']?.toString() ?? null,
-    postalCode: userAddressParameters['postal_code']?.toString() ?? null,
-    country: userAddressParameters['country']?.toString() ?? null,
-  });
+  protected _instantiateClient(
+    parameters: Record<string, SQLOutputValue>,
+    secrets: ClientSecret[],
+    scopes: Scope[],
+  ): Client {
+    return Object.assign<Client, Client>(new Client(), {
+      id: this._toUUIDString(parameters['id']! as Uint8Array),
+      secrets,
+      name: parameters['name']!.toString(),
+      type: parameters['type']!.toString() as ClientType,
+      profile: parameters['profile']!.toString() as ApplicationType,
+      redirectUris: (jsonParse(parameters['redirect_uris']!.toString()) as string[]).map((redirectUri) => {
+        return new URL(redirectUri);
+      }),
+      scopes,
+      responseTypes: jsonParse(parameters['response_types']!.toString()) as ResponseTypeName[],
+      grantTypes: jsonParse(parameters['grant_types']!.toString()) as GrantTypeName[],
+      authenticationMethod: parameters['authentication_method']!.toString() as ClientAuthenticationName,
+      contacts: jsonParse(parameters['contacts']!.toString()) as string[],
+      clientUri: parameters['client_uri'] ? new URL(parameters['client_uri'].toString()) : null,
+      logoUri: parameters['logo_uri'] ? new URL(parameters['logo_uri'].toString()) : null,
+      policyUri: parameters['policy_uri'] ? new URL(parameters['policy_uri'].toString()) : null,
+      tosUri: parameters['tos_uri'] ? new URL(parameters['tos_uri'].toString()) : null,
+      jwksUri: parameters['jwks_uri'] ? new URL(parameters['jwks_uri'].toString()) : null,
+      jwks: parameters['jwks'] ? jsonParse(parameters['jwks'].toString()) : null,
+      sectorIdentifierUri: parameters['sector_identifier_uri']
+        ? new URL(parameters['sector_identifier_uri'].toString())
+        : null,
+      subjectType: parameters['subject_type']!.toString() as SubjectTypeName,
+      idTokenSignedResponseAlgorithm:
+        (parameters['id_token_signed_response_alg']?.toString() as Exclude<DigitalSignatureAlgorithm, 'none'>) ?? null,
+      idTokenEncryptedResponseKeyWrap:
+        (parameters['id_token_encrypted_response_alg']?.toString() as KeyManagementAlgorithm) ?? null,
+      idTokenEncryptedResponseContentEncryption:
+        (parameters['id_token_encrypted_response_enc']?.toString() as ContentEncryptionAlgorithm) ?? null,
+      authenticationSigningAlgorithm:
+        (parameters['authentication_signing_alg']?.toString() as Exclude<DigitalSignatureAlgorithm, 'none'>) ?? null,
+      jwtBearerGrantSigningAlgorithm:
+        (parameters['jwt_bearer_grant_signing_alg']?.toString() as Exclude<DigitalSignatureAlgorithm, 'none'>) ?? null,
+      defaultMaxAge: (parameters['default_max_age'] as number) ?? null,
+      requireAuthTime: parameters['require_auth_time'] === 1,
+      defaultAcrValues: jsonParse(parameters['default_acr_values']!.toString()),
+      softwareId: parameters['software_id']?.toString() ?? null,
+      softwareVersion: parameters['software_version']?.toString() ?? null,
+      createdAt: new Date((parameters['created_at']! as number) * 1000),
+      updatedAt: new Date((parameters['updated_at']! as number) * 1000),
+    });
+  }
 
-  return Object.assign<User, Partial<User>>(new User(), {
-    id: toUUIDString(userParameters['id'] as Uint8Array),
-    password: userParameters['password']!.toString(),
-    name: userParameters['middle_name']
-      ? `${userParameters['given_name']!.toString()} ${userParameters['middle_name'].toString()} ${userParameters['family_name']!.toString()}`
-      : null,
-    givenName: userParameters['given_name']!.toString(),
-    middleName: userParameters['middle_name']?.toString() ?? null,
-    familyName: userParameters['family_name']!.toString(),
-    nickname: userParameters['nickname']?.toString() ?? null,
-    preferredUsername: userParameters['preferred_username']?.toString() ?? null,
-    profile: userParameters['profile'] ? new URL(userParameters['profile'].toString()) : null,
-    picture: userParameters['picture'] ? new URL(userParameters['picture'].toString()) : null,
-    website: userParameters['website'] ? new URL(userParameters['website'].toString()) : null,
-    email: userParameters['email']!.toString(),
-    emailVerified: userParameters['email_verified']! === 1,
-    gender: userParameters['gender']?.toString() ?? null,
-    birthdate: userParameters['birthdate']!.toString(),
-    zoneinfo: userParameters['zoneinfo']?.toString() ?? null,
-    locale: userParameters['locale']?.toString() ?? null,
-    phoneNumber: userParameters['phone_number']!.toString(),
-    phoneNumberVerified: userParameters['phone_number_verified']! === 1,
-    address,
-    createdAt: new Date((userParameters['created_at']! as number) * 1000),
-    updatedAt: new Date((userParameters['updated_at']! as number) * 1000),
-  });
+  protected _instantiateGrant(parameters: Record<string, SQLOutputValue>): Grant {
+    return Object.assign<Grant, Partial<Grant>>(new Grant(), {
+      id: this._toUUIDString(parameters['id'] as Uint8Array),
+      loginChallenge: parameters['login_challenge']!.toString(),
+      consentChallenge: parameters['consent_challenge']!.toString(),
+      parameters: jsonParse(parameters['parameters']!.toString()) as AuthorizationRequest,
+      interactions: jsonParse(parameters['interactions']!.toString()) as InteractionTypeName[],
+      createdAt: new Date((parameters['created_at']! as number) * 1000),
+      expiresAt: new Date((parameters['expires_at']! as number) * 1000),
+    });
+  }
+
+  protected _instantiateLogin(
+    parameters: Record<string, SQLOutputValue>,
+    user: User,
+    session: Session,
+    clients: Client[],
+  ): Login {
+    return Object.assign<Login, Partial<Login>>(new Login(), {
+      id: this._toUUIDString(parameters['id'] as Uint8Array),
+      amr: jsonParse(parameters['amr']!.toString()) as string[],
+      acr: parameters['acr']?.toString() ?? null,
+      createdAt: new Date((parameters['created_at']! as number) * 1000),
+      expiresAt: parameters['expires_at'] ? new Date((parameters['expires_at']! as number) * 1000) : null,
+      user,
+      session,
+      clients,
+    });
+  }
+
+  protected _instantiateRefreshToken(
+    parameters: Record<string, SQLOutputValue>,
+    scopes: Scope[],
+    client: Client,
+    user: User,
+  ): RefreshToken {
+    return Object.assign<RefreshToken, RefreshToken>(new RefreshToken(), {
+      id: this._toUUIDString(parameters['id'] as Uint8Array),
+      scopes,
+      createdAt: new Date((parameters['created_at'] as number) * 1000),
+      expiresAt: new Date((parameters['expires_at'] as number) * 1000),
+      revokedAt: null,
+      validAfter: new Date((parameters['valid_after'] as number) * 1000),
+      client,
+      user,
+    });
+  }
+
+  protected _instantiateScopes(parameters: Record<string, SQLOutputValue>[]): Scope[] {
+    return parameters.map((scope) => {
+      return Object.assign<Scope, Scope>(new Scope(), {
+        id: this._toUUIDString(scope['id']! as Uint8Array),
+        name: scope['name']!.toString(),
+        description: scope['description']?.toString() ?? null,
+        createdAt: new Date((scope['created_at']! as number) * 1000),
+        updatedAt: new Date((scope['updated_at']! as number) * 1000),
+      });
+    });
+  }
+
+  protected _instantiateUser(
+    userParameters: Record<string, SQLOutputValue>,
+    userAddressParameters: Record<string, SQLOutputValue>,
+  ): User {
+    const address: UserAddress = Object.assign<UserAddress, UserAddress>(new UserAddress(), {
+      id: this._toUUIDString(userAddressParameters['address_id'] as Uint8Array),
+      formatted: null,
+      streetAddress: userAddressParameters['street_address']?.toString() ?? null,
+      locality: userAddressParameters['locality']?.toString() ?? null,
+      region: userAddressParameters['region']?.toString() ?? null,
+      postalCode: userAddressParameters['postal_code']?.toString() ?? null,
+      country: userAddressParameters['country']?.toString() ?? null,
+    });
+
+    return Object.assign<User, Partial<User>>(new User(), {
+      id: this._toUUIDString(userParameters['id'] as Uint8Array),
+      password: userParameters['password']!.toString(),
+      name: userParameters['middle_name']
+        ? `${userParameters['given_name']!.toString()} ${userParameters['middle_name'].toString()} ${userParameters['family_name']!.toString()}`
+        : null,
+      givenName: userParameters['given_name']!.toString(),
+      middleName: userParameters['middle_name']?.toString() ?? null,
+      familyName: userParameters['family_name']!.toString(),
+      nickname: userParameters['nickname']?.toString() ?? null,
+      preferredUsername: userParameters['preferred_username']?.toString() ?? null,
+      profile: userParameters['profile'] ? new URL(userParameters['profile'].toString()) : null,
+      picture: userParameters['picture'] ? new URL(userParameters['picture'].toString()) : null,
+      website: userParameters['website'] ? new URL(userParameters['website'].toString()) : null,
+      email: userParameters['email']!.toString(),
+      emailVerified: userParameters['email_verified']! === 1,
+      gender: userParameters['gender']?.toString() ?? null,
+      birthdate: userParameters['birthdate']!.toString(),
+      zoneinfo: userParameters['zoneinfo']?.toString() ?? null,
+      locale: userParameters['locale']?.toString() ?? null,
+      phoneNumber: userParameters['phone_number']!.toString(),
+      phoneNumberVerified: userParameters['phone_number_verified']! === 1,
+      address,
+      createdAt: new Date((userParameters['created_at']! as number) * 1000),
+      updatedAt: new Date((userParameters['updated_at']! as number) * 1000),
+    });
+  }
+  // #endregion
 }

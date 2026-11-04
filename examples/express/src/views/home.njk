@@ -1,0 +1,40 @@
+{% extends "base.njk" %}
+
+{% block customcss %}
+  <link rel="stylesheet" href="/static/css/_partials/navbar.css">
+  <link rel="stylesheet" href="/static/css/home.css">
+{% endblock %}
+
+{% block content %}
+  <div class="container-fluid min-vh-100 p-0">
+    {% include "./_partials/navbar.njk" %}
+
+    {# <div class="container-fluid d-flex justify-content-center align-items-center mt-5">
+      <div class="form-widget">
+        <div class="d-flex flex-column justify-content-center align-items-center">
+          <h4>Authorize a Client</h4>
+        </div>
+
+        <form action="/" method="post">
+          <div class="col-12 mt-3">
+            <div class="d-flex align-items-center ps-2 input-group-widget">
+              <div class="icon d-flex align-items-center justify-content-center">
+                <i class="fa fa-person"></i>
+              </div>
+              <select name="client_id" class="form-select input-select-widget">
+                <option selected disabled>Select a Client</option>
+                {% for client in clients %}
+                  <option value="{{ client.id }}">{{ client.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group mt-5">
+          <button type="submit" class="btn btn-widget w-100">Authorize</button>
+        </div>
+        </form>
+      </div>
+    </div> #}
+  </div>
+{% endblock %}

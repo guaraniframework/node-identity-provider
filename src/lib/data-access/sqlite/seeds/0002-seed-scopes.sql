@@ -1,4 +1,4 @@
-INSERT INTO
+INSERT OR IGNORE INTO
     scopes (id, name, description)
 VALUES (
         X'3c0e3cb6db26406fa082bf591aad8099',

@@ -1,0 +1,114 @@
+{% extends "../base.njk" %}
+
+{% block customcss %}
+  <link rel="stylesheet" href="/static/css/auth/registration.css">
+{% endblock %}
+
+{% block content %}
+  <div class="container-fluid d-flex justify-content-center align-items-center min-vh-100">
+    <div class="form-widget">
+      <div class="d-flex flex-column justify-content-center align-items-center">
+        <h4>Sign Up</h4>
+      </div>
+
+      <form action="{{ request.originalUrl }}" method="post">
+        <input type="hidden" name="login_challenge" value="{{ login_challenge }}"/>
+
+        <div class="row">
+          <div class="col-12 col-md-6 mt-3">
+            <label for="email" class="form-label text-muted">Email*</label>
+            <div class="d-flex align-items-center ps-2 input-group-widget">
+              <div class="icon d-flex align-items-center justify-content-center">
+                <i class="fa fa-envelope"></i>
+              </div>
+              <input type="email" name="email" id="email" class="form-control input-text-widget" placeholder="johndoe@email.com" required />
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6 mt-3">
+            <label for="password" class="form-label text-muted">Password*</label>
+            <div class="d-flex align-items-center ps-2 input-group-widget">
+              <div class="icon d-flex align-items-center justify-content-center">
+                <i class="fa fa-lock"></i>
+              </div>
+              <input type="password" name="password" id="password" class="form-control input-text-widget" placeholder="Input your password" required />
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-12 col-md-6 mt-3">
+            <label for="given-name" class="form-label text-muted">Given Name*</label>
+            <div class="d-flex align-items-center ps-2 input-group-widget">
+              <div class="icon d-flex align-items-center justify-content-center">
+                <i class="fa fa-user"></i>
+              </div>
+              <input type="text" name="given_name" id="given-name" class="form-control input-text-widget" placeholder="Given Name" required />
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6 mt-3">
+            <label for="family-name" class="form-label text-muted">Family Name*</label>
+            <div class="d-flex align-items-center ps-2 input-group-widget">
+              <div class="icon d-flex align-items-center justify-content-center">
+                <i class="fa fa-user"></i>
+              </div>
+              <input type="text" name="family_name" id="family-name" class="form-control input-text-widget" placeholder="Family Name" required />
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-12 col-md-6 mt-3">
+            <label for="phone-number" class="form-label text-muted">Phone Number*</label>
+            <div class="d-flex align-items-center ps-2 input-group-widget">
+              <div class="icon d-flex align-items-center justify-content-center">
+                <i class="fa fa-mobile"></i>
+              </div>
+              <input type="text" name="phone_number" id="phone-number" class="form-control input-text-widget" placeholder="+15551234567" required />
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6 mt-3">
+            <label for="birthdate" class="form-label text-muted">Birthdate*</label>
+            <div class="d-flex align-items-center ps-2 input-group-widget">
+              <div class="icon d-flex align-items-center justify-content-center">
+                <i class="fa fa-calendar"></i>
+              </div>
+              <input type="date" name="birthdate" id="birthdate" class="form-control input-text-widget" required />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group mt-5">
+          <button type="submit" class="btn btn-widget w-100">Sign Up</button>
+        </div>
+      </form>
+
+      <div class="d-flex flex-column justify-content-center align-items-center mt-3">
+        <span class="text-muted">Already registered?</span>
+        <a href="/auth/login" class="link link-widget">Sign In!</a>
+      </div>
+
+      <div class="toast-container position-fixed bottom-0 start-50 translate-middle-x p-3">
+        {% for message in errors %}
+          <div class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+              <div class="toast-body">{{ message }}</div>
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block customjs %}
+  <script type="text/javascript">
+    document
+      .querySelectorAll('.toast')
+      .forEach((element) => bootstrap.Toast.getOrCreateInstance(element).show());
+  </script>
+{% endblock %}
+

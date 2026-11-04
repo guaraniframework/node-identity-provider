@@ -1,0 +1,31 @@
+{% extends "../base.njk" %}
+
+{% block customcss %}
+  <link rel="stylesheet" href="/static/css/oidc/logout-callback.css">
+{% endblock %}
+
+{% block content %}
+  <div class="container-fluid d-flex justify-content-center align-items-center min-vh-100">
+    <div class="logout-widget">
+      <div class="d-flex flex-column justify-content-center align-items-center mt-4">
+        <h5>Redirecting to the Home Page...</h4>
+      </div>
+
+      <div class="container-fluid px-5 mt-5">
+        <div class="row">
+          <div class="col-12 mt-3">
+            <p>Redirecting to the Home Page...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block customjs %}
+  <script type="text/javascript">
+    setTimeout(() => {
+      window.location.href = 'https://localhost:4000/';
+    }, 5000);
+  </script>
+{% endblock %}
