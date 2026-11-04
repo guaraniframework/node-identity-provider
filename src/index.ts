@@ -111,6 +111,7 @@ export { RefreshTokenGrantType } from './lib/grant-types/refresh-token/refresh-t
 export { ClientAuthenticationHandler } from './lib/handlers/client-authentication/client-authentication.handler';
 export { IdTokenHandler } from './lib/handlers/id-token/id-token.handler';
 export { ScopeHandler } from './lib/handlers/scope/scope.handler';
+export { ExpressIdentityProvider } from './lib/http/providers/express/express.identity-provider';
 export { IdentityProvider } from './lib/http/providers/identity-provider';
 export { NodeIdentityProvider } from './lib/http/providers/node/node.identity-provider';
 export { HttpRequest } from './lib/http/request/http-request';
@@ -221,6 +222,7 @@ export { type AccessTokenType } from './lib/types/access-token-type.type';
 export { type ApplicationType } from './lib/types/application-type.type';
 export { type ClientType } from './lib/types/client-type.type';
 export { type Prompt } from './lib/types/promt.type';
+export { getClientJsonWebKey } from './lib/utils/get-client-jsonwebkey/get-client-jsonwebkey';
 export { AuthorizationValidator } from './lib/validators/authorization/authorization.validator';
 export { CodeAuthorizationValidator } from './lib/validators/authorization/code/code.authorization.validator';
 export { CodeIdTokenAuthorizationValidator } from './lib/validators/authorization/code-id-token/code-id-token.authorization.validator';

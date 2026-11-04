@@ -1,4 +1,4 @@
-INSERT INTO
+INSERT OR IGNORE INTO
     users (
         id,
         password,
@@ -60,7 +60,7 @@ VALUES (
         1
     );
 
-INSERT INTO
+INSERT OR IGNORE INTO
     user_addresses (
         id,
         street_address,

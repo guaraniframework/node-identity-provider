@@ -53,6 +53,7 @@ describe('Authorization Endpoint', () => {
 
   const dataAccessMock = jest.mocked<DataAccess>(
     Object.assign<DataAccess, Partial<DataAccess>>(Reflect.construct(DataAccess, []), {
+      atomic: jest.fn(),
       createGrant: jest.fn(),
       createSession: jest.fn(),
       findConsentByClientAndUser: jest.fn(),
@@ -60,6 +61,7 @@ describe('Authorization Endpoint', () => {
       logout: jest.fn(),
       removeConsent: jest.fn(),
       removeGrant: jest.fn(),
+      saveSession: jest.fn(),
     }),
   );
 
@@ -682,6 +684,7 @@ describe('Authorization Endpoint', () => {
       } as AuthorizationContext;
 
       validatorMock.validate.mockResolvedValueOnce(context);
+      dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
       dataAccessMock.createGrant.mockResolvedValueOnce(grant);
 
       const response = await endpoint.handle(request);
@@ -691,6 +694,7 @@ describe('Authorization Endpoint', () => {
       });
 
       expect(dataAccessMock.createGrant).toHaveBeenCalledExactlyOnceWith(parameters, client, session);
+      expect(dataAccessMock.saveSession).toHaveBeenCalledExactlyOnceWith(session);
       expect(dataAccessMock.removeGrant).not.toHaveBeenCalled();
     });
 
@@ -753,6 +757,7 @@ describe('Authorization Endpoint', () => {
       } as AuthorizationContext;
 
       validatorMock.validate.mockResolvedValueOnce(context);
+      dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
       dataAccessMock.createGrant.mockResolvedValueOnce(grant);
 
       Reflect.set(settingsMock, 'enableAuthorizationResponseIssuerIdentifier', true);
@@ -766,6 +771,7 @@ describe('Authorization Endpoint', () => {
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
 
       expect(dataAccessMock.createGrant).toHaveBeenCalledExactlyOnceWith(parameters, client, session);
+      expect(dataAccessMock.saveSession).toHaveBeenCalledExactlyOnceWith(session);
       expect(dataAccessMock.removeGrant).toHaveBeenCalledExactlyOnceWith(grant);
     });
 
@@ -831,6 +837,7 @@ describe('Authorization Endpoint', () => {
       } as AuthorizationContext;
 
       validatorMock.validate.mockResolvedValueOnce(context);
+      dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
       dataAccessMock.createGrant.mockResolvedValueOnce(grant);
 
       const response = await endpoint.handle(request);
@@ -840,6 +847,7 @@ describe('Authorization Endpoint', () => {
       });
 
       expect(dataAccessMock.createGrant).toHaveBeenCalledExactlyOnceWith(parameters, client, session);
+      expect(dataAccessMock.saveSession).toHaveBeenCalledExactlyOnceWith(session);
       expect(dataAccessMock.removeGrant).not.toHaveBeenCalled();
     });
 
@@ -904,6 +912,7 @@ describe('Authorization Endpoint', () => {
       } as AuthorizationContext;
 
       validatorMock.validate.mockResolvedValueOnce(context);
+      dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
       dataAccessMock.createGrant.mockResolvedValueOnce(grant);
 
       const response = await endpoint.handle(request);
@@ -915,6 +924,7 @@ describe('Authorization Endpoint', () => {
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
 
       expect(dataAccessMock.createGrant).toHaveBeenCalledExactlyOnceWith(parameters, client, session);
+      expect(dataAccessMock.saveSession).toHaveBeenCalledExactlyOnceWith(session);
       expect(dataAccessMock.removeGrant).toHaveBeenCalledExactlyOnceWith(grant);
     });
 
@@ -983,6 +993,7 @@ describe('Authorization Endpoint', () => {
       } as AuthorizationContext;
 
       validatorMock.validate.mockResolvedValueOnce(context);
+      dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
       dataAccessMock.createGrant.mockResolvedValueOnce(grant);
 
       const inactivateMock = dataAccessMock.inactivateSessionActiveLogin.mockImplementationOnce(async (session) => {
@@ -998,6 +1009,7 @@ describe('Authorization Endpoint', () => {
       });
 
       expect(dataAccessMock.createGrant).toHaveBeenCalledExactlyOnceWith(parameters, client, session);
+      expect(dataAccessMock.saveSession).toHaveBeenCalledExactlyOnceWith(session);
       expect(dataAccessMock.inactivateSessionActiveLogin).toHaveBeenCalledExactlyOnceWith(
         expect.objectContaining<Session>({ ...session, activeLogin: login }),
       );
@@ -1029,6 +1041,7 @@ describe('Authorization Endpoint', () => {
       } as AuthorizationContext;
 
       validatorMock.validate.mockResolvedValueOnce(context);
+      dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
       dataAccessMock.createGrant.mockResolvedValueOnce(grant);
 
       const response = await endpoint.handle(request);
@@ -1038,6 +1051,7 @@ describe('Authorization Endpoint', () => {
       });
 
       expect(dataAccessMock.createGrant).toHaveBeenCalledExactlyOnceWith(parameters, client, session);
+      expect(dataAccessMock.saveSession).toHaveBeenCalledExactlyOnceWith(session);
       expect(dataAccessMock.inactivateSessionActiveLogin).not.toHaveBeenCalled();
       expect(dataAccessMock.removeGrant).not.toHaveBeenCalled();
     });
@@ -1067,6 +1081,7 @@ describe('Authorization Endpoint', () => {
       } as AuthorizationContext;
 
       validatorMock.validate.mockResolvedValueOnce(context);
+      dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
       dataAccessMock.createGrant.mockResolvedValueOnce(grant);
 
       const response = await endpoint.handle(request);
@@ -1076,6 +1091,7 @@ describe('Authorization Endpoint', () => {
       });
 
       expect(dataAccessMock.createGrant).toHaveBeenCalledExactlyOnceWith(parameters, client, session);
+      expect(dataAccessMock.saveSession).toHaveBeenCalledExactlyOnceWith(session);
       expect(dataAccessMock.inactivateSessionActiveLogin).not.toHaveBeenCalled();
       expect(dataAccessMock.removeGrant).not.toHaveBeenCalled();
     });
@@ -1225,6 +1241,7 @@ describe('Authorization Endpoint', () => {
       } as AuthorizationContext;
 
       validatorMock.validate.mockResolvedValueOnce(context);
+      dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
       dataAccessMock.createGrant.mockResolvedValueOnce(grant);
 
       const response = await endpoint.handle(request);
@@ -1236,6 +1253,7 @@ describe('Authorization Endpoint', () => {
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
 
       expect(dataAccessMock.createGrant).toHaveBeenCalledExactlyOnceWith(parameters, client, session);
+      expect(dataAccessMock.saveSession).toHaveBeenCalledExactlyOnceWith(session);
       expect(dataAccessMock.removeGrant).toHaveBeenCalledExactlyOnceWith(grant);
     });
 
@@ -1303,6 +1321,7 @@ describe('Authorization Endpoint', () => {
       } as AuthorizationContext;
 
       validatorMock.validate.mockResolvedValueOnce(context);
+      dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
       dataAccessMock.createGrant.mockResolvedValueOnce(grant);
 
       const response = await endpoint.handle(request);
@@ -1312,6 +1331,7 @@ describe('Authorization Endpoint', () => {
       });
 
       expect(dataAccessMock.createGrant).toHaveBeenCalledExactlyOnceWith(parameters, client, session);
+      expect(dataAccessMock.saveSession).toHaveBeenCalledExactlyOnceWith(session);
       expect(dataAccessMock.removeGrant).not.toHaveBeenCalled();
     });
 
@@ -1378,6 +1398,7 @@ describe('Authorization Endpoint', () => {
       } as AuthorizationContext;
 
       validatorMock.validate.mockResolvedValueOnce(context);
+      dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
       dataAccessMock.createGrant.mockResolvedValueOnce(grant);
 
       const response = await endpoint.handle(request);
@@ -1389,6 +1410,7 @@ describe('Authorization Endpoint', () => {
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
 
       expect(dataAccessMock.createGrant).toHaveBeenCalledExactlyOnceWith(parameters, client, session);
+      expect(dataAccessMock.saveSession).toHaveBeenCalledExactlyOnceWith(session);
       expect(dataAccessMock.logout).toHaveBeenCalledExactlyOnceWith(login, session);
       expect(dataAccessMock.removeGrant).toHaveBeenCalledExactlyOnceWith(grant);
     });
@@ -1420,6 +1442,7 @@ describe('Authorization Endpoint', () => {
       } as AuthorizationContext;
 
       validatorMock.validate.mockResolvedValueOnce(context);
+      dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
       dataAccessMock.createGrant.mockResolvedValueOnce(grant);
 
       const response = await endpoint.handle(request);
@@ -1431,6 +1454,7 @@ describe('Authorization Endpoint', () => {
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
 
       expect(dataAccessMock.createGrant).toHaveBeenCalledExactlyOnceWith(parameters, client, session);
+      expect(dataAccessMock.saveSession).toHaveBeenCalledExactlyOnceWith(session);
       expect(dataAccessMock.logout).toHaveBeenCalledExactlyOnceWith(oldLogin, session);
       expect(dataAccessMock.removeGrant).toHaveBeenCalledExactlyOnceWith(grant);
     });
@@ -1462,6 +1486,7 @@ describe('Authorization Endpoint', () => {
       } as AuthorizationContext;
 
       validatorMock.validate.mockResolvedValueOnce(context);
+      dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
       dataAccessMock.createGrant.mockResolvedValueOnce(grant);
 
       const response = await endpoint.handle(request);
@@ -1471,6 +1496,7 @@ describe('Authorization Endpoint', () => {
       });
 
       expect(dataAccessMock.createGrant).toHaveBeenCalledExactlyOnceWith(parameters, client, session);
+      expect(dataAccessMock.saveSession).toHaveBeenCalledExactlyOnceWith(session);
       expect(dataAccessMock.logout).toHaveBeenCalledExactlyOnceWith(login, session);
       expect(dataAccessMock.removeGrant).not.toHaveBeenCalled();
     });
@@ -1502,6 +1528,7 @@ describe('Authorization Endpoint', () => {
       } as AuthorizationContext;
 
       validatorMock.validate.mockResolvedValueOnce(context);
+      dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
       dataAccessMock.createGrant.mockResolvedValueOnce(grant);
 
       const response = await endpoint.handle(request);
@@ -1511,6 +1538,7 @@ describe('Authorization Endpoint', () => {
       });
 
       expect(dataAccessMock.createGrant).toHaveBeenCalledExactlyOnceWith(parameters, client, session);
+      expect(dataAccessMock.saveSession).toHaveBeenCalledExactlyOnceWith(session);
       expect(dataAccessMock.logout).toHaveBeenCalledExactlyOnceWith(oldLogin, session);
       expect(dataAccessMock.removeGrant).not.toHaveBeenCalled();
     });
@@ -1794,6 +1822,7 @@ describe('Authorization Endpoint', () => {
       } as AuthorizationContext;
 
       validatorMock.validate.mockResolvedValueOnce(context);
+      dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
       dataAccessMock.createGrant.mockResolvedValueOnce(grant);
       idTokenHandlerMock.checkIdTokenHint.mockResolvedValueOnce(false);
 
@@ -1806,6 +1835,7 @@ describe('Authorization Endpoint', () => {
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
 
       expect(dataAccessMock.createGrant).toHaveBeenCalledExactlyOnceWith(parameters, client, session);
+      expect(dataAccessMock.saveSession).toHaveBeenCalledExactlyOnceWith(session);
       expect(dataAccessMock.inactivateSessionActiveLogin).toHaveBeenCalledExactlyOnceWith(session);
       expect(dataAccessMock.removeGrant).toHaveBeenCalledExactlyOnceWith(grant);
     });

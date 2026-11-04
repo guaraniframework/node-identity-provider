@@ -87,6 +87,7 @@ describe('Authorization Validator', () => {
     Object.assign<DataAccess, Partial<DataAccess>>(Reflect.construct(DataAccess, []), {
       findClientById: jest.fn(),
       findSessionById: jest.fn(),
+      removeGrant: jest.fn(),
     }),
   );
 
@@ -848,6 +849,8 @@ describe('Authorization Validator', () => {
           { grant, client_id: client.id, parameters },
           error,
         );
+
+        expect(dataAccessMock.removeGrant).toHaveBeenCalledExactlyOnceWith(grant);
       },
     );
 
@@ -879,6 +882,8 @@ describe('Authorization Validator', () => {
         { grant, client_id: client.id, parameters },
         error,
       );
+
+      expect(dataAccessMock.removeGrant).toHaveBeenCalledExactlyOnceWith(grant);
     });
 
     it('should throw when the Authorization Request Parameters of the Grant do not match the provided Authorization Request Parameters.', async () => {
@@ -910,6 +915,8 @@ describe('Authorization Validator', () => {
         { grant, client_id: client.id, parameters },
         error,
       );
+
+      expect(dataAccessMock.removeGrant).toHaveBeenCalledExactlyOnceWith(grant);
     });
 
     it('should return an Authorization Context without the "offline_access" Scope if not requested together with the "consent" Prompt.', async () => {

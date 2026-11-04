@@ -1,0 +1,8 @@
+.form-widget {
+  width: 50rem;
+  padding: 2rem;
+  background-color: white;
+  font-size: 14px;
+  border-radius: 0.5rem;
+  box-shadow: 0px 0px 5px 1px rgba(0, 0, 0, 25%);
+}

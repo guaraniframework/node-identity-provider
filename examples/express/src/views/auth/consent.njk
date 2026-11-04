@@ -1,0 +1,31 @@
+{% extends "../base.njk" %}
+
+{% block customcss %}
+  <link rel="stylesheet" href="/static/css/auth/consent.css">
+{% endblock %}
+
+{% block content %}
+  <div class="container-fluid d-flex justify-content-center align-items-center min-vh-100">
+    <div class="form-widget">
+      <div class="d-flex flex-column justify-content-center align-items-center">
+        <p>The Client <strong>{{ consent.client.name }}</strong> is requesting the following scope:</p>
+      </div>
+
+      <form action="/auth/consent" method="post">
+        <input type="hidden" name="consent_challenge" value="{{ consent_challenge }}"/>
+
+        {% for scope in scopes %}
+          <div class="form-check">
+            <input type="checkbox" name="grant_scope" class="form-check-input" value="{{ scope }}" id="scope:{{ scope }}"/>
+            <label class="form-check-label" for="scope:{{ scope }}">{{ scope }}</label>
+          </div>
+        {% endfor %}
+
+        <div class="form-group mt-4 d-flex flex-row">
+          <button type="submit" name="decision" class="btn btn-widget w-100" value="accept">Accept</button>
+          <button type="submit" name="decision" class="btn btn-light w-100" value="deny">Deny</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

@@ -62,13 +62,6 @@ export class HttpResponse {
   }
 
   /**
-   * Instantiates a new Http Response.
-   */
-  public constructor() {
-    this.isValidJsonData = this.isValidJsonData.bind(this);
-  }
-
-  /**
    * Sets the Status of the Http Response.
    *
    * @param status Status of the Http Response.
@@ -216,13 +209,13 @@ export class HttpResponse {
     }
 
     if (Array.isArray(data)) {
-      return data.every(this.isValidJsonData);
+      return data.every((item) => this.isValidJsonData(item));
     }
 
     if (typeof data === 'object') {
       return (
         ('toJSON' in data && typeof data.toJSON === 'function') ||
-        (isPlainObject(data) && Object.values(data).every(this.isValidJsonData))
+        (isPlainObject(data) && Object.values(data).every((item) => this.isValidJsonData(item)))
       );
     }
 

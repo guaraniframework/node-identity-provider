@@ -1,0 +1,39 @@
+.link-widget,
+.link-widget:active,
+.link-widget:focus,
+.link-widget:hover {
+  text-decoration: none;
+  color: #fd940a;
+}
+
+.input-group-widget {
+  height: 3rem;
+  border-bottom: 1px solid #ffaa00;
+}
+
+.input-text-widget,
+.input-text-widget:active,
+.input-text-widget:focus {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  font-size: 14px;
+}
+
+.input-select-widget,
+.input-select-widget:active,
+.input-select-widget:focus,
+.input-select-widget:hover {
+  border: none;
+  box-shadow: none;
+  font-size: 14px;
+}
+
+.btn-widget,
+.btn-widget:active,
+.btn-widget:focus,
+.btn-widget:hover {
+  background-color: #fd940a;
+  color: white;
+  box-shadow: 0px 0px 5px 1px rgba(0, 0, 0, 25%);
+}

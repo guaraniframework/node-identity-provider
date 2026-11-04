@@ -1,4 +1,4 @@
-INSERT INTO
+INSERT OR IGNORE INTO
     clients (
         id,
         name,
@@ -84,7 +84,7 @@ VALUES (
         NULL
     );
 
-INSERT INTO
+INSERT OR IGNORE INTO
     client_secrets (
         id,
         secret,
@@ -104,7 +104,7 @@ VALUES (
         X'922e0d5e08ba4b0d8068fde37f2c3604'
     );
 
-INSERT INTO
+INSERT OR IGNORE INTO
     client_scopes (client_id, scope_id)
 VALUES (
         X'b1eeace92b0c468ea444733befc3b35d',

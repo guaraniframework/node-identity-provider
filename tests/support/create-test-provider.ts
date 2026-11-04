@@ -42,13 +42,13 @@ export function createTestProvider(): NodeIdentityProvider {
 
   return new IdentityProviderFactory()
     .addAuthorizationEndpoint((options) => {
-      options.useResponseModes(['fragment', 'query']).useResponseTypes(['code', 'id_token']);
+      options.useResponseModes(['fragment', 'query']).useResponseTypes(['code', 'id_token']).build();
     })
     .addInteractionEndpoint()
-    .addTokenEndpoint()
-    .addLogger(Object.assign(new ConsoleLogger(LoggerLevel.ERROR)))
+    .addLogger(new ConsoleLogger(LoggerLevel.ERROR))
     .addSettings(settings)
     .addSubjectTypes(['pairwise', 'public'])
+    .addTokenEndpoint()
     .add(DatabaseSync, new DatabaseSync(':memory:'))
     .add(JsonWebKeySet, jsonWebKeySet)
     .create(NodeIdentityProvider);

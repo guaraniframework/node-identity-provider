@@ -64,3 +64,6 @@ vite.config.ts.timestamp-*
 .vite/
 .continue
 *.db
+jwks.json
+*.cert
+*.key

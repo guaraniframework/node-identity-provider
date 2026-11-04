@@ -1,0 +1,37 @@
+{% extends "../base.njk" %}
+
+{% block customcss %}
+  <link rel="stylesheet" href="/static/css/oidc/error.css">
+{% endblock %}
+
+{% block content %}
+  <div class="container-fluid d-flex justify-content-center align-items-center min-vh-100">
+    <div class="error-widget">
+      <div class="d-flex flex-column justify-content-center align-items-center mt-4">
+        <h4>Authorization Error</h4>
+      </div>
+
+      <div class="container-fluid px-5 mt-5">
+        <div class="row">
+          <div class="col-12 mt-3">
+            <strong>Error Code:</strong>
+            <span>{{ parameters.error }}</span>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-12 mt-3">
+            <strong>Error Description:</strong>
+            <span>{{ parameters.error_description }}</span>
+          </div>
+        </div>
+
+        <div class="text-start my-5">
+          <a href="/" class="link link-widget">
+            <strong>Back to Home Page</strong>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
