@@ -25,7 +25,8 @@ export class NodeIdentityProvider extends IdentityProvider {
   /**
    * NodeJS Environment.
    */
-  private readonly environment?: string = process.env['NODE_ENV'];
+  // istanbul ignore next
+  private readonly environment: string = process.env['NODE_ENV'] ?? 'development';
 
   /**
    * Instantiates a new Node Identity Provider.

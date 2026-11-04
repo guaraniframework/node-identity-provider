@@ -19,8 +19,6 @@ import { HttpResponse } from '../../response/http-response';
 import { HttpResponseStatus } from '../../response/http-response-status.enum';
 import { NodeIdentityProvider } from './node.identity-provider';
 
-jest.mock('../../../loggers/logger');
-
 describe('Node Identity Provider', () => {
   let provider: NodeIdentityProvider;
   let server: Server;

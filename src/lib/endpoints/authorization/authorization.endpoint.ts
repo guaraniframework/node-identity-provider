@@ -120,13 +120,15 @@ export class AuthorizationEndpoint extends Endpoint {
       }
 
       if (!(context.session.grant instanceof Grant)) {
-        context.session.grant = await this.dataAccess.createGrant(parameters, client, context.session);
+        await this.dataAccess.atomic(async () => {
+          context.session!.grant = await this.dataAccess.createGrant(parameters, client, context.session!);
+          await this.dataAccess.saveSession(context.session!);
+        });
       }
 
-      let {
-        session: { activeLogin: login, grant },
-        session,
-      } = context;
+      const session = context.session;
+      const grant = context.session.grant!;
+      let login = context.session.activeLogin;
 
       if (prompts.includes('create') && !grant.interactions.includes('create')) {
         return this.redirectToRegistrationPage(grant, display);

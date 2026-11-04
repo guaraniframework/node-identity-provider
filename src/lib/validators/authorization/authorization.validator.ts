@@ -128,7 +128,7 @@ export abstract class AuthorizationValidator<
     scopes = this.checkOfflineAccessScope(scopes, prompts, responseType);
 
     if (session?.grant instanceof Grant) {
-      this.checkGrant(session.grant, client, parameters);
+      await this.checkGrant(session.grant, client, parameters);
     }
 
     const context = {
@@ -906,6 +906,11 @@ export abstract class AuthorizationValidator<
     const { sessionCookie } = this.settings;
 
     if (!(sessionCookie in cookies)) {
+      this.logger.debug(`[${this.constructor.name}] Completed findSession()`, '74bc16ac-b0f2-4623-9a00-48122ad328ec', {
+        cookies,
+        session_id: null,
+      });
+
       return null;
     }
 
@@ -980,7 +985,7 @@ export abstract class AuthorizationValidator<
    * @param parameters Parameters of the Authorization Request.
    * @throws {InvalidRequestError} The provided Grant is invalid.
    */
-  protected checkGrant(grant: Grant, client: Client, parameters: AuthorizationRequest): void {
+  protected async checkGrant(grant: Grant, client: Client, parameters: AuthorizationRequest): Promise<void> {
     this.logger.debug(`[${this.constructor.name}] Called checkGrant()`, '63571aea-2c2f-4a41-817c-15b57e976ad4', {
       grant,
       client_id: client.id,
@@ -988,6 +993,8 @@ export abstract class AuthorizationValidator<
     });
 
     if (!secureStringCompare(client.id, grant.client.id)) {
+      await this.dataAccess.removeGrant(grant);
+
       const error = new InvalidRequestError('Invalid Grant.');
 
       this.logger.error(
@@ -1001,6 +1008,8 @@ export abstract class AuthorizationValidator<
     }
 
     if (new Date() > grant.expiresAt) {
+      await this.dataAccess.removeGrant(grant);
+
       const error = new InvalidRequestError('Expired Grant.');
 
       this.logger.error(
@@ -1014,6 +1023,8 @@ export abstract class AuthorizationValidator<
     }
 
     if (!isDeepStrictEqual(parameters, grant.parameters, { skipPrototype: true })) {
+      await this.dataAccess.removeGrant(grant);
+
       const error = new InvalidRequestError('One or more parameters changed since the initial Authorization Request.');
 
       this.logger.error(
