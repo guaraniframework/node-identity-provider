@@ -73,6 +73,7 @@ export async function getProviderRouter(): Promise<Router> {
         .build();
     })
     .addDataAccess(CustomDataAccess)
+    .addDiscoveryEndpoint()
     .addInteractionEndpoint((options) => {
       options.useClientAuthenticationMethods(clientAuthenticationMethods).build();
     })

@@ -12,6 +12,7 @@ import { CONTAINER } from '../constants';
 import { DataAccess } from '../data-access/data-access';
 import { SQLiteDataAccess } from '../data-access/sqlite/sqlite.data-access';
 import { AuthorizationEndpoint } from '../endpoints/authorization/authorization.endpoint';
+import { DiscoveryEndpoint } from '../endpoints/discovery/discovery.endpoint';
 import { Endpoint } from '../endpoints/endpoint';
 import { InteractionEndpoint } from '../endpoints/interaction/interaction.endpoint';
 import { TokenEndpoint } from '../endpoints/token/token.endpoint';
@@ -87,6 +88,18 @@ export class IdentityProviderFactory {
   }
 
   /**
+   * Adds the Discovery Endpoint to the Identity Provider.
+   *
+   * @param callback Callback function used to configure the Discovery Endpoint.
+   * @throws {TypeError} Failed to add the Discovery Endpoint.
+   * @returns Identity Provider Factory.
+   */
+  public addDiscoveryEndpoint(): IdentityProviderFactory {
+    this.addContainerEntry(Endpoint, DiscoveryEndpoint);
+    return this;
+  }
+
+  /**
    * Adds the Interaction Endpoint to the Identity Provider.
    *
    * @param callback Callback function used to configure the Interaction Endpoint.
@@ -103,30 +116,6 @@ export class IdentityProviderFactory {
     if (
       !this.container.has(Endpoint) ||
       !(this.container.getAll(Endpoint) as Constructor<Endpoint>[]).includes(InteractionEndpoint)
-    ) {
-      options.build();
-    }
-
-    return this;
-  }
-
-  /**
-   * Adds the Token Endpoint to the Identity Provider.
-   *
-   * @param callback Callback function used to configure the Token Endpoint.
-   * @throws {TypeError} Failed to add the Token Endpoint.
-   * @returns Identity Provider Factory.
-   */
-  public addTokenEndpoint(callback?: (options: TokenEndpointOptions) => void): IdentityProviderFactory {
-    const options = new TokenEndpointOptions(this.container);
-
-    if (typeof callback === 'function') {
-      callback(options);
-    }
-
-    if (
-      !this.container.has(Endpoint) ||
-      !(this.container.getAll(Endpoint) as Constructor<Endpoint>[]).includes(TokenEndpoint)
     ) {
       options.build();
     }
@@ -185,6 +174,30 @@ export class IdentityProviderFactory {
     subjectTypes.forEach((subjectType) => {
       this.container.bind(SubjectType).toClass(SUBJECT_TYPE_REGISTRY[subjectType]).asSingleton();
     });
+
+    return this;
+  }
+
+  /**
+   * Adds the Token Endpoint to the Identity Provider.
+   *
+   * @param callback Callback function used to configure the Token Endpoint.
+   * @throws {TypeError} Failed to add the Token Endpoint.
+   * @returns Identity Provider Factory.
+   */
+  public addTokenEndpoint(callback?: (options: TokenEndpointOptions) => void): IdentityProviderFactory {
+    const options = new TokenEndpointOptions(this.container);
+
+    if (typeof callback === 'function') {
+      callback(options);
+    }
+
+    if (
+      !this.container.has(Endpoint) ||
+      !(this.container.getAll(Endpoint) as Constructor<Endpoint>[]).includes(TokenEndpoint)
+    ) {
+      options.build();
+    }
 
     return this;
   }

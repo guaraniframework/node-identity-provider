@@ -65,6 +65,7 @@ export { PopupDisplay } from './lib/displays/popup/popup.display';
 export { TouchDisplay } from './lib/displays/touch/touch.display';
 export { WapDisplay } from './lib/displays/wap/wap.display';
 export { AuthorizationEndpoint } from './lib/endpoints/authorization/authorization.endpoint';
+export { DiscoveryEndpoint } from './lib/endpoints/discovery/discovery.endpoint';
 export { Endpoint } from './lib/endpoints/endpoint';
 export { type EndpointName } from './lib/endpoints/endpoint-name.type';
 export { TokenEndpoint } from './lib/endpoints/token/token.endpoint';
@@ -189,6 +190,7 @@ export { type IdTokenAuthorizationResponse } from './lib/responses/authorization
 export { type IdTokenTokenAuthorizationResponse } from './lib/responses/authorization/id-token-token/id-token-token.authorization-response';
 export { type NoneAuthorizationResponse } from './lib/responses/authorization/none/none.authorization-response';
 export { type TokenAuthorizationResponse } from './lib/responses/authorization/token/token.authorization-response';
+export { type DiscoveryResponse } from './lib/responses/discovery/discovery-response';
 export { type ErrorResponse } from './lib/responses/error/error-response';
 export { type ConsentContextInteractionResponse } from './lib/responses/interaction/context/consent/consent.context-interaction-response';
 export { type ConsentContextInteractionResponseContext } from './lib/responses/interaction/context/consent/consent.context-interaction-response-context';

@@ -1,4 +1,4 @@
 /**
  * Supported Endpoints.
  */
-export type EndpointName = 'authorization' | 'interaction' | 'token';
+export type EndpointName = 'authorization' | 'discovery' | 'interaction' | 'token';

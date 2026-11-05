@@ -9,6 +9,7 @@ import { CONTAINER } from '../constants';
 import { DataAccess } from '../data-access/data-access';
 import { SQLiteDataAccess } from '../data-access/sqlite/sqlite.data-access';
 import { AuthorizationEndpoint } from '../endpoints/authorization/authorization.endpoint';
+import { DiscoveryEndpoint } from '../endpoints/discovery/discovery.endpoint';
 import { Endpoint } from '../endpoints/endpoint';
 import { InteractionEndpoint } from '../endpoints/interaction/interaction.endpoint';
 import { TokenEndpoint } from '../endpoints/token/token.endpoint';
@@ -212,6 +213,31 @@ describe('Identity Provider Factory', () => {
     );
   });
 
+  describe('addDiscoveryEndpoint()', () => {
+    it('should add the Discovery Endpoint to the Identity Provider Factory.', () => {
+      factory
+        .addAuthorizationEndpoint((options) =>
+          options
+            .useDisplays(['page'])
+            .usePKCEs(['plain'])
+            .useResponseModes(['query'])
+            .useResponseTypes(['code'])
+            .build(),
+        )
+        .addDataAccess(SQLiteDataAccess.prototype)
+        .addInteractionEndpoint((options) => options.useClientAuthenticationMethods(['client_secret_basic']).build())
+        .addLogger(ConsoleLogger.prototype)
+        .addSettings(Object.create(Settings.prototype))
+        .addSubjectTypes(['public'])
+        .addTokenEndpoint((options) =>
+          options.useClientAuthenticationMethods(['client_secret_basic']).useGrantTypes(['authorization_code']).build(),
+        );
+
+      expect(() => factory.addDiscoveryEndpoint()).not.toThrow();
+      expect(factory['container'].resolve(Endpoint)).toBeInstanceOf(DiscoveryEndpoint);
+    });
+  });
+
   describe('addInteractionEndpoint()', () => {
     it('should add the Interaction Endpoint with the default options to the Identity Provider Factory.', () => {
       factory['container'].bind(Settings).toValue(Settings.prototype);
@@ -231,28 +257,6 @@ describe('Identity Provider Factory', () => {
 
       expect(() => factory.addInteractionEndpoint((options) => options.build())).not.toThrow();
       expect(factory['container'].resolve(Endpoint)).toBeInstanceOf(InteractionEndpoint);
-    });
-  });
-
-  describe('addTokenEndpoint()', () => {
-    it('should add the Token Endpoint with the default options to the Identity Provider Factory.', () => {
-      factory['container'].bind(Settings).toValue(Settings.prototype);
-      factory['container'].bind(JsonWebKeySet).toValue(JsonWebKeySet.prototype);
-      factory['container'].bind(DatabaseSync).toValue(DatabaseSync.prototype);
-      factory['container'].bind(PKCE).toValue(PKCE.prototype);
-
-      expect(() => factory.addTokenEndpoint()).not.toThrow();
-      expect(factory['container'].resolve(Endpoint)).toBeInstanceOf(TokenEndpoint);
-    });
-
-    it('should add the Token Endpoint with the provided options to the Identity Provider Factory.', () => {
-      factory['container'].bind(Settings).toValue(Settings.prototype);
-      factory['container'].bind(JsonWebKeySet).toValue(JsonWebKeySet.prototype);
-      factory['container'].bind(DatabaseSync).toValue(DatabaseSync.prototype);
-      factory['container'].bind(PKCE).toValue(PKCE.prototype);
-
-      expect(() => factory.addTokenEndpoint((options) => options.build())).not.toThrow();
-      expect(factory['container'].resolve(Endpoint)).toBeInstanceOf(TokenEndpoint);
     });
   });
 
@@ -291,6 +295,28 @@ describe('Identity Provider Factory', () => {
       expect(factory['container'].resolveAll(SubjectType)).toStrictEqual<SubjectType[]>([
         expect.any(PublicSubjectType),
       ]);
+    });
+  });
+
+  describe('addTokenEndpoint()', () => {
+    it('should add the Token Endpoint with the default options to the Identity Provider Factory.', () => {
+      factory['container'].bind(Settings).toValue(Settings.prototype);
+      factory['container'].bind(JsonWebKeySet).toValue(JsonWebKeySet.prototype);
+      factory['container'].bind(DatabaseSync).toValue(DatabaseSync.prototype);
+      factory['container'].bind(PKCE).toValue(PKCE.prototype);
+
+      expect(() => factory.addTokenEndpoint()).not.toThrow();
+      expect(factory['container'].resolve(Endpoint)).toBeInstanceOf(TokenEndpoint);
+    });
+
+    it('should add the Token Endpoint with the provided options to the Identity Provider Factory.', () => {
+      factory['container'].bind(Settings).toValue(Settings.prototype);
+      factory['container'].bind(JsonWebKeySet).toValue(JsonWebKeySet.prototype);
+      factory['container'].bind(DatabaseSync).toValue(DatabaseSync.prototype);
+      factory['container'].bind(PKCE).toValue(PKCE.prototype);
+
+      expect(() => factory.addTokenEndpoint((options) => options.build())).not.toThrow();
+      expect(factory['container'].resolve(Endpoint)).toBeInstanceOf(TokenEndpoint);
     });
   });
 
