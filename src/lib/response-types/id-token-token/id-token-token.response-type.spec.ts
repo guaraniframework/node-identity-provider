@@ -113,6 +113,7 @@ describe('ID Token & Token Response Type', () => {
       });
 
       expect(idTokenHandlerMock.generateIdToken).toHaveBeenCalledExactlyOnceWith(activeLogin, consent, {
+        accessToken,
         maxAge: context.maxAge,
         nonce: context.nonce,
       });
@@ -133,7 +134,7 @@ describe('ID Token & Token Response Type', () => {
         scope: 'openid foo bar',
       });
 
-      expect(idTokenHandlerMock.generateIdToken).toHaveBeenCalledExactlyOnceWith(activeLogin, consent, {});
+      expect(idTokenHandlerMock.generateIdToken).toHaveBeenCalledExactlyOnceWith(activeLogin, consent, { accessToken });
     });
   });
 });

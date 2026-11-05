@@ -6,13 +6,14 @@ import { ConsentController } from '../controllers/auth/consent.controller';
 import { LoginController } from '../controllers/auth/login.controller';
 import { RegistrationController } from '../controllers/auth/registration.controller';
 import { authenticated } from '../guards/authenticated.guard';
+import { unauthenticated } from '../guards/unauthenticated.guard';
 
 const router: Router = Router();
 
 router
   .route('/registration')
-  .get(async (req, res) => await RegistrationController.get(req, res))
-  .post(async (req, res) => await RegistrationController.post(req, res));
+  .get(unauthenticated, async (req, res) => await RegistrationController.get(req, res))
+  .post(unauthenticated, async (req, res) => await RegistrationController.post(req, res));
 
 router
   .route('/account-selection')
@@ -21,8 +22,9 @@ router
 
 router
   .route('/login')
-  .get(async (req, res) => await LoginController.get(req, res))
+  .get(unauthenticated, async (req, res) => await LoginController.get(req, res))
   .post(
+    unauthenticated,
     passport.authenticate('local', { failureRedirect: '/auth/login', failureFlash: true }),
     async (req, res) => await LoginController.post(req, res),
   );

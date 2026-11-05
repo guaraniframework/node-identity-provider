@@ -108,9 +108,9 @@ describe('Code & ID Token Response Type', () => {
       });
 
       expect(idTokenHandlerMock.generateIdToken).toHaveBeenCalledExactlyOnceWith(activeLogin, consent, {
+        authorizationCode,
         maxAge: context.maxAge,
         nonce: context.nonce,
-        authorizationCode,
       });
     });
 

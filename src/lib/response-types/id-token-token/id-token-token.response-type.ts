@@ -66,12 +66,16 @@ export class IdTokenTokenResponseType extends ResponseType {
     const { client, scopes, user } = consent;
 
     const [accessToken, idToken] = await this.dataAccess.atomic(async () => {
+      const generateIdTokenOptions = removeNullishValues<GenerateIdTokenOptions>({
+        maxAge: maxAge ?? undefined!,
+        nonce: nonce ?? undefined!,
+      });
+
       const accessToken = await this.dataAccess.createAccessToken(scopes, client, user);
-      const idToken = await this.idTokenHandler.generateIdToken(
-        login,
-        consent,
-        removeNullishValues({ maxAge: maxAge ?? undefined, nonce: nonce ?? undefined } as GenerateIdTokenOptions),
-      );
+      const idToken = await this.idTokenHandler.generateIdToken(login, consent, {
+        accessToken,
+        ...generateIdTokenOptions,
+      });
 
       return [accessToken, idToken];
     });

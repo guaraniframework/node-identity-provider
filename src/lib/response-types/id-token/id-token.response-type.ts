@@ -62,7 +62,7 @@ export class IdTokenResponseType extends ResponseType {
     const idToken = await this.idTokenHandler.generateIdToken(
       login,
       consent,
-      removeNullishValues({ maxAge: maxAge ?? undefined, nonce: nonce ?? undefined } as GenerateIdTokenOptions),
+      removeNullishValues<GenerateIdTokenOptions>({ maxAge: maxAge ?? undefined!, nonce: nonce ?? undefined! }),
     );
 
     const response: IdTokenAuthorizationResponse = { id_token: idToken };

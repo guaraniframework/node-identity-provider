@@ -1,8 +1,10 @@
 import { Injectable, Optional } from '@guarani/di';
+import { removeNullishValues } from '@guarani/primitives';
 
 import { AuthorizationCodeTokenContext } from '../../context/token/authorization-code/authorization-code.token-context';
 import { DataAccess } from '../../data-access/data-access';
 import { RefreshToken } from '../../entities/refresh-token';
+import { GenerateIdTokenOptions } from '../../handlers/id-token/generate-id-token.options';
 import { IdTokenHandler } from '../../handlers/id-token/id-token.handler';
 import { Logger } from '../../loggers/logger';
 import { AuthorizationCodeTokenResponse } from '../../responses/token/authorization-code/authorization-code.token-response';
@@ -70,16 +72,20 @@ export class AuthorizationCodeGrantType extends GrantType {
           ? await this.dataAccess.createRefreshToken(scopes, client, user)
           : null;
 
+      const generateIdTokenOptions = removeNullishValues<GenerateIdTokenOptions>({
+        maxAge:
+          typeof authorizationCode.parameters.max_age === 'string'
+            ? Number.parseInt(authorizationCode.parameters.max_age, 10)
+            : undefined!,
+        nonce: authorizationCode.parameters.nonce ?? undefined!,
+      });
+
       const idToken =
         typeof this.idTokenHandler !== 'undefined' && scopes.some((scope) => scope.name === 'openid')
           ? await this.idTokenHandler!.generateIdToken(login, consent, {
               accessToken,
               authorizationCode,
-              maxAge:
-                typeof authorizationCode.parameters.max_age === 'string'
-                  ? Number.parseInt(authorizationCode.parameters.max_age, 10)
-                  : undefined!,
-              nonce: authorizationCode.parameters.nonce ?? undefined!,
+              ...generateIdTokenOptions,
             })
           : null;
 
