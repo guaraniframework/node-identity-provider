@@ -30,7 +30,7 @@ export { type AuthorizationContext } from './lib/context/authorization/authoriza
 export { type CodeAuthorizationContext } from './lib/context/authorization/code/code.authorization-context';
 export { type CodeIdTokenAuthorizationContext } from './lib/context/authorization/code-id-token/code-id-token.authorization-context';
 export { type CodeIdTokenTokenAuthorizationContext } from './lib/context/authorization/code-id-token-token/code-id-token-token.authorization-context';
-export { type CodeTokenAuthorizationContext } from './lib/context/authorization/code-token/code-token.authorization-request';
+export { type CodeTokenAuthorizationContext } from './lib/context/authorization/code-token/code-token.authorization-context';
 export { type IdTokenAuthorizationContext } from './lib/context/authorization/id-token/id-token.authorization-context';
 export { type IdTokenTokenAuthorizationContext } from './lib/context/authorization/id-token-token/id-token-token.authorization-context';
 export { type NoneAuthorizationContext } from './lib/context/authorization/none/none.authorization-context';

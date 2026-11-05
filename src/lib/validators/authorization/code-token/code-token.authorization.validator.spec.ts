@@ -5,7 +5,7 @@ import { getContainer } from '@guarani/di';
 import { removeNullishValues } from '@guarani/primitives';
 
 import { CONTAINER } from '../../../constants';
-import { CodeTokenAuthorizationContext } from '../../../context/authorization/code-token/code-token.authorization-request';
+import { CodeTokenAuthorizationContext } from '../../../context/authorization/code-token/code-token.authorization-context';
 import { DataAccess } from '../../../data-access/data-access';
 import { Display } from '../../../displays/display';
 import { Client } from '../../../entities/client';

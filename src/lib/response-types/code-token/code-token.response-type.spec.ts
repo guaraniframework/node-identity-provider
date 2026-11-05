@@ -1,7 +1,7 @@
 import { getContainer } from '@guarani/di';
 
 import { CONTAINER } from '../../constants';
-import { CodeTokenAuthorizationContext } from '../../context/authorization/code-token/code-token.authorization-request';
+import { CodeTokenAuthorizationContext } from '../../context/authorization/code-token/code-token.authorization-context';
 import { DataAccess } from '../../data-access/data-access';
 import { AccessToken } from '../../entities/access-token';
 import { AuthorizationCode } from '../../entities/authorization-code';
