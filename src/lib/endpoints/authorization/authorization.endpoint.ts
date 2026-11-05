@@ -198,7 +198,16 @@ export class AuthorizationEndpoint extends Endpoint {
       // #endregion
 
       // #region Authorization
-      let consent = grant.consent ?? (await this.dataAccess.findConsentByClientAndUser(client, login.user));
+      await this.dataAccess.atomic(async () => {
+        const shouldSave = grant.consent === null;
+        grant.consent ??= await this.dataAccess.findConsentByClientAndUser(client, login.user);
+
+        if (shouldSave && grant.consent !== null) {
+          await this.dataAccess.saveGrant(grant);
+        }
+      });
+
+      let consent = grant.consent;
 
       if (consent instanceof Consent && prompts.includes('consent') && !grant.interactions.includes('consent')) {
         await this.dataAccess.removeConsent(consent);

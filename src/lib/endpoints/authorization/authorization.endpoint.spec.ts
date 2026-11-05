@@ -61,6 +61,7 @@ describe('Authorization Endpoint', () => {
       logout: jest.fn(),
       removeConsent: jest.fn(),
       removeGrant: jest.fn(),
+      saveGrant: jest.fn(),
       saveSession: jest.fn(),
     }),
   );
@@ -1909,6 +1910,7 @@ describe('Authorization Endpoint', () => {
       } as AuthorizationContext;
 
       validatorMock.validate.mockResolvedValueOnce(context);
+      dataAccessMock.atomic.mockImplementation(async (operations) => await operations());
       dataAccessMock.findConsentByClientAndUser.mockResolvedValueOnce(null);
 
       const response = await endpoint.handle(request);
@@ -1919,6 +1921,7 @@ describe('Authorization Endpoint', () => {
       expect(response.status).toBe(error.status);
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
 
+      expect(dataAccessMock.saveGrant).not.toHaveBeenCalled();
       expect(dataAccessMock.removeGrant).toHaveBeenCalledExactlyOnceWith(grant);
     });
 
@@ -1949,6 +1952,7 @@ describe('Authorization Endpoint', () => {
       } as AuthorizationContext;
 
       validatorMock.validate.mockResolvedValueOnce(context);
+      dataAccessMock.atomic.mockImplementation(async (operations) => await operations());
       dataAccessMock.findConsentByClientAndUser.mockResolvedValueOnce(null);
 
       const response = await endpoint.handle(request);
@@ -1957,6 +1961,7 @@ describe('Authorization Endpoint', () => {
         location: 'https://provider.example.com/oidc/consent?consent_challenge=consent_challenge',
       });
 
+      expect(dataAccessMock.saveGrant).not.toHaveBeenCalled();
       expect(dataAccessMock.removeGrant).not.toHaveBeenCalled();
     });
 
@@ -1987,6 +1992,7 @@ describe('Authorization Endpoint', () => {
       } as AuthorizationContext;
 
       validatorMock.validate.mockResolvedValueOnce(context);
+      dataAccessMock.atomic.mockImplementation(async (operations) => await operations());
       dataAccessMock.findConsentByClientAndUser.mockResolvedValueOnce(null);
 
       const response = await endpoint.handle(request);
@@ -1995,6 +2001,7 @@ describe('Authorization Endpoint', () => {
         location: 'https://provider.example.com/oidc/consent?consent_challenge=consent_challenge',
       });
 
+      expect(dataAccessMock.saveGrant).not.toHaveBeenCalled();
       expect(dataAccessMock.removeGrant).not.toHaveBeenCalled();
     });
 
@@ -2025,6 +2032,7 @@ describe('Authorization Endpoint', () => {
       } as AuthorizationContext;
 
       validatorMock.validate.mockResolvedValueOnce(context);
+      dataAccessMock.atomic.mockImplementation(async (operations) => await operations());
       dataAccessMock.findConsentByClientAndUser.mockResolvedValueOnce(consent);
 
       const response = await endpoint.handle(request);
@@ -2033,6 +2041,7 @@ describe('Authorization Endpoint', () => {
         location: 'https://provider.example.com/oidc/consent?consent_challenge=consent_challenge',
       });
 
+      expect(dataAccessMock.saveGrant).not.toHaveBeenCalled();
       expect(dataAccessMock.removeConsent).toHaveBeenCalledExactlyOnceWith(consent);
       expect(dataAccessMock.removeGrant).not.toHaveBeenCalled();
     });
@@ -2064,6 +2073,7 @@ describe('Authorization Endpoint', () => {
       } as AuthorizationContext;
 
       validatorMock.validate.mockResolvedValueOnce(context);
+      dataAccessMock.atomic.mockImplementation(async (operations) => await operations());
       dataAccessMock.findConsentByClientAndUser.mockResolvedValueOnce(expiredConsent);
 
       const response = await endpoint.handle(request);
@@ -2074,6 +2084,7 @@ describe('Authorization Endpoint', () => {
       expect(response.status).toBe(error.status);
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
 
+      expect(dataAccessMock.saveGrant).not.toHaveBeenCalled();
       expect(dataAccessMock.removeConsent).toHaveBeenCalledExactlyOnceWith(expiredConsent);
       expect(dataAccessMock.removeGrant).toHaveBeenCalledExactlyOnceWith(grant);
     });
@@ -2105,6 +2116,7 @@ describe('Authorization Endpoint', () => {
       } as AuthorizationContext;
 
       validatorMock.validate.mockResolvedValueOnce(context);
+      dataAccessMock.atomic.mockImplementation(async (operations) => await operations());
       dataAccessMock.findConsentByClientAndUser.mockResolvedValueOnce(expiredConsent);
 
       const response = await endpoint.handle(request);
@@ -2113,6 +2125,7 @@ describe('Authorization Endpoint', () => {
         location: 'https://provider.example.com/oidc/consent?consent_challenge=consent_challenge',
       });
 
+      expect(dataAccessMock.saveGrant).not.toHaveBeenCalled();
       expect(dataAccessMock.removeConsent).toHaveBeenCalledExactlyOnceWith(expiredConsent);
       expect(dataAccessMock.removeGrant).not.toHaveBeenCalled();
     });
@@ -2145,6 +2158,7 @@ describe('Authorization Endpoint', () => {
       } as AuthorizationContext;
 
       validatorMock.validate.mockResolvedValueOnce(context);
+      dataAccessMock.atomic.mockImplementation(async (operations) => await operations());
 
       const response = await endpoint.handle(request);
 
@@ -2155,6 +2169,7 @@ describe('Authorization Endpoint', () => {
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
 
       expect(dataAccessMock.findConsentByClientAndUser).not.toHaveBeenCalled();
+      expect(dataAccessMock.saveGrant).not.toHaveBeenCalled();
       expect(dataAccessMock.removeConsent).toHaveBeenCalledExactlyOnceWith(expiredConsent);
       expect(dataAccessMock.removeGrant).toHaveBeenCalledExactlyOnceWith(grant);
     });
@@ -2187,6 +2202,7 @@ describe('Authorization Endpoint', () => {
       } as AuthorizationContext;
 
       validatorMock.validate.mockResolvedValueOnce(context);
+      dataAccessMock.atomic.mockImplementation(async (operations) => await operations());
 
       const response = await endpoint.handle(request);
 
@@ -2197,6 +2213,7 @@ describe('Authorization Endpoint', () => {
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
 
       expect(dataAccessMock.findConsentByClientAndUser).not.toHaveBeenCalled();
+      expect(dataAccessMock.saveGrant).not.toHaveBeenCalled();
       expect(dataAccessMock.removeConsent).toHaveBeenCalledExactlyOnceWith(expiredConsent);
       expect(dataAccessMock.removeGrant).toHaveBeenCalledExactlyOnceWith(grant);
     });
@@ -2236,6 +2253,7 @@ describe('Authorization Endpoint', () => {
         const authorizationResponse: AuthorizationResponse = { code: 'authorization_code' };
 
         validatorMock.validate.mockResolvedValueOnce(context);
+        dataAccessMock.atomic.mockImplementation(async (operations) => await operations());
 
         if (typeof idTokenHint === 'string') {
           idTokenHandlerMock.checkIdTokenHint.mockResolvedValueOnce(true);
@@ -2251,6 +2269,17 @@ describe('Authorization Endpoint', () => {
 
         expect(response.status).toBe(303);
         expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
+
+        if (dataAccessMock.findConsentByClientAndUser.mock.calls.length > 0) {
+          // eslint-disable-next-line jest/no-conditional-expect
+          expect(dataAccessMock.saveGrant).toHaveBeenCalledExactlyOnceWith(
+            // eslint-disable-next-line jest/no-conditional-expect
+            expect.objectContaining<Grant>({ ...grant, consent }),
+          );
+        } else {
+          // eslint-disable-next-line jest/no-conditional-expect
+          expect(dataAccessMock.saveGrant).not.toHaveBeenCalled();
+        }
 
         expect(dataAccessMock.createSession).not.toHaveBeenCalled();
         expect(dataAccessMock.createGrant).not.toHaveBeenCalled();
@@ -2294,6 +2323,7 @@ describe('Authorization Endpoint', () => {
       };
 
       validatorMock.validate.mockResolvedValueOnce(context);
+      dataAccessMock.atomic.mockImplementation(async (operations) => await operations());
       dataAccessMock.findConsentByClientAndUser.mockResolvedValueOnce(consent);
 
       Reflect.set(settingsMock, 'enableAuthorizationResponseIssuerIdentifier', true);
@@ -2309,6 +2339,7 @@ describe('Authorization Endpoint', () => {
       expect(dataAccessMock.createGrant).not.toHaveBeenCalled();
       expect(dataAccessMock.inactivateSessionActiveLogin).not.toHaveBeenCalled();
       expect(dataAccessMock.logout).not.toHaveBeenCalled();
+      expect(dataAccessMock.saveGrant).not.toHaveBeenCalled();
       expect(dataAccessMock.removeConsent).not.toHaveBeenCalled();
       expect(dataAccessMock.removeGrant).toHaveBeenCalledExactlyOnceWith(grant);
     });

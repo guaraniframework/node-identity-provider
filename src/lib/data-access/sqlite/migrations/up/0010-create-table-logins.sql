@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS logins (
     expires_at INTEGER NULL,
     user_id BLOB NOT NULL,
     session_id BLOB NOT NULL,
+    UNIQUE (user_id, session_id),
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE
 ) STRICT;

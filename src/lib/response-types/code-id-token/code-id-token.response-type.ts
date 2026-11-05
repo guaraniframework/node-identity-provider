@@ -64,16 +64,16 @@ export class CodeIdTokenResponseType extends ResponseType {
     const consent = context.session!.grant!.consent!;
 
     const [authorizationCode, idToken] = await this.dataAccess.atomic(async () => {
+      const generateIdTokenOptions = removeNullishValues<GenerateIdTokenOptions>({
+        maxAge: maxAge ?? undefined!,
+        nonce: nonce ?? undefined!,
+      });
+
       const authorizationCode = await this.dataAccess.createAuthorizationCode(parameters, login, consent);
-      const idToken = await this.idTokenHandler.generateIdToken(
-        login,
-        consent,
-        removeNullishValues({
-          maxAge: maxAge ?? undefined,
-          nonce: nonce ?? undefined,
-          authorizationCode,
-        } as GenerateIdTokenOptions),
-      );
+      const idToken = await this.idTokenHandler.generateIdToken(login, consent, {
+        authorizationCode,
+        ...generateIdTokenOptions,
+      });
 
       return [authorizationCode, idToken];
     });
