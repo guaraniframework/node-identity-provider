@@ -871,7 +871,8 @@ describe('SQLite Data Access', () => {
       const login2Id = randomUUIDv7();
       const consentId = randomUUIDv7();
       const grantId = randomUUIDv7();
-      const userId = '16907c32-687b-493c-85ba-f41f2c9d4daa';
+      const user1Id = '16907c32-687b-493c-85ba-f41f2c9d4daa';
+      const user2Id = '5abe9a9c-c868-4f12-8c76-f34dec7e1cc0';
       const clientId = 'b1eeace9-2b0c-468e-a444-733befc3b35d';
 
       const insertSessionSql = 'INSERT INTO sessions (id, active_login_id, grant_id) VALUES ($id, NULL, NULL)';
@@ -898,13 +899,13 @@ describe('SQLite Data Access', () => {
       database.prepare(insertLoginSql).run({
         id: toUUIDBuffer(login1Id),
         expires_at: null,
-        user_id: toUUIDBuffer(userId),
+        user_id: toUUIDBuffer(user1Id),
         session_id: toUUIDBuffer(sessionId),
       });
 
       database.prepare(insertLoginSql.replace('$expires_at', "(unixepoch('now', '+7 days'))")).run({
         id: toUUIDBuffer(login2Id),
-        user_id: toUUIDBuffer(userId),
+        user_id: toUUIDBuffer(user2Id),
         session_id: toUUIDBuffer(sessionId),
       });
 
@@ -918,7 +919,7 @@ describe('SQLite Data Access', () => {
 
       database
         .prepare(insertConsentSql)
-        .run({ id: toUUIDBuffer(consentId), client_id: toUUIDBuffer(clientId), user_id: toUUIDBuffer(userId) });
+        .run({ id: toUUIDBuffer(consentId), client_id: toUUIDBuffer(clientId), user_id: toUUIDBuffer(user1Id) });
 
       database.prepare(insertConsentScopes).run({ consent_id: toUUIDBuffer(consentId) });
 
@@ -942,7 +943,7 @@ describe('SQLite Data Access', () => {
 
       expect(session.activeLogin!.id).toBe(login1Id);
       expect(session.activeLogin!.session).toBe(session);
-      expect(session.activeLogin!.user.id).toBe(userId);
+      expect(session.activeLogin!.user.id).toBe(user1Id);
       expect(session.activeLogin!.clients[0]!.id).toBe(clientId);
       expect(session.logins[0]!.id).toBe(login1Id);
       expect(session.logins[1]!.id).toBe(login2Id);
@@ -959,7 +960,8 @@ describe('SQLite Data Access', () => {
       const login1Id = randomUUIDv7();
       const login2Id = randomUUIDv7();
       const grantId = randomUUIDv7();
-      const userId = '16907c32-687b-493c-85ba-f41f2c9d4daa';
+      const user1Id = '16907c32-687b-493c-85ba-f41f2c9d4daa';
+      const user2Id = '5abe9a9c-c868-4f12-8c76-f34dec7e1cc0';
       const clientId = 'b1eeace9-2b0c-468e-a444-733befc3b35d';
 
       const insertSessionSql = 'INSERT INTO sessions (id, active_login_id, grant_id) VALUES ($id, NULL, NULL)';
@@ -981,13 +983,13 @@ describe('SQLite Data Access', () => {
       database.prepare(insertLoginSql).run({
         id: toUUIDBuffer(login1Id),
         expires_at: null,
-        user_id: toUUIDBuffer(userId),
+        user_id: toUUIDBuffer(user1Id),
         session_id: toUUIDBuffer(sessionId),
       });
 
       database.prepare(insertLoginSql.replace('$expires_at', "(unixepoch('now', '+7 days'))")).run({
         id: toUUIDBuffer(login2Id),
-        user_id: toUUIDBuffer(userId),
+        user_id: toUUIDBuffer(user2Id),
         session_id: toUUIDBuffer(sessionId),
       });
 
@@ -1018,7 +1020,7 @@ describe('SQLite Data Access', () => {
 
       expect(session.activeLogin!.id).toBe(login1Id);
       expect(session.activeLogin!.session).toBe(session);
-      expect(session.activeLogin!.user.id).toBe(userId);
+      expect(session.activeLogin!.user.id).toBe(user1Id);
       expect(session.activeLogin!.clients[0]!.id).toBe(clientId);
       expect(session.logins[0]!.id).toBe(login1Id);
       expect(session.logins[1]!.id).toBe(login2Id);
