@@ -4,8 +4,12 @@ import { OutgoingHttpHeaders } from 'http';
 import { DatabaseSync } from 'node:sqlite';
 import request, { Agent } from 'supertest';
 
+import { getContainer } from '@guarani/di';
 import { JsonWebKeySet } from '@guarani/jose';
 
+import { CONTAINER } from '../../../constants';
+import { DataAccess } from '../../../data-access/data-access';
+import { SQLiteDataAccess } from '../../../data-access/sqlite/sqlite.data-access';
 import { InvalidRequestError } from '../../../errors/invalid-request/invalid-request.error';
 import { IdentityProviderFactory } from '../../../factory/identity-provider.factory';
 import { ConsoleLogger } from '../../../loggers/console/console.logger';
@@ -17,10 +21,13 @@ import { ExpressIdentityProvider } from './express.identity-provider';
 
 describe('Express Identity Provider', () => {
   let provider: ExpressIdentityProvider;
+  const container = getContainer(CONTAINER);
+
   let agent: Agent;
   let app: Express;
   let database: DatabaseSync;
   let jsonWebKeySet: JsonWebKeySet;
+  let dataAccess: SQLiteDataAccess;
 
   const settings = new Settings({
     issuer: 'https://provider.example.com',
@@ -34,12 +41,13 @@ describe('Express Identity Provider', () => {
     },
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     database = new DatabaseSync(':memory:');
     jsonWebKeySet = new JsonWebKeySet([]);
 
     provider = new IdentityProviderFactory()
       .addAuthorizationEndpoint()
+      .addDiscoveryEndpoint()
       .addInteractionEndpoint()
       .addLogger(new ConsoleLogger(LoggerLevel.ERROR))
       .addSettings(settings)
@@ -47,6 +55,11 @@ describe('Express Identity Provider', () => {
       .add(DatabaseSync, database)
       .add(JsonWebKeySet, jsonWebKeySet)
       .create(ExpressIdentityProvider);
+
+    dataAccess = container.resolve(DataAccess) as SQLiteDataAccess;
+
+    await dataAccess.up();
+    await dataAccess.seed();
 
     app = express();
 
@@ -57,6 +70,7 @@ describe('Express Identity Provider', () => {
   });
 
   afterEach(() => {
+    container.clear();
     jest.restoreAllMocks();
   });
 
@@ -72,6 +86,11 @@ describe('Express Identity Provider', () => {
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>(
         expect.objectContaining<OutgoingHttpHeaders>({ location: location.href }),
       );
+    });
+
+    it('should have a Discovery Endpoint.', async () => {
+      const response = await agent.get('/.well-known/openid-configuration');
+      expect(response.status).toBe(HttpResponseStatus.OK);
     });
 
     it('should have an Interaction Endpoint.', async () => {

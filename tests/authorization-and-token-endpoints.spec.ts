@@ -115,14 +115,11 @@ describe('Authorization and Token Endpoints', () => {
   const authorizationRequestQuery = qs.stringify(authorizationRequest);
 
   beforeAll(async () => {
-    provider = createTestProvider();
+    provider = await createTestProvider();
 
     jsonWebKeySet = container.resolve(JsonWebKeySet);
     dataAccess = container.resolve(DataAccess) as SQLiteDataAccess;
     settings = container.resolve(Settings);
-
-    await dataAccess.up();
-    await dataAccess.seed();
 
     server = http.createServer(provider.handle);
     agent = request.agent(server);

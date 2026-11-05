@@ -3,9 +3,13 @@ import { createServer, OutgoingHttpHeaders, Server } from 'http';
 import { DatabaseSync } from 'node:sqlite';
 import request, { Agent } from 'supertest';
 
+import { getContainer } from '@guarani/di';
 import { JsonWebKeySet } from '@guarani/jose';
 import { removeNullishValues } from '@guarani/primitives';
 
+import { CONTAINER } from '../../../constants';
+import { DataAccess } from '../../../data-access/data-access';
+import { SQLiteDataAccess } from '../../../data-access/sqlite/sqlite.data-access';
 import { InvalidRequestError } from '../../../errors/invalid-request/invalid-request.error';
 import { MethodNotAllowedError } from '../../../errors/method-not-allowed/method-not-allowed.error';
 import { NotFoundError } from '../../../errors/not-found/not-found.error';
@@ -21,10 +25,13 @@ import { NodeIdentityProvider } from './node.identity-provider';
 
 describe('Node Identity Provider', () => {
   let provider: NodeIdentityProvider;
+  const container = getContainer(CONTAINER);
+
   let server: Server;
   let agent: Agent;
   let database: DatabaseSync;
   let jsonWebKeySet: JsonWebKeySet;
+  let dataAccess: SQLiteDataAccess;
 
   let loggerErrorSpy: jest.SpyInstance;
   let loggerWarnSpy: jest.SpyInstance;
@@ -41,7 +48,7 @@ describe('Node Identity Provider', () => {
     },
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     loggerErrorSpy = jest.spyOn(ConsoleLogger.prototype, 'error');
     loggerWarnSpy = jest.spyOn(ConsoleLogger.prototype, 'warn');
 
@@ -50,18 +57,25 @@ describe('Node Identity Provider', () => {
 
     provider = new IdentityProviderFactory()
       .addAuthorizationEndpoint()
+      .addDiscoveryEndpoint()
       .addInteractionEndpoint()
-      .addTokenEndpoint()
       .addSettings(settings)
+      .addTokenEndpoint()
       .add(DatabaseSync, database)
       .add(JsonWebKeySet, jsonWebKeySet)
       .create(NodeIdentityProvider);
+
+    dataAccess = container.resolve(DataAccess) as SQLiteDataAccess;
+
+    await dataAccess.up();
+    await dataAccess.seed();
 
     server = createServer(provider.handle);
     agent = request.agent(server);
   });
 
   afterEach(() => {
+    container.clear();
     jest.restoreAllMocks();
   });
 
@@ -87,6 +101,11 @@ describe('Node Identity Provider', () => {
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>(
         expect.objectContaining<OutgoingHttpHeaders>({ location: location.href }),
       );
+    });
+
+    it('should have a Discovery Endpoint.', async () => {
+      const response = await agent.get('/.well-known/openid-configuration');
+      expect(response.status).toBe(HttpResponseStatus.OK);
     });
 
     it('should have an Interaction Endpoint.', async () => {

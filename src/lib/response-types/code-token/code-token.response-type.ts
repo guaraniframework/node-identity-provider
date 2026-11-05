@@ -1,6 +1,6 @@
 import { Injectable } from '@guarani/di';
 
-import { CodeTokenAuthorizationContext } from '../../context/authorization/code-token/code-token.authorization-request';
+import { CodeTokenAuthorizationContext } from '../../context/authorization/code-token/code-token.authorization-context';
 import { DataAccess } from '../../data-access/data-access';
 import { Logger } from '../../loggers/logger';
 import { ResponseModeName } from '../../response-modes/response-mode-name.type';

@@ -1,15 +1,21 @@
 /* istanbul ignore file */
 import { DatabaseSync } from 'node:sqlite';
 
+import { getContainer } from '@guarani/di';
 import { EllipticCurveJsonWebKey, JsonWebKeySet } from '@guarani/jose';
 
+import { CONTAINER } from '../../src/lib/constants';
+import { DataAccess } from '../../src/lib/data-access/data-access';
+import { SQLiteDataAccess } from '../../src/lib/data-access/sqlite/sqlite.data-access';
 import { IdentityProviderFactory } from '../../src/lib/factory/identity-provider.factory';
 import { NodeIdentityProvider } from '../../src/lib/http/providers/node/node.identity-provider';
 import { ConsoleLogger } from '../../src/lib/loggers/console/console.logger';
 import { LoggerLevel } from '../../src/lib/loggers/logger-level.enum';
 import { Settings } from '../../src/lib/settings/settings';
 
-export function createTestProvider(): NodeIdentityProvider {
+export async function createTestProvider(): Promise<NodeIdentityProvider> {
+  const container = getContainer(CONTAINER);
+
   const jsonWebKeySet = new JsonWebKeySet([
     new EllipticCurveJsonWebKey({
       kty: 'EC',
@@ -40,10 +46,11 @@ export function createTestProvider(): NodeIdentityProvider {
     },
   });
 
-  return new IdentityProviderFactory()
+  const provider = new IdentityProviderFactory()
     .addAuthorizationEndpoint((options) => {
       options.useResponseModes(['fragment', 'query']).useResponseTypes(['code', 'id_token']).build();
     })
+    .addDiscoveryEndpoint()
     .addInteractionEndpoint()
     .addLogger(new ConsoleLogger(LoggerLevel.ERROR))
     .addSettings(settings)
@@ -52,4 +59,11 @@ export function createTestProvider(): NodeIdentityProvider {
     .add(DatabaseSync, new DatabaseSync(':memory:'))
     .add(JsonWebKeySet, jsonWebKeySet)
     .create(NodeIdentityProvider);
+
+  const dataAccess = container.resolve(DataAccess) as SQLiteDataAccess;
+
+  await dataAccess.up();
+  await dataAccess.seed();
+
+  return provider;
 }

@@ -1,7 +1,7 @@
 import { Injectable, InjectAll } from '@guarani/di';
 import { isNonEmptyString } from '@guarani/primitives';
 
-import { CodeTokenAuthorizationContext } from '../../../context/authorization/code-token/code-token.authorization-request';
+import { CodeTokenAuthorizationContext } from '../../../context/authorization/code-token/code-token.authorization-context';
 import { DataAccess } from '../../../data-access/data-access';
 import { Display } from '../../../displays/display';
 import { InvalidRequestError } from '../../../errors/invalid-request/invalid-request.error';
