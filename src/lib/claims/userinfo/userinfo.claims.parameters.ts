@@ -5,57 +5,57 @@ import { AddressClaimParameters } from './address.claim.parameters';
  */
 export interface UserinfoClaimsParameters extends NodeJS.Dict<unknown> {
   /**
-   * Formatted name of the User.
+   * Formatted Name of the User.
    */
   name?: string;
 
   /**
-   * Given or First name of the User.
+   * Given or First Name of the User.
    */
   given_name?: string;
 
   /**
-   * Middle name of the User.
+   * Middle Name of the User.
    */
   middle_name?: string;
 
   /**
-   * Family or Last name of the User.
+   * Family or Last Name of the User.
    */
   family_name?: string;
 
   /**
-   * Casual name of the User.
+   * Casual Name of the User.
    */
   nickname?: string;
 
   /**
-   * Shorthand name that the User is referred to at the Relying Party.
+   * Shorthand Name that the User is referred to at the Relying Party.
    */
   preferred_username?: string;
 
   /**
-   * Url of the Profile page of the User.
+   * URL of the Profile Page of the User.
    */
   profile?: string;
 
   /**
-   * Url of the Picture of the User.
+   * URL of the Picture of the User.
    */
   picture?: string;
 
   /**
-   * Url of the Personal Website or Blog of the User.
+   * URL of the Personal Website or Blog of the User.
    */
   website?: string;
 
   /**
-   * Email address of the User.
+   * Email Address of the User.
    */
   email?: string;
 
   /**
-   * Informs the Relying Party whether or not the Email address of the User has been verified.
+   * Informs the Relying Party whether or not the Email Address of the User has been verified.
    */
   email_verified?: boolean;
 
@@ -70,7 +70,7 @@ export interface UserinfoClaimsParameters extends NodeJS.Dict<unknown> {
   birthdate?: string;
 
   /**
-   * Time zone of the User.
+   * Time Zone of the User.
    */
   zoneinfo?: string;
 
@@ -80,12 +80,12 @@ export interface UserinfoClaimsParameters extends NodeJS.Dict<unknown> {
   locale?: string;
 
   /**
-   * Phone number of the User, represented as an E.164 string.
+   * Phone Number of the User, represented as an E.164 string.
    */
   phone_number?: string;
 
   /**
-   * Informs the Relying Party whether or not the Phone number of the User has been verified.
+   * Informs the Relying Party whether or not the Phone Number of the User has been verified.
    */
   phone_number_verified?: boolean;
 
