@@ -115,7 +115,7 @@ describe('Authorization and Interaction Endpoints', () => {
     dataAccess = container.resolve(DataAccess) as SQLiteDataAccess;
     settings = container.resolve(Settings);
 
-    server = http.createServer(provider.handle);
+    server = http.createServer(provider.handle());
     agent = request.agent(server);
   });
 

@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer';
-import { IncomingMessage, ServerResponse } from 'http';
+import { IncomingMessage, RequestListener, ServerResponse } from 'http';
 import { URL } from 'url';
 
 import { Injectable, InjectAll } from '@guarani/di';
@@ -47,32 +47,34 @@ export class NodeIdentityProvider extends IdentityProvider {
       '0fa83143-3000-4c25-a21c-a77cc3b365b9',
       null,
     );
-
-    this.handle = this.handle.bind(this);
   }
 
   /**
    * Handler used to interface the Native Http Server with the Identity Provider.
    *
-   * @param request Native Http Incoming Message.
-   * @param response Native Http Server Response.
+   * @returns Node Http Server Request Listener.
    */
-  public async handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
+  public handle(): RequestListener {
     this.logger.debug(`[${this.constructor.name}] Called handle()`, '05956a82-c04f-4b88-92b6-ca49c81b1277', null);
 
-    let httpResponse: HttpResponse;
+    const handler = async (request: IncomingMessage, response: ServerResponse): Promise<void> => {
+      let httpResponse: HttpResponse;
 
-    try {
-      const httpRequest = await this.createHttpRequest(request);
-      const handler = this.getEndpointHandler(httpRequest);
-      httpResponse = await handler(httpRequest);
-    } catch (err: unknown) {
-      const error = asIdentityProviderError(err);
-      httpResponse = new HttpResponse().setStatus(error.status).setHeaders(error.headers).json(error);
-    }
+      try {
+        const httpRequest = await this.createHttpRequest(request);
+        const handler = this.getEndpointHandler(httpRequest);
+        httpResponse = await handler(httpRequest);
+      } catch (err: unknown) {
+        const error = asIdentityProviderError(err);
+        httpResponse = new HttpResponse().setStatus(error.status).setHeaders(error.headers).json(error);
+      }
 
-    await this.parseHttpResponse(httpResponse, response);
+      await this.parseHttpResponse(httpResponse, response);
+    };
+
     this.logger.debug(`[${this.constructor.name}] Completed handle()`, 'e811cfe6-84dd-4a61-9620-f72867920228', null);
+
+    return handler;
   }
 
   /**

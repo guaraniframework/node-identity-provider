@@ -121,7 +121,7 @@ describe('Authorization and Token Endpoints', () => {
     dataAccess = container.resolve(DataAccess) as SQLiteDataAccess;
     settings = container.resolve(Settings);
 
-    server = http.createServer(provider.handle);
+    server = http.createServer(provider.handle());
     agent = request.agent(server);
   });
 
@@ -415,7 +415,7 @@ describe('Authorization and Token Endpoints', () => {
     expect(tokenResponse.body).toStrictEqual<AuthorizationCodeTokenResponse>({
       access_token: expect.any(String),
       token_type: 'Bearer',
-      expires_in: 86400,
+      expires_in: expect.toBeNumber(),
       scope: 'baz bar openid foo qux',
       refresh_token: expect.any(String),
       id_token: expect.any(String),

@@ -24,7 +24,7 @@ describe('Discovery Endpoint', () => {
 
     dataAccess = container.resolve(DataAccess) as SQLiteDataAccess;
 
-    server = http.createServer(provider.handle);
+    server = http.createServer(provider.handle());
     agent = request.agent(server);
   });
 

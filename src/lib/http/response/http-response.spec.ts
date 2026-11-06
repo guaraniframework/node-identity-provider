@@ -1,5 +1,6 @@
 import { Buffer } from 'buffer';
 import { OutgoingHttpHeaders } from 'http';
+import { URL } from 'url';
 
 import { jsonStringify } from '@guarani/primitives';
 
@@ -257,13 +258,22 @@ describe('Http Response', () => {
       expect(() => response.redirect(url)).toThrowWithMessage(TypeError, error.message);
     });
 
-    it('should set the provided Redirect URL as the Redirect Http Response.', () => {
+    it('should set the provided Redirect URL string as the Redirect Http Response.', () => {
       const url = 'https://client.example.com/oidc/callback';
 
       expect(() => response.redirect(url)).not.toThrow();
 
       expect(response.status).toBe(HttpResponseStatus.SeeOther);
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: url });
+    });
+
+    it('should set the provided Redirect URL as the Redirect Http Response.', () => {
+      const url = new URL('https://client.example.com/oidc/callback');
+
+      expect(() => response.redirect(url)).not.toThrow();
+
+      expect(response.status).toBe(HttpResponseStatus.SeeOther);
+      expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: url.href });
     });
   });
 
