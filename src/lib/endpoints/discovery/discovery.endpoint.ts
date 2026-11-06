@@ -1,10 +1,14 @@
 import { URL } from 'url';
 
-import { Injectable, InjectAll, LazyInject } from '@guarani/di';
+import { Injectable, InjectAll, LazyInject, Optional } from '@guarani/di';
 import { removeNullishValues } from '@guarani/primitives';
 
 import { ClientAuthentication } from '../../client-authentication/client-authentication';
-import { INTERACTION_CLIENT_AUTHENTICATION, TOKEN_CLIENT_AUTHENTICATION } from '../../constants';
+import {
+  INTERACTION_CLIENT_AUTHENTICATION,
+  REVOCATION_CLIENT_AUTHENTICATION,
+  TOKEN_CLIENT_AUTHENTICATION,
+} from '../../constants';
 import { DataAccess } from '../../data-access/data-access';
 import { Display } from '../../displays/display';
 import { GrantType } from '../../grant-types/grant-type';
@@ -62,6 +66,7 @@ export class DiscoveryEndpoint extends Endpoint {
    * @param interactionEndpointMethods Interaction Endpoint Client Authentication Methods of the Identity Provider.
    * @param displays Displays of the Identity Provider.
    * @param pkces PKCEs of the Identity Provider.
+   * @param revocationEndpointMethods Revocation Endpoint Client Authentication Methods of the Identity Provider.
    */
   public constructor(
     private readonly logger: Logger,
@@ -77,6 +82,9 @@ export class DiscoveryEndpoint extends Endpoint {
     @InjectAll(INTERACTION_CLIENT_AUTHENTICATION) private readonly interactionEndpointMethods: ClientAuthentication[],
     @InjectAll(Display) private readonly displays: Display[],
     @InjectAll(PKCE) private readonly pkces: PKCE[],
+    @Optional()
+    @InjectAll(REVOCATION_CLIENT_AUTHENTICATION)
+    private readonly revocationEndpointMethods?: ClientAuthentication[],
   ) {
     super();
   }
@@ -138,6 +146,7 @@ export class DiscoveryEndpoint extends Endpoint {
       authorization_endpoint: this.getEndpointPath('authorization')!,
       interaction_endpoint: this.getEndpointPath('interaction')!,
       token_endpoint: this.getEndpointPath('token')!,
+      revocation_endpoint: this.getEndpointPath('revocation')!,
       scopes_supported: (await this.dataAccess.getScopes()).map((scope) => scope.name),
       response_types_supported: this.responseTypes.map((responseType) => responseType.name),
       response_modes_supported: this.responseModes.map((responseMode) => responseMode.name),
@@ -165,6 +174,16 @@ export class DiscoveryEndpoint extends Endpoint {
       interaction_endpoint_auth_encryption_alg_values_supported: clientAuthenticationEncryptionKeyWrapAlgorithms!,
       interaction_endpoint_auth_encryption_enc_values_supported:
         clientAuthenticationEncryptionContentEncryptionAlgorithms!,
+      revocation_endpoint_auth_methods_supported: this.revocationEndpointMethods?.map((method) => method.name)!,
+      revocation_endpoint_auth_signing_alg_values_supported: Array.isArray(this.revocationEndpointMethods)
+        ? clientAuthenticationSigningAlgorithms!
+        : undefined!,
+      revocation_endpoint_auth_encryption_alg_values_supported: Array.isArray(this.revocationEndpointMethods)
+        ? clientAuthenticationEncryptionKeyWrapAlgorithms!
+        : undefined!,
+      revocation_endpoint_auth_encryption_enc_values_supported: Array.isArray(this.revocationEndpointMethods)
+        ? clientAuthenticationEncryptionContentEncryptionAlgorithms!
+        : undefined!,
     });
 
     const response = new HttpResponse().json(discoveryResponse);

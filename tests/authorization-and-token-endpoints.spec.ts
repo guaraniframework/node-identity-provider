@@ -427,7 +427,7 @@ describe('Authorization and Token Endpoints', () => {
     const refreshToken = (await dataAccess.findRefreshTokenById(tokenResponse.body.refresh_token))!;
 
     expect(accessToken.scopes.map(({ name }) => name)).toStrictEqual<string[]>(expect.arrayContaining(expectedScopes));
-    expect(accessToken.client.id).toBe('b1eeace9-2b0c-468e-a444-733befc3b35d');
+    expect(accessToken.client!.id).toBe('b1eeace9-2b0c-468e-a444-733befc3b35d');
     expect(accessToken.user!.id).toBe('16907c32-687b-493c-85ba-f41f2c9d4daa');
 
     expect(refreshToken.scopes.map(({ name }) => name)).toStrictEqual<string[]>(expect.arrayContaining(expectedScopes));

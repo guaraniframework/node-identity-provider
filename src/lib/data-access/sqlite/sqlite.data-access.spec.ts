@@ -447,7 +447,7 @@ describe('SQLite Data Access', () => {
 
       expect(accessToken).toBeInstanceOf(AccessToken);
       expect(accessToken.id).toBe(accessTokenId);
-      expect(accessToken.client.id).toBe(client.id);
+      expect(accessToken.client!.id).toBe(client.id);
       expect(accessToken.user).toBeNull();
     });
 
@@ -466,7 +466,7 @@ describe('SQLite Data Access', () => {
 
       expect(accessToken).toBeInstanceOf(AccessToken);
       expect(accessToken.id).toBe(accessTokenId);
-      expect(accessToken.client.id).toBe(client.id);
+      expect(accessToken.client!.id).toBe(client.id);
       expect(accessToken.user!.id).toBe(user.id);
     });
   });
@@ -1433,6 +1433,29 @@ describe('SQLite Data Access', () => {
     });
   });
 
+  describe('revokeAccessToken()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should revoke the provided Access Token.', async () => {
+      let accessToken!: AccessToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+
+      accessToken = await dataAccess.createAccessToken(scopes, client, user);
+      expect(accessToken.revokedAt).toBeNull();
+
+      await expect(dataAccess.revokeAccessToken(accessToken)).resolves.not.toThrow();
+
+      accessToken = (await dataAccess.findAccessTokenById(accessToken.id))!;
+      expect(accessToken.revokedAt).toBeDate();
+    });
+  });
+
   describe('revokeAuthorizationCode()', () => {
     beforeEach(async () => {
       await dataAccess.up();
@@ -1462,6 +1485,29 @@ describe('SQLite Data Access', () => {
 
       authorizationCode = (await dataAccess.findAuthorizationCodeById(authorizationCode.id))!;
       expect(authorizationCode.revokedAt).toBeDate();
+    });
+  });
+
+  describe('revokeRefreshToken()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should revoke the provided Refresh Token.', async () => {
+      let refreshToken!: RefreshToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+
+      refreshToken = await dataAccess.createRefreshToken(scopes, client, user);
+      expect(refreshToken.revokedAt).toBeNull();
+
+      await expect(dataAccess.revokeRefreshToken(refreshToken)).resolves.not.toThrow();
+
+      refreshToken = (await dataAccess.findRefreshTokenById(refreshToken.id))!;
+      expect(refreshToken.revokedAt).toBeDate();
     });
   });
 

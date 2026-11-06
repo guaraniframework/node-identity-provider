@@ -708,6 +708,16 @@ export class SQLiteDataAccess extends DataAccess {
   }
 
   /**
+   * Revokes the provided Access Token.
+   *
+   * @param accessToken Access Token to be revoked.
+   */
+  public async revokeAccessToken(accessToken: AccessToken): Promise<void> {
+    const sql = this._procedure('revoke-access-token-by-id.sql');
+    this.database.prepare(sql).run({ id: this._toUUIDBuffer(accessToken.id) });
+  }
+
+  /**
    * Revokes the provided Authorization Code.
    *
    * @param authorizationCode Authorization Code to be revoked.
@@ -715,6 +725,16 @@ export class SQLiteDataAccess extends DataAccess {
   public async revokeAuthorizationCode(authorizationCode: AuthorizationCode): Promise<void> {
     const sql = this._procedure('revoke-authorization-code-by-id.sql');
     this.database.prepare(sql).run({ id: this._toUUIDBuffer(authorizationCode.id) });
+  }
+
+  /**
+   * Revokes the provided Refresh Token.
+   *
+   * @param refreshToken Refresh Token to be revoked.
+   */
+  public async revokeRefreshToken(refreshToken: RefreshToken): Promise<void> {
+    const sql = this._procedure('revoke-refresh-token-by-id.sql');
+    this.database.prepare(sql).run({ id: this._toUUIDBuffer(refreshToken.id) });
   }
 
   /**
@@ -897,11 +917,13 @@ export class SQLiteDataAccess extends DataAccess {
       createdAt: new Date((accessTokenParameters['created_at'] as number) * 1000),
       expiresAt: new Date((accessTokenParameters['expires_at'] as number) * 1000),
       revokedAt: accessTokenParameters['revoked_at']
-        ? // istanbul ignore next
-          new Date((accessTokenParameters['revoked_at'] as number) * 1000)
+        ? new Date((accessTokenParameters['revoked_at'] as number) * 1000)
         : null,
       validAfter: new Date((accessTokenParameters['valid_after']! as number) * 1000),
-      client: this._findClientById(this._toUUIDString(accessTokenParameters['client_id'] as Uint8Array))!,
+      client: accessTokenParameters['client_id']
+        ? this._findClientById(this._toUUIDString(accessTokenParameters['client_id'] as Uint8Array))
+        : // istanbul ignore next
+          null,
       user: accessTokenParameters['user_id']
         ? this._findUserById(this._toUUIDString(accessTokenParameters['user_id'] as Uint8Array))
         : null,

@@ -53,6 +53,7 @@ export async function createTestProvider(): Promise<NodeIdentityProvider> {
     .addDiscoveryEndpoint()
     .addInteractionEndpoint()
     .addLogger(new ConsoleLogger(LoggerLevel.ERROR))
+    .addRevocationEndpoint()
     .addSettings(settings)
     .addSubjectTypes(['pairwise', 'public'])
     .addTokenEndpoint()

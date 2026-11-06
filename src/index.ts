@@ -24,6 +24,7 @@ export {
   DEFAULT_MINIMUM_MAX_AGE,
   DEFAULT_SESSION_COOKIE,
   INTERACTION_CLIENT_AUTHENTICATION,
+  REVOCATION_CLIENT_AUTHENTICATION,
   TOKEN_CLIENT_AUTHENTICATION,
 } from './lib/constants';
 export { type AuthorizationContext } from './lib/context/authorization/authorization-context';
@@ -50,6 +51,7 @@ export { type LoginAcceptDecisionInteractionContext } from './lib/context/intera
 export { type LoginDenyDecisionInteractionContext } from './lib/context/interaction/decision/login/login-deny.decision-interaction-context';
 export { type SelectAccountDecisionInteractionContext } from './lib/context/interaction/decision/select-account/select-account.decision-interaction-context';
 export { type InteractionContext } from './lib/context/interaction/interaction-context';
+export { type RevocationContext } from './lib/context/revocation/revocation-context';
 export { type AuthorizationCodeTokenContext } from './lib/context/token/authorization-code/authorization-code.token-context';
 export { type ClientCredentialsTokenContext } from './lib/context/token/client-credentials/client-credentials.token-context';
 export { type JwtBearerTokenContext } from './lib/context/token/jwt-bearer/jwt-bearer.token-context';
@@ -68,6 +70,7 @@ export { AuthorizationEndpoint } from './lib/endpoints/authorization/authorizati
 export { DiscoveryEndpoint } from './lib/endpoints/discovery/discovery.endpoint';
 export { Endpoint } from './lib/endpoints/endpoint';
 export { type EndpointName } from './lib/endpoints/endpoint-name.type';
+export { RevocationEndpoint } from './lib/endpoints/revocation/revocation.endpoint';
 export { TokenEndpoint } from './lib/endpoints/token/token.endpoint';
 export { AccessToken } from './lib/entities/access-token';
 export { AuthorizationCode } from './lib/entities/authorization-code';
@@ -101,6 +104,7 @@ export { UnsupportedGrantTypeError } from './lib/errors/unsupported-grant-type/u
 export { UnsupportedInteractionTypeError } from './lib/errors/unsupported-interaction-type/unsupported-interaction-type.error';
 export { UnsupportedMediaTypeError } from './lib/errors/unsupported-media-type/unsupported-media-type.error';
 export { UnsupportedResponseTypeError } from './lib/errors/unsupported-response-type/unsupported-response-type.error';
+export { UnsupportedTokenTypeError } from './lib/errors/unsupported-token-type/unsupported-token-type.error';
 export { IdentityProviderFactory } from './lib/factory/identity-provider.factory';
 export { AuthorizationCodeGrantType } from './lib/grant-types/authorization-code/authorization-code.grant-type';
 export { ClientCredentialsGrantType } from './lib/grant-types/client-credentials/client-credentials.grant-type';
@@ -160,6 +164,7 @@ export { type LoginAcceptDecisionInteractionRequest } from './lib/requests/inter
 export { type LoginDenyDecisionInteractionRequest } from './lib/requests/interaction/decision/login/login-deny.decision-interaction-request';
 export { type SelectAccountDecisionInteractionRequest } from './lib/requests/interaction/decision/select-account/select-account.decision-interaction-request';
 export { type InteractionRequest } from './lib/requests/interaction/interaction-request';
+export { type RevocationRequest } from './lib/requests/revocation/revocation-request';
 export { type AuthorizationCodeTokenRequest } from './lib/requests/token/authorization-code/authorization-code.token-request';
 export { type ClientCredentialsTokenRequest } from './lib/requests/token/client-credentials/client-credentials.token-request';
 export { type JwtBearerTokenRequest } from './lib/requests/token/jwt-bearer/jwt-bearer.token-request';
@@ -224,6 +229,7 @@ export { type AccessTokenType } from './lib/types/access-token-type.type';
 export { type ApplicationType } from './lib/types/application-type.type';
 export { type ClientType } from './lib/types/client-type.type';
 export { type Prompt } from './lib/types/promt.type';
+export { type TokenTypeHint } from './lib/types/token-type-hint.type';
 export { getClientJsonWebKey } from './lib/utils/get-client-jsonwebkey/get-client-jsonwebkey';
 export { AuthorizationValidator } from './lib/validators/authorization/authorization.validator';
 export { CodeAuthorizationValidator } from './lib/validators/authorization/code/code.authorization.validator';
@@ -244,6 +250,7 @@ export { CreateDecisionInteractionValidator } from './lib/validators/interaction
 export { DecisionInteractionValidator } from './lib/validators/interaction/decision/decision-interaction.validator';
 export { LoginDecisionInteractionValidator } from './lib/validators/interaction/decision/login/login.decision-interaction.validator';
 export { SelectAccountDecisionInteractionValidator } from './lib/validators/interaction/decision/select-account/select-account.decision-interaction.validator';
+export { RevocationValidator } from './lib/validators/revocation/revocation.validator';
 export { AuthorizationCodeTokenValidator } from './lib/validators/token/authorization-code/authorization-code.token.validator';
 export { ClientCredentialsTokenValidator } from './lib/validators/token/client-credentials/client-credentials.token.validator';
 export { JwtBearerTokenValidator } from './lib/validators/token/jwt-bearer/jwt-bearer.token.validator';

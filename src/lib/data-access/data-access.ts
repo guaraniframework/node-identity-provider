@@ -314,11 +314,25 @@ export abstract class DataAccess {
   public abstract removeGrant(grant: Grant): Promise<void>;
 
   /**
+   * Revokes the provided Access Token.
+   *
+   * @param accessToken Access Token to be revoked.
+   */
+  public abstract revokeAccessToken(accessToken: AccessToken): Promise<void>;
+
+  /**
    * Revokes the provided Authorization Code.
    *
    * @param authorizationCode Authorization Code to be revoked.
    */
   public abstract revokeAuthorizationCode(authorizationCode: AuthorizationCode): Promise<void>;
+
+  /**
+   * Revokes the provided Refresh Token.
+   *
+   * @param refreshToken Refresh Token to be revoked.
+   */
+  public abstract revokeRefreshToken?(refreshToken: RefreshToken): Promise<void>;
 
   /**
    * Rotates the Refresh Token by creating a new Refresh Token with the same metadata and different Identifier,

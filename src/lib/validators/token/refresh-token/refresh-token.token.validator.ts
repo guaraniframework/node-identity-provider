@@ -51,6 +51,19 @@ export class RefreshTokenTokenValidator extends TokenValidator<RefreshTokenToken
   ) {
     super(logger, clientAuthenticationHandler, grantTypes, clientAuthenticationMethods);
 
+    if (typeof this.dataAccess.createRefreshToken !== 'function') {
+      const error = new TypeError('Missing implementation of required method "DataAccess.createRefreshToken".');
+
+      this.logger.fatal(
+        `[${this.constructor.name}] Missing implementation of required method "DataAccess.createRefreshToken"`,
+        'bbbfbf94-6d5e-4183-89c8-f0833c592dd9',
+        null,
+        error,
+      );
+
+      throw error;
+    }
+
     if (typeof this.dataAccess.findRefreshTokenById !== 'function') {
       const error = new TypeError('Missing implementation of required method "DataAccess.findRefreshTokenById".');
 
