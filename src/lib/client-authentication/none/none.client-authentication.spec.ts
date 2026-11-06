@@ -22,7 +22,7 @@ jest.mock('../../loggers/logger');
 
 const invalidClientIds: any[] = [undefined, ''];
 
-describe('Client Secret Post Client Authentication', () => {
+describe('None Client Authentication', () => {
   let clientAuthentication: NoneClientAuthentication;
   const container = getContainer(CONTAINER);
 

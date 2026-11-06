@@ -47,10 +47,7 @@ describe('Token Response Type', () => {
     user,
   });
 
-  const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
-    id: 'grant_id',
-    consent,
-  });
+  const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), { id: 'grant_id', consent });
 
   const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
     id: 'session_id',

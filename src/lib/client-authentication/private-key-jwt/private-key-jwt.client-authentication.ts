@@ -25,6 +25,7 @@ export class PrivateKeyJwtClientAuthentication extends JwtBearerClientAssertion 
    */
   protected readonly algorithms: Exclude<DigitalSignatureAlgorithm, 'none'>[] = [
     'ES256',
+    'ES256K',
     'ES384',
     'ES512',
     'EdDSA',
@@ -40,7 +41,7 @@ export class PrivateKeyJwtClientAuthentication extends JwtBearerClientAssertion 
    * Instantiates a new Private Key JWT Client Authentication Method.
    *
    * @param logger Logger of the Identity Provider.
-   * @param clientService Data Access of the Identity Provider.
+   * @param dataAccess Data Access of the Identity Provider.
    * @param settings Settings of the Identity Provider.
    */
   public constructor(

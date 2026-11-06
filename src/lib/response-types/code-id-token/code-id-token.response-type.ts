@@ -48,7 +48,7 @@ export class CodeIdTokenResponseType extends ResponseType {
   }
 
   /**
-   * Creates and returns an Authorization Code and ID Token Response to the Client.
+   * Creates and returns an Authorization Code & ID Token Response to the Client.
    *
    * @param context Authorization Context.
    * @returns Authorization Response.

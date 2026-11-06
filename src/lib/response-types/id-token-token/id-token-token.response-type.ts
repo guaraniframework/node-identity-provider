@@ -48,7 +48,7 @@ export class IdTokenTokenResponseType extends ResponseType {
   }
 
   /**
-   * Creates the ID Token Authorization Response with an Access Token to be used by the Client on behalf of the User.
+   * Creates and returns the ID Token & Token Authorization Response to the Client.
    *
    * @param context Authorization Context.
    * @returns Authorization Response.

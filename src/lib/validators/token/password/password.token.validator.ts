@@ -38,6 +38,7 @@ export class PasswordTokenValidator extends TokenValidator<PasswordTokenContext>
    * @param scopeHandler Scope Handler of the Identity Provider.
    * @param grantTypes Grant Types of the Identity Provider.
    * @param clientAuthenticationMethods Token Endpoint Client Authentication Methods of the Identity Provider.
+   * @throws {TypeError} Missing implementation of a required Data Access method.
    */
   public constructor(
     protected override readonly logger: Logger,
@@ -70,6 +71,7 @@ export class PasswordTokenValidator extends TokenValidator<PasswordTokenContext>
    * Validates the Http Request and returns the actors of the Resource Owner Password Credentials Token Context.
    *
    * @param request Http Request.
+   * @throws {IdentityProviderError} An error occurred when validating the Http Request.
    * @returns Resource Owner Password Credentials Token Context.
    */
   public override async validate(request: HttpRequest): Promise<PasswordTokenContext> {
@@ -98,6 +100,8 @@ export class PasswordTokenValidator extends TokenValidator<PasswordTokenContext>
    * Searches a User from the application's storage based on the provided username and password.
    *
    * @param parameters Parameters of the Resource Owner Password Credentials Token Request.
+   * @throws {InvalidGrantError} Failed to retrieve a User based on the provided parameters.
+   * @throws {InvalidRequestError} One of the provided parameters is invalid.
    * @returns User that matches the provided Credentials.
    */
   private async getUser(parameters: PasswordTokenRequest): Promise<User> {
@@ -160,6 +164,9 @@ export class PasswordTokenValidator extends TokenValidator<PasswordTokenContext>
    *
    * @param parameters Parameters of the Resource Owner Password Credentials Token Request.
    * @param client Client of the Request.
+   * @throws {AccessDeniedError} The Client is not allowed to request the provided Scope.
+   * @throws {InvalidRequestError} The provided parameter "scope" is invalid.
+   * @throws {InvalidScopeError} The Client requested an unsupported Scope.
    * @returns Scopes granted to the Client.
    */
   private async getScopes(parameters: PasswordTokenRequest, client: Client): Promise<Scope[]> {

@@ -28,7 +28,7 @@ export class ClientSecretJwtClientAuthentication extends JwtBearerClientAssertio
    * Instantiates a new Client Secret JWT Client Authentication Method.
    *
    * @param logger Logger of the Identity Provider.
-   * @param clientService Data Access of the Identity Provider.
+   * @param dataAccess Data Access of the Identity Provider.
    * @param settings Settings of the Identity Provider.
    */
   public constructor(

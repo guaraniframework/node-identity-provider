@@ -78,6 +78,7 @@ describe('Authorization Code Grant Type', () => {
     let authorizationCode: AuthorizationCode;
     let accessToken: AccessToken;
     let refreshToken: RefreshToken;
+    let context: AuthorizationCodeTokenContext;
 
     beforeEach(() => {
       parameters = {
@@ -122,10 +123,8 @@ describe('Authorization Code Grant Type', () => {
       refreshToken = Object.assign<RefreshToken, Partial<RefreshToken>>(new RefreshToken(), {
         id: 'refresh_token_id',
       });
-    });
 
-    it('should return an Authorization Code Token Response with only an Access Token when the Identity Provider does not support Refresh Tokens and ID Tokens.', async () => {
-      const context: AuthorizationCodeTokenContext = {
+      context = {
         parameters,
         grantType,
         client,
@@ -133,7 +132,9 @@ describe('Authorization Code Grant Type', () => {
         redirectUri: new URL(parameters.redirect_uri),
         codeVerifier: parameters.code_verifier,
       };
+    });
 
+    it('should return an Authorization Code Token Response with only an Access Token when the Identity Provider does not support Refresh Tokens and ID Tokens.', async () => {
       Reflect.deleteProperty(dataAccessMock, 'createRefreshToken');
       Reflect.deleteProperty(grantType, 'idTokenHandler');
 
@@ -155,15 +156,6 @@ describe('Authorization Code Grant Type', () => {
     });
 
     it('should return an Authorization Code Token Response with only an Access Token when the Client does not support Refresh Tokens and the Identity Provider does not support ID Tokens.', async () => {
-      const context: AuthorizationCodeTokenContext = {
-        parameters,
-        grantType,
-        client,
-        authorizationCode,
-        redirectUri: new URL(parameters.redirect_uri),
-        codeVerifier: parameters.code_verifier,
-      };
-
       Reflect.deleteProperty(grantType, 'idTokenHandler');
       client.grantTypes.pop();
 
@@ -185,15 +177,6 @@ describe('Authorization Code Grant Type', () => {
     });
 
     it('should return an Authorization Code Token Response with only an Access Token when the Identity Provider does not support Refresh Tokens and the Scope "openid" was not requested.', async () => {
-      const context: AuthorizationCodeTokenContext = {
-        parameters,
-        grantType,
-        client,
-        authorizationCode,
-        redirectUri: new URL(parameters.redirect_uri),
-        codeVerifier: parameters.code_verifier,
-      };
-
       Reflect.deleteProperty(dataAccessMock, 'createRefreshToken');
       scopes.shift();
 
@@ -215,15 +198,6 @@ describe('Authorization Code Grant Type', () => {
     });
 
     it('should return an Authorization Code Token Response with only an Access Token when the Client does not support Refresh Tokens and the Scope "openid" was not requested.', async () => {
-      const context: AuthorizationCodeTokenContext = {
-        parameters,
-        grantType,
-        client,
-        authorizationCode,
-        redirectUri: new URL(parameters.redirect_uri),
-        codeVerifier: parameters.code_verifier,
-      };
-
       scopes.shift();
       client.grantTypes.pop();
 
@@ -245,15 +219,6 @@ describe('Authorization Code Grant Type', () => {
     });
 
     it('should return an Authorization Code Token Response without an ID Token when the Identity Provider does not support ID Tokens.', async () => {
-      const context: AuthorizationCodeTokenContext = {
-        parameters,
-        grantType,
-        client,
-        authorizationCode,
-        redirectUri: new URL(parameters.redirect_uri),
-        codeVerifier: parameters.code_verifier,
-      };
-
       Reflect.deleteProperty(grantType, 'idTokenHandler');
 
       dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
@@ -276,15 +241,6 @@ describe('Authorization Code Grant Type', () => {
     });
 
     it('should return an Authorization Code Token Response without an ID Token when the Scope "openid" was not requested.', async () => {
-      const context: AuthorizationCodeTokenContext = {
-        parameters,
-        grantType,
-        client,
-        authorizationCode,
-        redirectUri: new URL(parameters.redirect_uri),
-        codeVerifier: parameters.code_verifier,
-      };
-
       scopes.shift();
 
       dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
@@ -307,15 +263,6 @@ describe('Authorization Code Grant Type', () => {
     });
 
     it('should return an Authorization Code Token Response without a Refresh Token when the Identity Provider does not support Refresh Tokens.', async () => {
-      const context: AuthorizationCodeTokenContext = {
-        parameters,
-        grantType,
-        client,
-        authorizationCode,
-        redirectUri: new URL(parameters.redirect_uri),
-        codeVerifier: parameters.code_verifier,
-      };
-
       Reflect.deleteProperty(dataAccessMock, 'createRefreshToken');
 
       dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
@@ -344,15 +291,6 @@ describe('Authorization Code Grant Type', () => {
     });
 
     it('should return an Authorization Code Token Response without a Refresh Token when the Client does not support Refresh Tokens.', async () => {
-      const context: AuthorizationCodeTokenContext = {
-        parameters,
-        grantType,
-        client,
-        authorizationCode,
-        redirectUri: new URL(parameters.redirect_uri),
-        codeVerifier: parameters.code_verifier,
-      };
-
       Reflect.deleteProperty(authorizationCode.parameters, 'max_age');
       client.grantTypes.pop();
 
@@ -382,15 +320,6 @@ describe('Authorization Code Grant Type', () => {
     });
 
     it('should return a complete Authorization Code Token Response.', async () => {
-      const context: AuthorizationCodeTokenContext = {
-        parameters,
-        grantType,
-        client,
-        authorizationCode,
-        redirectUri: new URL(parameters.redirect_uri),
-        codeVerifier: parameters.code_verifier,
-      };
-
       Reflect.deleteProperty(authorizationCode.parameters, 'nonce');
 
       dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());

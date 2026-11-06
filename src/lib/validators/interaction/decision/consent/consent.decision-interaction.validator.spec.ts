@@ -191,14 +191,8 @@ describe('Consent Decision Interaction Validator', () => {
     it('should throw when the Client requests a Grant that was not issued to itself.', async () => {
       const request = requestFactory();
 
-      const anotherClient: Client = Object.assign<Client, Partial<Client>>(new Client(), {
-        id: 'another_client_id',
-      });
-
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
-        id: 'grant_id',
-        client: anotherClient,
-      });
+      const anotherClient: Client = Object.assign<Client, Partial<Client>>(new Client(), { id: 'another_client_id' });
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), { id: 'grant_id', client: anotherClient });
 
       dataAccessMock.findGrantByConsentChallenge.mockResolvedValueOnce(grant);
 

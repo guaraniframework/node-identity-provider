@@ -27,7 +27,7 @@ export function findClientSecret(client: Client, clientSecret: string): ClientSe
     matchFound |= hasSameLength && isEqual ? 1 : 0;
 
     // @ts-expect-error the compiler complains about bitwise on booleans
-    secretMatchIndex = (secretMatchIndex === -1) & (isEqual === true) & (matchFound === 1) ? i - 1 : secretMatchIndex;
+    secretMatchIndex = (secretMatchIndex === -1) & isEqual & (matchFound === 1) ? i - 1 : secretMatchIndex;
   }
 
   return secretMatchIndex === -1 ? null : client.secrets[secretMatchIndex]!;

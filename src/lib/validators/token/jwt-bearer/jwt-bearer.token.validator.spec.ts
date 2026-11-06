@@ -27,7 +27,6 @@ import { HttpRequestMethod } from '../../../http/request/http-request-method.enu
 import { Logger } from '../../../loggers/logger';
 import { JwtBearerTokenRequest } from '../../../requests/token/jwt-bearer/jwt-bearer.token-request';
 import { Settings } from '../../../settings/settings';
-import { addParametersToUrl } from '../../../utils/add-parameters-to-url/add-parameters-to-url';
 import { TokenValidator } from '../token.validator';
 import { JwtBearerTokenValidator } from './jwt-bearer.token.validator';
 
@@ -375,7 +374,7 @@ describe('JWT Bearer Token Validator', () => {
         cookies: {},
         headers: { 'content-type': 'application/x-www-form-urlencoded' },
         method: HttpRequestMethod.POST,
-        url: addParametersToUrl('https://provider.example.com/oidc/token', parameters),
+        url: new URL('https://provider.example.com/oidc/token'),
       });
     };
 

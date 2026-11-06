@@ -94,9 +94,9 @@ describe('Refresh Token Grant Type', () => {
       user,
     });
 
-    it('should return a Refresh Token Token Response without Refresh Token Rotation.', async () => {
-      const context: RefreshTokenTokenContext = { parameters, grantType, client, refreshToken, scopes };
+    const context: RefreshTokenTokenContext = { parameters, grantType, client, refreshToken, scopes };
 
+    it('should return a Refresh Token Token Response without Refresh Token Rotation.', async () => {
       const accessToken: AccessToken = Object.assign<AccessToken, Partial<AccessToken>>(new AccessToken(), {
         id: 'access_token_id',
         type: 'Bearer',
@@ -124,8 +124,6 @@ describe('Refresh Token Grant Type', () => {
     });
 
     it('should return a Refresh Token Token Response with Refresh Token Rotation.', async () => {
-      const context: RefreshTokenTokenContext = { parameters, grantType, client, refreshToken, scopes };
-
       const accessToken: AccessToken = Object.assign<AccessToken, Partial<AccessToken>>(new AccessToken(), {
         id: 'access_token_id',
         type: 'Bearer',

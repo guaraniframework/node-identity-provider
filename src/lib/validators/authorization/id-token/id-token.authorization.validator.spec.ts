@@ -204,10 +204,7 @@ describe('ID Token Authorization Validator', () => {
         client,
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
-        id: 'session_id',
-        grant,
-      });
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), { id: 'session_id', grant });
 
       dataAccessMock.findClientById.mockResolvedValueOnce(client);
       dataAccessMock.findSessionById.mockResolvedValueOnce(session);

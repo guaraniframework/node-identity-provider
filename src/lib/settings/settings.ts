@@ -102,7 +102,7 @@ export class Settings {
   public readonly enableAuthorizationResponseIssuerIdentifier: boolean;
 
   /**
-   * Enables Refresh Token Rotation on the Authorization Server.
+   * Enables Refresh Token Rotation on the Identity Provider.
    *
    * @default false
    */

@@ -209,15 +209,14 @@ export class DiscoveryEndpoint extends Endpoint {
 
     const endpoint = this.provider.endpoints.find((endpoint) => endpoint.name === name);
 
-    // istanbul ignore next
     if (!(endpoint instanceof Endpoint)) {
       this.logger.debug(
         `[${this.constructor.name}] Completed getEndpointPath()`,
         '513bc0ce-eb3b-4132-9771-16fe995c4eae',
-        { name, path: undefined },
+        { name },
       );
 
-      return undefined;
+      return;
     }
 
     const path = new URL(endpoint.path, this.settings.issuer).href;

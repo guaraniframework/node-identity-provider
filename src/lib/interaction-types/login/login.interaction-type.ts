@@ -62,7 +62,7 @@ export class LoginInteractionType extends InteractionType {
    * @param logger Logger of the Identity Provider.
    * @param dataAccess Data Access of the Identity Provider.
    * @param settings Settings of the Identity Provider.
-   * @param endpoints Endpoints of the Identity Provider.
+   * @param provider Identity Provider.
    */
   public constructor(
     private readonly logger: Logger,
@@ -176,6 +176,7 @@ export class LoginInteractionType extends InteractionType {
    * Accepts the Authentication performed by the application and redirects the User-Agent to continue the Authorization Process.
    *
    * @param context Login Accept Decision Interaction Context.
+   * @throws {UnmetAuthenticationRequirementsError} Could not authenticate using the provided Authentication Context Class Reference.
    * @returns Login Decision Interaction Response.
    */
   private async acceptLogin(context: LoginAcceptDecisionInteractionContext): Promise<LoginDecisionInteractionResponse> {

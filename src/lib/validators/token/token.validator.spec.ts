@@ -20,7 +20,6 @@ import { HttpRequest } from '../../http/request/http-request';
 import { HttpRequestMethod } from '../../http/request/http-request-method.enum';
 import { Logger } from '../../loggers/logger';
 import { TokenRequest } from '../../requests/token/token-request';
-import { addParametersToUrl } from '../../utils/add-parameters-to-url/add-parameters-to-url';
 import { TokenValidator } from './token.validator';
 
 jest.mock('../../client-authentication/client-authentication');
@@ -115,7 +114,7 @@ describe('Token Validator', () => {
           cookies: {},
           headers: {},
           method,
-          url: addParametersToUrl('https://provider.example.com/oidc/token', parameters),
+          url: new URL('https://provider.example.com/oidc/token'),
         });
 
         const error = new MethodNotAllowedError(

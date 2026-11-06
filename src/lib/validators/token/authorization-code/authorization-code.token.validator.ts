@@ -39,6 +39,7 @@ export class AuthorizationCodeTokenValidator extends TokenValidator<Authorizatio
    * @param dataAccess Data Access of the Identity Provider.
    * @param clientAuthenticationHandler Client Authentication Handler of the Identity Provider.
    * @param grantTypes Grant Types of the Identity Provider.
+   * @param pkces PKCEs of the Identity Provider.
    * @param clientAuthenticationMethods Token Endpoint Client Authentication Methods of the Identity Provider.
    */
   public constructor(
@@ -57,6 +58,7 @@ export class AuthorizationCodeTokenValidator extends TokenValidator<Authorizatio
    * Validates the Http Request and returns the actors of the Authorization Code Token Context.
    *
    * @param request Http Request.
+   * @throws {IdentityProviderError} An error occurred when validating the Http Request.
    * @returns Authorization Code Token Context.
    */
   public override async validate(request: HttpRequest): Promise<AuthorizationCodeTokenContext> {
@@ -92,6 +94,8 @@ export class AuthorizationCodeTokenValidator extends TokenValidator<Authorizatio
    * Fetches the requested Authorization Code from the application's storage.
    *
    * @param parameters Parameters of the Authorization Code Token Request.
+   * @throws {InvalidGrantError} Could not find an Authorization Code with the provided "code".
+   * @throws {InvalidRequestError} The provided parameter "code" is invalid.
    * @returns Authorization Code based on the provided Code.
    */
   private async getAuthorizationCode(parameters: AuthorizationCodeTokenRequest): Promise<AuthorizationCode> {
@@ -213,6 +217,7 @@ export class AuthorizationCodeTokenValidator extends TokenValidator<Authorizatio
    * Checks and returns the Code Verifier provided by the Client.
    *
    * @param parameters Parameters of the Token Request.
+   * @throws {InvalidRequestError} The provided parameter "code_verifier" is invalid.
    * @returns Code Verifier provided by the Client.
    */
   private getCodeVerifier(parameters: AuthorizationCodeTokenRequest): string {

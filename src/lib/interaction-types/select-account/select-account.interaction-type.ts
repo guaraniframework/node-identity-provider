@@ -49,7 +49,7 @@ export class SelectAccountInteractionType extends InteractionType {
    * @param logger Logger of the Identity Provider.
    * @param dataAccess Data Access of the Identity Provider.
    * @param settings Settings of the Identity Provider.
-   * @param endpoints Endpoints of the Identity Provider.
+   * @param provider Identity Provider.
    */
   public constructor(
     private readonly logger: Logger,

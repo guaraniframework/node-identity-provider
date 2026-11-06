@@ -24,7 +24,6 @@ import { Logger } from '../../../loggers/logger';
 import { PKCE } from '../../../pkces/pkce';
 import { AuthorizationRequest } from '../../../requests/authorization/authorization-request';
 import { AuthorizationCodeTokenRequest } from '../../../requests/token/authorization-code/authorization-code.token-request';
-import { addParametersToUrl } from '../../../utils/add-parameters-to-url/add-parameters-to-url';
 import { TokenValidator } from '../token.validator';
 import { AuthorizationCodeTokenValidator } from './authorization-code.token.validator';
 
@@ -107,7 +106,7 @@ describe('Authorization Code Token Validator', () => {
         cookies: {},
         headers: { 'content-type': 'application/x-www-form-urlencoded' },
         method: HttpRequestMethod.POST,
-        url: addParametersToUrl('https://provider.example.com/oidc/token', parameters),
+        url: new URL('https://provider.example.com/oidc/token'),
       });
     };
 

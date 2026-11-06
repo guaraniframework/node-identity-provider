@@ -250,6 +250,7 @@ export { CreateDecisionInteractionValidator } from './lib/validators/interaction
 export { DecisionInteractionValidator } from './lib/validators/interaction/decision/decision-interaction.validator';
 export { LoginDecisionInteractionValidator } from './lib/validators/interaction/decision/login/login.decision-interaction.validator';
 export { SelectAccountDecisionInteractionValidator } from './lib/validators/interaction/decision/select-account/select-account.decision-interaction.validator';
+export { InteractionValidator } from './lib/validators/interaction/interaction.validator';
 export { RevocationValidator } from './lib/validators/revocation/revocation.validator';
 export { AuthorizationCodeTokenValidator } from './lib/validators/token/authorization-code/authorization-code.token.validator';
 export { ClientCredentialsTokenValidator } from './lib/validators/token/client-credentials/client-credentials.token.validator';

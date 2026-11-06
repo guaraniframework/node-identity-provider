@@ -50,6 +50,7 @@ export class ClientCredentialsTokenValidator extends TokenValidator<ClientCreden
    * Validates the Http Request and returns the actors of the Client Credentials Token Context.
    *
    * @param request Http Request.
+   * @throws {IdentityProviderError} An error occurred when validating the Http Request.
    * @returns Client Credentials Token Context.
    */
   public override async validate(request: HttpRequest): Promise<ClientCredentialsTokenContext> {
@@ -78,6 +79,9 @@ export class ClientCredentialsTokenValidator extends TokenValidator<ClientCreden
    *
    * @param parameters Parameters of the Client Credentials Token Request.
    * @param client Client of the Request.
+   * @throws {AccessDeniedError} The Client is not allowed to request the provided Scope.
+   * @throws {InvalidRequestError} The provided parameter "scope" is invalid.
+   * @throws {InvalidScopeError} The Client requested an unsupported Scope.
    * @returns Scopes granted to the Client.
    */
   private async getScopes(parameters: ClientCredentialsTokenRequest, client: Client): Promise<Scope[]> {

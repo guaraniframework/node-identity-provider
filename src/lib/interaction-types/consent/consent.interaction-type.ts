@@ -60,8 +60,8 @@ export class ConsentInteractionType extends InteractionType {
    * @param logger Logger of the Identity Provider.
    * @param dataAccess Data Access of the Identity Provider.
    * @param settings Settings of the Identity Provider.
+   * @param provider Identity Provider.
    * @param subjectTypes Subject Types of the Identity Provider.
-   * @param endpoints Endpoints of the Identity Provider.
    */
   public constructor(
     private readonly logger: Logger,

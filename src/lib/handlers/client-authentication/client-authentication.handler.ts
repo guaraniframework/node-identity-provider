@@ -23,8 +23,8 @@ export class ClientAuthenticationHandler {
    *
    * @param request Http Request.
    * @param clientAuthenticationMethods Client Authentication Methods of the Endpoint.
-   * @throws {InvalidRequestError} One of the provided parameters is invalid.
    * @throws {InvalidClientError} Failed to authenticate the Client.
+   * @throws {InvalidRequestError} One of the provided parameters is invalid.
    * @returns Authenticated Client.
    */
   public async authenticate(

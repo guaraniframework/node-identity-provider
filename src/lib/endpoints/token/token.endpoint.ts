@@ -104,10 +104,12 @@ export class TokenEndpoint extends Endpoint {
         .setHeaders(this.headers)
         .json(removeNullishValues(error.toJSON()));
 
-      this.logger.debug(`[${this.constructor.name}] Completed handle()`, '2b1a3dfc-ed13-448d-8510-992f4d448a57', {
-        request,
-        response,
-      });
+      this.logger.error(
+        `[${this.constructor.name}] Failed handle()`,
+        '2b1a3dfc-ed13-448d-8510-992f4d448a57',
+        { request, response },
+        error,
+      );
 
       return response;
     }

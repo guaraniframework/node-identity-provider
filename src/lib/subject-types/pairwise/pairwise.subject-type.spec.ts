@@ -1,3 +1,5 @@
+import { URL } from 'url';
+
 import { getContainer } from '@guarani/di';
 
 import { CONTAINER } from '../../constants';
@@ -24,7 +26,6 @@ describe('Pairwise Subject Type', () => {
   const client: Client = Object.assign<Client, Partial<Client>>(new Client(), {
     id: 'client_id',
     sectorIdentifierUri: new URL('https://client.example.com/redirect_uris.json'),
-    pairwiseSalt: 'f2ad0faed5a636483adc4b5c268b72e3',
   });
 
   beforeEach(() => {

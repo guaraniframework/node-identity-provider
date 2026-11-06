@@ -23,7 +23,6 @@ import { HttpRequestMethod } from '../../http/request/http-request-method.enum';
 import { Logger } from '../../loggers/logger';
 import { RevocationRequest } from '../../requests/revocation/revocation-request';
 import { TokenTypeHint } from '../../types/token-type-hint.type';
-import { addParametersToUrl } from '../../utils/add-parameters-to-url/add-parameters-to-url';
 import { RevocationValidator } from './revocation.validator';
 
 jest.mock('../../client-authentication/client-authentication');
@@ -125,7 +124,7 @@ describe('Revocation Validation', () => {
           cookies: {},
           headers: {},
           method,
-          url: addParametersToUrl('https://provider.example.com/oidc/revocation', parameters),
+          url: new URL('https://provider.example.com/oidc/revocation'),
         });
 
         const error = new MethodNotAllowedError(

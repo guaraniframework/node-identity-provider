@@ -1,5 +1,6 @@
 import { Buffer } from 'buffer';
 import qs from 'querystring';
+import { URL } from 'url';
 
 import { getContainer } from '@guarani/di';
 import { removeNullishValues } from '@guarani/primitives';
@@ -23,7 +24,6 @@ import { HttpRequest } from '../../../http/request/http-request';
 import { HttpRequestMethod } from '../../../http/request/http-request-method.enum';
 import { Logger } from '../../../loggers/logger';
 import { PasswordTokenRequest } from '../../../requests/token/password/password.token-request';
-import { addParametersToUrl } from '../../../utils/add-parameters-to-url/add-parameters-to-url';
 import { TokenValidator } from '../token.validator';
 import { PasswordTokenValidator } from './password.token.validator';
 
@@ -142,7 +142,7 @@ describe('Resource Owner Password Credentials Token Validator', () => {
         cookies: {},
         headers: { 'content-type': 'application/x-www-form-urlencoded' },
         method: HttpRequestMethod.POST,
-        url: addParametersToUrl('https://provider.example.com/oidc/token', parameters),
+        url: new URL('https://provider.example.com/oidc/token'),
       });
     };
 

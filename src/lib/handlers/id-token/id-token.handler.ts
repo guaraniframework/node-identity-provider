@@ -33,7 +33,7 @@ export class IdTokenHandler {
   /**
    * Instantiates a new ID Token Handler.
    *
-   * @param logger Logger of the Authorization Server.
+   * @param logger Logger of the Identity Provider.
    * @param dataAccess Data Access of the Identity Provider.
    * @param settings Settings of the Identity Provider.
    * @param subjectTypes Subject Types of the Identity Provider.
@@ -146,7 +146,11 @@ export class IdTokenHandler {
 
     const signKey = await this.dataAccess.getSignJsonWebKey!();
     const userinfo = await this.dataAccess.getUserinfo!(user, scopes);
-    const claims = Object.assign(this.createIdTokenClaims(user, client, login, options), userinfo);
+
+    const claims: IdTokenClaimsParameters = Object.assign(
+      this.createIdTokenClaims(user, client, login, options),
+      userinfo,
+    );
 
     const jwsHeader = removeNullishValues<JsonWebSignatureHeaderParameters>({
       alg: client.idTokenSignedResponseAlgorithm!,
@@ -349,13 +353,14 @@ export class IdTokenHandler {
    * @param alg JSON Web Signature Algorithm used to create the ID Token.
    * @returns Base64Url encoded left hash of the provided Identifier.
    */
-  private getLeftHash(token: string, alg: DigitalSignatureAlgorithm): string {
+  // TODO: Add support for EdDSA, Ed25519 and Ed448.
+  private getLeftHash(token: string, alg: Exclude<DigitalSignatureAlgorithm, 'none'>): string {
     this.logger.debug(`[${this.constructor.name}] Called getLeftHash()`, '180356e0-2325-4956-9b76-57c5af4ec8df', {
       token,
       alg,
     });
 
-    const hashAlgorithm = `sha${alg.substring(2)}`;
+    const hashAlgorithm = `sha${alg.substring(2, 5)}`;
     const hash = createHash(hashAlgorithm).update(token, 'ascii').digest();
     const leftHash = hash.subarray(0, hash.length / 2).toString('base64url');
 

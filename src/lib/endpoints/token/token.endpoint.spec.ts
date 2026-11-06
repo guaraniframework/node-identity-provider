@@ -127,10 +127,17 @@ describe('Token Endpoint', () => {
 
         expect(response.body).toStrictEqual(Buffer.from(jsonStringify(error.toJSON()), 'utf8'));
 
-        expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
+        expect(loggerMock.error).toHaveBeenCalledWith(
           '[TokenEndpoint] Invalid parameter "grant_type"',
           '8c9df96c-5d27-4ab8-b484-61e4c6f934c7',
           { parameters },
+          error,
+        );
+
+        expect(loggerMock.error).toHaveBeenCalledWith(
+          '[TokenEndpoint] Failed handle()',
+          '2b1a3dfc-ed13-448d-8510-992f4d448a57',
+          { request, response },
           error,
         );
       },
@@ -152,10 +159,17 @@ describe('Token Endpoint', () => {
 
       expect(response.body).toStrictEqual(Buffer.from(jsonStringify(error.toJSON()), 'utf8'));
 
-      expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
+      expect(loggerMock.error).toHaveBeenCalledWith(
         '[TokenEndpoint] Unsupported Grant Type "unknown"',
         '00232cfe-e92d-487c-b313-64c1dc2f71cf',
         { parameters },
+        error,
+      );
+
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        '[TokenEndpoint] Failed handle()',
+        '2b1a3dfc-ed13-448d-8510-992f4d448a57',
+        { request, response },
         error,
       );
     });

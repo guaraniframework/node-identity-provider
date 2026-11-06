@@ -44,7 +44,7 @@ export class CodeTokenResponseType extends ResponseType {
   }
 
   /**
-   * Creates and returns an Authorization Code and Access Token Response to the Client.
+   * Creates and returns an Authorization Code & Access Token Response to the Client.
    *
    * @param context Authorization Context.
    * @returns Authorization Response.

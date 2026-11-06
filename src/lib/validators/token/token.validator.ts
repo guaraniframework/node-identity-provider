@@ -54,6 +54,7 @@ export abstract class TokenValidator<TContext extends TokenContext = TokenContex
    * Validates the Http Request and returns the actors of the Token Context.
    *
    * @param request Http Request.
+   * @throws {IdentityProviderError} An error occurred when validating the Http Request.
    * @returns Token Context.
    */
   public async validate(request: HttpRequest): Promise<TContext> {

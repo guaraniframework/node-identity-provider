@@ -181,9 +181,10 @@ describe('Private Key JWT Client Authentication', () => {
   });
 
   describe('algorithms', () => {
-    it('should have ["ES256", "ES384", "ES512", "EdDSA", "PS256", "PS384", "PS512", "RS256", "RS384", "RS512"] as its value.', () => {
+    it('should have ["ES256", "ES256K", "ES384", "ES512", "EdDSA", "PS256", "PS384", "PS512", "RS256", "RS384", "RS512"] as its value.', () => {
       expect(clientAuthentication['algorithms']).toStrictEqual<Exclude<DigitalSignatureAlgorithm, 'none'>[]>([
         'ES256',
+        'ES256K',
         'ES384',
         'ES512',
         'EdDSA',

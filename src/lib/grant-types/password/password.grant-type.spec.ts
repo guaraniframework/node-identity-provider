@@ -67,9 +67,9 @@ describe('Resource Owner Password Credentials Grant Type', () => {
       user,
     });
 
-    it('should return a Resource Owner Password Credentials Token Response without a Refresh Token when the Identity Provider does not support it.', async () => {
-      const context: PasswordTokenContext = { parameters, grantType, client, user, scopes };
+    const context: PasswordTokenContext = { parameters, grantType, client, user, scopes };
 
+    it('should return a Resource Owner Password Credentials Token Response without a Refresh Token when the Identity Provider does not support it.', async () => {
       const accessToken: AccessToken = Object.assign<AccessToken, Partial<AccessToken>>(new AccessToken(), {
         id: 'access_token_id',
         type: 'Bearer',
@@ -96,8 +96,6 @@ describe('Resource Owner Password Credentials Grant Type', () => {
     });
 
     it('should return a Resource Owner Password Credentials Token Response without a Refresh Token when the Client does not support it.', async () => {
-      const context: PasswordTokenContext = { parameters, grantType, client, user, scopes };
-
       const accessToken: AccessToken = Object.assign<AccessToken, Partial<AccessToken>>(new AccessToken(), {
         id: 'access_token_id',
         type: 'Bearer',
@@ -124,8 +122,6 @@ describe('Resource Owner Password Credentials Grant Type', () => {
     });
 
     it('should return a Resource Owner Password Credentials Token Response with a Refresh Token.', async () => {
-      const context: PasswordTokenContext = { parameters, grantType, client, user, scopes };
-
       const accessToken: AccessToken = Object.assign<AccessToken, Partial<AccessToken>>(new AccessToken(), {
         id: 'access_token_id',
         type: 'Bearer',

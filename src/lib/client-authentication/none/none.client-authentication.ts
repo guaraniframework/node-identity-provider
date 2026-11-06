@@ -27,8 +27,7 @@ import { NoneClientAuthenticationParameters } from './none.client-authentication
  *     key1=value1&key2=value2&client_id=client1
  * ```
  *
- * In this workflow, if the Client provides a Secret, it will automatically fail,
- * since it is intended to be used by Public Clients.
+ * In this workflow, if the Client provides a Secret, it will automatically fail, since it is intended to be used by Public Clients.
  */
 @Injectable()
 export class NoneClientAuthentication extends ClientAuthentication {

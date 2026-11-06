@@ -30,15 +30,8 @@ describe('ID Token Response Type', () => {
     return Object.assign<Scope, Partial<Scope>>(new Scope(), { name: scope });
   });
 
-  const consent: Consent = Object.assign<Consent, Partial<Consent>>(new Consent(), {
-    id: 'consent_id',
-    scopes,
-  });
-
-  const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
-    id: 'grant_id',
-    consent,
-  });
+  const consent: Consent = Object.assign<Consent, Partial<Consent>>(new Consent(), { id: 'consent_id', scopes });
+  const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), { id: 'grant_id', consent });
 
   const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
     id: 'session_id',

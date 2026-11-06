@@ -157,14 +157,8 @@ describe('Select Account Decision Interaction Request Validator', () => {
     it('should throw when the Client requests a Grant that was not issued to itself.', async () => {
       const request = requestFactory();
 
-      const anotherClient: Client = Object.assign<Client, Partial<Client>>(new Client(), {
-        id: 'another_client_id',
-      });
-
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
-        id: 'grant_id',
-        client: anotherClient,
-      });
+      const anotherClient: Client = Object.assign<Client, Partial<Client>>(new Client(), { id: 'another_client_id' });
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), { id: 'grant_id', client: anotherClient });
 
       dataAccessMock.findGrantByLoginChallenge.mockResolvedValueOnce(grant);
 
@@ -234,10 +228,7 @@ describe('Select Account Decision Interaction Request Validator', () => {
     it('should throw when the Session of the Grant does not have the requested Login.', async () => {
       const request = requestFactory();
 
-      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
-        id: 'another_login_id',
-      });
-
+      const login: Login = Object.assign<Login, Partial<Login>>(new Login(), { id: 'another_login_id' });
       const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
         id: 'session_id',
         logins: [login],

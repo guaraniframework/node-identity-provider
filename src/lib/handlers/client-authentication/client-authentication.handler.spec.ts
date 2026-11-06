@@ -47,6 +47,7 @@ describe('Client Authentication Handler', () => {
   });
 
   afterEach(() => {
+    container.clear();
     jest.resetAllMocks();
   });
 
@@ -97,7 +98,7 @@ describe('Client Authentication Handler', () => {
       );
     });
 
-    it('should return an authenticated client.', async () => {
+    it('should return an authenticated Client.', async () => {
       const secret: ClientSecret = Object.assign<ClientSecret, Partial<ClientSecret>>(new ClientSecret(), {
         secret: 'client_secret',
       });

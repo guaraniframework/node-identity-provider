@@ -46,6 +46,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
    * @param settings Settings of the Identity Provider.
    * @param grantTypes Grant Types of the Identity Provider.
    * @param clientAuthenticationMethods Token Endpoint Client Authentication Methods of the Identity Provider.
+   * @throws {TypeError} Missing implementation of a required Data Access method.
    */
   public constructor(
     protected override readonly logger: Logger,
@@ -79,6 +80,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
    * Validates the Http Request and returns the actors of the JWT Bearer Token Context.
    *
    * @param request Http Request.
+   * @throws {IdentityProviderError} An error occurred when validating the Http Request.
    * @returns JWT Bearer Token Context.
    */
   public override async validate(request: HttpRequest): Promise<JwtBearerTokenContext> {
@@ -109,6 +111,8 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
    * @param request Http Request.
    * @param parameters Parameters of the JWT Bearer Token Request.
    * @param client Client requesting authorization.
+   * @throws {InvalidGrantError} The provided Assertion is invalid.
+   * @throws {InvalidRequestError} The provided parameter "assertion" is invalid.
    * @returns User represented in the Assertion.
    */
   private async getSubjectFromAssertion(
@@ -255,6 +259,9 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
    *
    * @param parameters Parameters of the JWT Bearer Token Request.
    * @param client Client of the Request.
+   * @throws {AccessDeniedError} The Client is not allowed to request the provided Scope.
+   * @throws {InvalidRequestError} The provided parameter "scope" is invalid.
+   * @throws {InvalidScopeError} The Client requested an unsupported Scope.
    * @returns Scopes granted to the Client.
    */
   private async getScopes(parameters: JwtBearerTokenRequest, client: Client): Promise<Scope[]> {
@@ -294,6 +301,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
    *
    * @param client Client of the Request.
    * @param header JSON Web Signature Header of the Assertion.
+   * @throws {InvalidClientError} Failed to obtain the Client's JWT Bearer Grant Sign JSON Web Key.
    * @returns JSON Web Key of the Client based on the JSON Web Signature Header.
    */
   private async getJwtBearerGrantClientSignJsonWebKey(

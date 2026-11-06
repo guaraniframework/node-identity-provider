@@ -90,12 +90,7 @@ export abstract class AuthorizationValidator<
    * Validates the Http Request and returns the actors of the Authorization Context.
    *
    * @param request Http Request.
-   * @throws {AccessDeniedError} The Client requested a Parameter it's not allowed to request.
-   * @throws {InvalidClientError} Failed to find a Client with the provided Client Identifier.
-   * @throws {InvalidRequestError} One of the provided parameters is invalid.
-   * @throws {InvalidScopeError} The Client requested an unsupported Scope.
-   * @throws {MethodNotAllowedError} The requested Http Request Method is not allowed.
-   * @throws {UnauthorizedClientError} The Client is not allowed to request the provided Response Type.
+   * @throws {IdentityProviderError} An error occurred when validating the Http Request.
    * @returns Authorization Context.
    */
   public async validate(request: HttpRequest): Promise<TContext> {

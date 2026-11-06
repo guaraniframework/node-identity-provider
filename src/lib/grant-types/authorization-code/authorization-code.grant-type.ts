@@ -32,6 +32,7 @@ export class AuthorizationCodeGrantType extends GrantType {
    *
    * @param logger Logger of the Identity Provider.
    * @param dataAccess Data Access of the Identity Provider.
+   * @param idTokenHandler ID Token Handler of the Identity Provider.
    */
   public constructor(
     private readonly logger: Logger,

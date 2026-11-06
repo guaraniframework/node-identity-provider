@@ -56,7 +56,7 @@ export class RevocationEndpoint extends Endpoint {
    *
    * @param logger Logger of the Identity Provider.
    * @param dataAccess Data Access of the Identity Provider.
-   * @param validators Revocation Validator of the Identity Provider.
+   * @param validator Revocation Validator of the Identity Provider.
    */
   public constructor(
     private readonly logger: Logger,

@@ -17,10 +17,7 @@ describe('findClientSecret()', () => {
       secret: 'another_client_secret',
     });
 
-    const client: Client = Object.assign<Client, Partial<Client>>(new Client(), {
-      id: 'client_id',
-      secrets: [secret],
-    });
+    const client: Client = Object.assign<Client, Partial<Client>>(new Client(), { id: 'client_id', secrets: [secret] });
 
     expect(findClientSecret(client, 'client_secret')).toBeNull();
   });
@@ -30,10 +27,7 @@ describe('findClientSecret()', () => {
       secret: 'secret_client',
     });
 
-    const client: Client = Object.assign<Client, Partial<Client>>(new Client(), {
-      id: 'client_id',
-      secrets: [secret],
-    });
+    const client: Client = Object.assign<Client, Partial<Client>>(new Client(), { id: 'client_id', secrets: [secret] });
 
     expect(findClientSecret(client, 'client_secret')).toBeNull();
   });
@@ -43,10 +37,7 @@ describe('findClientSecret()', () => {
       secret: 'client_secret',
     });
 
-    const client: Client = Object.assign<Client, Partial<Client>>(new Client(), {
-      id: 'client_id',
-      secrets: [secret],
-    });
+    const client: Client = Object.assign<Client, Partial<Client>>(new Client(), { id: 'client_id', secrets: [secret] });
 
     expect(findClientSecret(client, 'client_secret')).toStrictEqual(secret);
   });
