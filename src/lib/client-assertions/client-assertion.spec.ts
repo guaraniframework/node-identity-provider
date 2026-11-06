@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer';
-import { stringify as stringifyQs } from 'querystring';
+import qs from 'querystring';
 import { URL } from 'url';
 
 import { getContainer, Injectable } from '@guarani/di';
@@ -27,7 +27,7 @@ class CustomClientAssertion extends ClientAssertion {
   }
 }
 
-describe('JWT Bearer Client Assertion', () => {
+describe('Client Assertion', () => {
   let clientAssertion: CustomClientAssertion;
   const container = getContainer(CONTAINER);
 
@@ -87,7 +87,7 @@ describe('JWT Bearer Client Assertion', () => {
       'should check if the Client Authentication Method has beed requested.',
       (body, expected) => {
         const request = new HttpRequest({
-          body: Buffer.from(stringifyQs(body), 'utf8'),
+          body: Buffer.from(qs.stringify(body), 'utf8'),
           cookies: {},
           headers: { 'content-type': 'application/x-www-form-urlencoded' },
           method: HttpRequestMethod.POST,

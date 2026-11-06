@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer';
-import { stringify as stringifyQs } from 'querystring';
+import qs from 'querystring';
 
 import { getContainer } from '@guarani/di';
 import { removeNullishValues } from '@guarani/primitives';
@@ -90,7 +90,7 @@ describe('Client Credentials Token Validator', () => {
       removeNullishValues<ClientCredentialsTokenRequest>(Object.assign(parameters, data));
 
       return new HttpRequest({
-        body: Buffer.from(stringifyQs(parameters)),
+        body: Buffer.from(qs.stringify(parameters)),
         cookies: {},
         headers: { 'content-type': 'application/x-www-form-urlencoded' },
         method: HttpRequestMethod.POST,

@@ -1,6 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { Request, Response } from 'express';
-import { stringify as stringifyQs } from 'querystring';
+import qs from 'querystring';
 import { URL } from 'url';
 
 import { getContainer } from '@guarani/di';
@@ -49,7 +49,7 @@ class Controller {
     const client = (await this.dataAccess.findClientById(request.signedCookies['client_id']))!;
 
     const url = new URL('https://localhost:4000/oidc/interaction');
-    url.search = stringifyQs({
+    url.search = qs.stringify({
       interaction_type: 'consent',
       client_id: client.id,
       consent_challenge: consentChallenge,
@@ -105,7 +105,7 @@ class Controller {
         throw new Error('Invalid parameter "decision".');
     }
 
-    const reqBody = stringifyQs(reqData);
+    const reqBody = qs.stringify(reqData);
 
     try {
       const client = (await this.dataAccess.findClientById(request.signedCookies['client_id']))!;
