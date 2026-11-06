@@ -78,6 +78,7 @@ export async function getProviderRouter(): Promise<Router> {
       options.useClientAuthenticationMethods(clientAuthenticationMethods).build();
     })
     .addLogger(new ConsoleLogger(LoggerLevel.DEBUG))
+    .addRevocationEndpoint()
     .addSettings(settings)
     .addSubjectTypes(['pairwise', 'public'])
     .addTokenEndpoint((options) => {

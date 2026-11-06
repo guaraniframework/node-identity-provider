@@ -9,6 +9,11 @@ export const CONTAINER: symbol = Symbol('CONTAINER');
 export const INTERACTION_CLIENT_AUTHENTICATION: symbol = Symbol('INTERACTION_CLIENT_AUTHENTICATION');
 
 /**
+ * Token that represents the Client Authentication Methods of the Revocation Endpoint.
+ */
+export const REVOCATION_CLIENT_AUTHENTICATION: symbol = Symbol('REVOCATION_CLIENT_AUTHENTICATION');
+
+/**
  * Token that represents the Client Authentication Methods of the Token Endpoint.
  */
 export const TOKEN_CLIENT_AUTHENTICATION: symbol = Symbol('TOKEN_CLIENT_AUTHENTICATION');

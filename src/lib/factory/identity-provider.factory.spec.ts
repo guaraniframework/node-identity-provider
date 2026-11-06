@@ -12,6 +12,7 @@ import { AuthorizationEndpoint } from '../endpoints/authorization/authorization.
 import { DiscoveryEndpoint } from '../endpoints/discovery/discovery.endpoint';
 import { Endpoint } from '../endpoints/endpoint';
 import { InteractionEndpoint } from '../endpoints/interaction/interaction.endpoint';
+import { RevocationEndpoint } from '../endpoints/revocation/revocation.endpoint';
 import { TokenEndpoint } from '../endpoints/token/token.endpoint';
 import { ClientAuthenticationHandler } from '../handlers/client-authentication/client-authentication.handler';
 import { IdTokenHandler } from '../handlers/id-token/id-token.handler';
@@ -298,6 +299,28 @@ describe('Identity Provider Factory', () => {
     });
   });
 
+  describe('addRevocationEndpoint()', () => {
+    it('should add the Revocation Endpoint with the default options to the Identity Provider Factory.', () => {
+      factory['container'].bind(Settings).toValue(Settings.prototype);
+      factory['container'].bind(JsonWebKeySet).toValue(JsonWebKeySet.prototype);
+      factory['container'].bind(DatabaseSync).toValue(DatabaseSync.prototype);
+      factory['container'].bind(PKCE).toValue(PKCE.prototype);
+
+      expect(() => factory.addRevocationEndpoint()).not.toThrow();
+      expect(factory['container'].resolve(Endpoint)).toBeInstanceOf(RevocationEndpoint);
+    });
+
+    it('should add the Revocation Endpoint with the provided options to the Identity Provider Factory.', () => {
+      factory['container'].bind(Settings).toValue(Settings.prototype);
+      factory['container'].bind(JsonWebKeySet).toValue(JsonWebKeySet.prototype);
+      factory['container'].bind(DatabaseSync).toValue(DatabaseSync.prototype);
+      factory['container'].bind(PKCE).toValue(PKCE.prototype);
+
+      expect(() => factory.addRevocationEndpoint((options) => options.build())).not.toThrow();
+      expect(factory['container'].resolve(Endpoint)).toBeInstanceOf(RevocationEndpoint);
+    });
+  });
+
   describe('addTokenEndpoint()', () => {
     it('should add the Token Endpoint with the default options to the Identity Provider Factory.', () => {
       factory['container'].bind(Settings).toValue(Settings.prototype);
@@ -354,6 +377,7 @@ describe('Identity Provider Factory', () => {
       factory
         .addAuthorizationEndpoint()
         .addInteractionEndpoint()
+        .addRevocationEndpoint()
         .addTokenEndpoint()
         .addSettings(settings)
         .add(DatabaseSync, Object.create(DatabaseSync.prototype))
@@ -366,6 +390,7 @@ describe('Identity Provider Factory', () => {
       expect(provider['endpoints']).toStrictEqual<Endpoint[]>([
         expect.any(AuthorizationEndpoint),
         expect.any(InteractionEndpoint),
+        expect.any(RevocationEndpoint),
         expect.any(TokenEndpoint),
       ]);
     });
@@ -382,6 +407,7 @@ describe('Identity Provider Factory', () => {
       factory
         .addAuthorizationEndpoint()
         .addInteractionEndpoint()
+        .addRevocationEndpoint()
         .addTokenEndpoint()
         .addSettings(settings)
         .addSubjectTypes(['public'])
@@ -395,6 +421,7 @@ describe('Identity Provider Factory', () => {
       expect(provider['endpoints']).toStrictEqual<Endpoint[]>([
         expect.any(AuthorizationEndpoint),
         expect.any(InteractionEndpoint),
+        expect.any(RevocationEndpoint),
         expect.any(TokenEndpoint),
       ]);
     });

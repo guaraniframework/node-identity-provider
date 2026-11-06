@@ -45,7 +45,7 @@ export class AccessToken implements NodeJS.Dict<unknown> {
   /**
    * Client that requested the Access Token.
    */
-  public readonly client!: Client;
+  public readonly client!: Client | null;
 
   /**
    * User that granted the Access Token to the Client.

@@ -44,6 +44,7 @@ describe('Refresh Token Token Validator', () => {
 
   const dataAccessMock = jest.mocked<DataAccess>(
     Object.assign<DataAccess, Partial<DataAccess>>(Reflect.construct(DataAccess, []), {
+      createRefreshToken: jest.fn(),
       findRefreshTokenById: jest.fn(),
     }),
   );
@@ -85,11 +86,39 @@ describe('Refresh Token Token Validator', () => {
   });
 
   describe('constructor', () => {
-    it('should throw when not implementing the method DataAccess.findRefreshTokenById().', () => {
+    it('should throw when not implementing the method DataAccess.createRefreshToken().', () => {
       container.clear();
 
       const dataAccessMock = jest.mocked<DataAccess>(
         Object.assign<DataAccess, Partial<DataAccess>>(Reflect.construct(DataAccess, []), {}),
+      );
+
+      container.bind(Logger).toValue(loggerMock);
+      container.bind(DataAccess).toValue(dataAccessMock);
+      container.bind(ClientAuthenticationHandler).toValue(clientAuthenticationHandlerMock);
+      container.bind(ScopeHandler).toValue(scopeHandlerMock);
+      container.bind(GrantType).toValue(grantTypeMock);
+      container.bind<ClientAuthentication>(TOKEN_CLIENT_AUTHENTICATION).toValue(clientAuthenticationMethodMock);
+      container.bind(RefreshTokenTokenValidator).toSelf().asSingleton();
+
+      const error = new TypeError('Missing implementation of required method "DataAccess.createRefreshToken".');
+      expect(() => container.resolve(RefreshTokenTokenValidator)).toThrowWithMessage(TypeError, error.message);
+
+      expect(loggerMock.fatal).toHaveBeenCalledExactlyOnceWith(
+        '[RefreshTokenTokenValidator] Missing implementation of required method "DataAccess.createRefreshToken"',
+        'bbbfbf94-6d5e-4183-89c8-f0833c592dd9',
+        null,
+        error,
+      );
+    });
+
+    it('should throw when not implementing the method DataAccess.findRefreshTokenById().', () => {
+      container.clear();
+
+      const dataAccessMock = jest.mocked<DataAccess>(
+        Object.assign<DataAccess, Partial<DataAccess>>(Reflect.construct(DataAccess, []), {
+          createRefreshToken: jest.fn(),
+        }),
       );
 
       container.bind(Logger).toValue(loggerMock);

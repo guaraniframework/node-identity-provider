@@ -6,7 +6,12 @@ import { getContainer } from '@guarani/di';
 import { jsonStringify } from '@guarani/primitives';
 
 import { ClientAuthentication } from '../../client-authentication/client-authentication';
-import { CONTAINER, INTERACTION_CLIENT_AUTHENTICATION, TOKEN_CLIENT_AUTHENTICATION } from '../../constants';
+import {
+  CONTAINER,
+  INTERACTION_CLIENT_AUTHENTICATION,
+  REVOCATION_CLIENT_AUTHENTICATION,
+  TOKEN_CLIENT_AUTHENTICATION,
+} from '../../constants';
 import { DataAccess } from '../../data-access/data-access';
 import { Display } from '../../displays/display';
 import { Scope } from '../../entities/scope';
@@ -44,30 +49,7 @@ describe('Discovery Endpoint', () => {
 
   let settingsMock: jest.MockedObjectDeep<Settings>;
 
-  const providerMock = jest.mocked<IdentityProvider>(
-    Object.assign<IdentityProvider, Partial<IdentityProvider>>(Reflect.construct(IdentityProvider, []), {
-      endpoints: [
-        jest.mocked<Endpoint>(
-          Object.assign<Endpoint, Partial<Endpoint>>(Reflect.construct(Endpoint, []), {
-            name: 'authorization',
-            path: '/oidc/authorization',
-          }),
-        ),
-        jest.mocked<Endpoint>(
-          Object.assign<Endpoint, Partial<Endpoint>>(Reflect.construct(Endpoint, []), {
-            name: 'interaction',
-            path: '/oidc/interaction',
-          }),
-        ),
-        jest.mocked<Endpoint>(
-          Object.assign<Endpoint, Partial<Endpoint>>(Reflect.construct(Endpoint, []), {
-            name: 'token',
-            path: '/oidc/token',
-          }),
-        ),
-      ],
-    }),
-  );
+  let providerMock: jest.MockedObjectDeep<IdentityProvider>;
 
   const responseTypeMock = jest.mocked<ResponseType>(
     Object.assign<ResponseType, Partial<ResponseType>>(Reflect.construct(ResponseType, []), { name: 'code' }),
@@ -127,6 +109,37 @@ describe('Discovery Endpoint', () => {
       }),
     );
 
+    providerMock = jest.mocked<IdentityProvider>(
+      Object.assign<IdentityProvider, Partial<IdentityProvider>>(Reflect.construct(IdentityProvider, []), {
+        endpoints: [
+          jest.mocked<Endpoint>(
+            Object.assign<Endpoint, Partial<Endpoint>>(Reflect.construct(Endpoint, []), {
+              name: 'authorization',
+              path: '/oidc/authorization',
+            }),
+          ),
+          jest.mocked<Endpoint>(
+            Object.assign<Endpoint, Partial<Endpoint>>(Reflect.construct(Endpoint, []), {
+              name: 'interaction',
+              path: '/oidc/interaction',
+            }),
+          ),
+          jest.mocked<Endpoint>(
+            Object.assign<Endpoint, Partial<Endpoint>>(Reflect.construct(Endpoint, []), {
+              name: 'revocation',
+              path: '/oidc/revocation',
+            }),
+          ),
+          jest.mocked<Endpoint>(
+            Object.assign<Endpoint, Partial<Endpoint>>(Reflect.construct(Endpoint, []), {
+              name: 'token',
+              path: '/oidc/token',
+            }),
+          ),
+        ],
+      }),
+    );
+
     container.bind(Logger).toValue(loggerMock);
     container.bind(DataAccess).toValue(dataAccessMock);
     container.bind(Settings).toValue(settingsMock);
@@ -140,6 +153,7 @@ describe('Discovery Endpoint', () => {
     clientAuthenticationMethodsMock.forEach((clientAuthenticationMethodMock) => {
       container.bind<ClientAuthentication>(TOKEN_CLIENT_AUTHENTICATION).toValue(clientAuthenticationMethodMock);
       container.bind<ClientAuthentication>(INTERACTION_CLIENT_AUTHENTICATION).toValue(clientAuthenticationMethodMock);
+      container.bind<ClientAuthentication>(REVOCATION_CLIENT_AUTHENTICATION).toValue(clientAuthenticationMethodMock);
     });
 
     container.bind(Display).toValue(displayMock);
@@ -185,6 +199,12 @@ describe('Discovery Endpoint', () => {
       Reflect.set(settingsMock, 'jwtBearerGrantEncryptionContentEncryptionAlgorithms', []);
       Reflect.set(settingsMock, 'acrValues', []);
       Reflect.set(settingsMock, 'uiLocales', []);
+
+      Reflect.set(
+        providerMock,
+        'endpoints',
+        providerMock.endpoints.filter((endpoint) => ['authorization', 'interaction', 'token'].includes(endpoint.name)),
+      );
 
       container.clear();
 
@@ -253,6 +273,7 @@ describe('Discovery Endpoint', () => {
         authorization_endpoint: 'https://provider.example.com/oidc/authorization',
         interaction_endpoint: 'https://provider.example.com/oidc/interaction',
         token_endpoint: 'https://provider.example.com/oidc/token',
+        revocation_endpoint: 'https://provider.example.com/oidc/revocation',
         scopes_supported: scopes,
         response_types_supported: ['code'],
         response_modes_supported: ['query'],
@@ -279,6 +300,10 @@ describe('Discovery Endpoint', () => {
         interaction_endpoint_auth_signing_alg_values_supported: ['ES256'],
         interaction_endpoint_auth_encryption_alg_values_supported: ['RSA-OAEP'],
         interaction_endpoint_auth_encryption_enc_values_supported: ['A128GCM'],
+        revocation_endpoint_auth_methods_supported: ['client_secret_basic', 'private_key_jwt'],
+        revocation_endpoint_auth_signing_alg_values_supported: ['ES256'],
+        revocation_endpoint_auth_encryption_alg_values_supported: ['RSA-OAEP'],
+        revocation_endpoint_auth_encryption_enc_values_supported: ['A128GCM'],
       };
 
       dataAccessMock.getScopes.mockResolvedValueOnce(

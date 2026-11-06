@@ -1,5 +1,3 @@
-BEGIN TRANSACTION;
-
 UPDATE refresh_tokens
 SET
     revoked_at = unixepoch('now')
@@ -21,5 +19,3 @@ VALUES (
         $client_id,
         $user_id
     );
-
-COMMIT;

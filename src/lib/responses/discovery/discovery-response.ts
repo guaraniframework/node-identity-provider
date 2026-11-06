@@ -35,6 +35,11 @@ export interface DiscoveryResponse extends NodeJS.Dict<string | number | boolean
   readonly token_endpoint: string;
 
   /**
+   * URL of the Revocation Endpoint.
+   */
+  readonly revocation_endpoint?: string;
+
+  /**
    * Scopes supported by the Identity Provider.
    */
   readonly scopes_supported: string[];
@@ -163,4 +168,24 @@ export interface DiscoveryResponse extends NodeJS.Dict<string | number | boolean
    * JSON Web Encryption Content Encryption Algorithms for Interaction Endpoint JWT Bearer Client Assertion Encryption supported by the Identity Provider.
    */
   readonly interaction_endpoint_auth_encryption_enc_values_supported?: ContentEncryptionAlgorithm[];
+
+  /**
+   * Client Authentication Methods supported by the Revocation Endpoint.
+   */
+  readonly revocation_endpoint_auth_methods_supported?: ClientAuthenticationName[];
+
+  /**
+   * JSON Web Signature Digital Signature Algorithms for Revocation Endpoint JWT Bearer Client Assertion Signature supported by the Identity Provider.
+   */
+  readonly revocation_endpoint_auth_signing_alg_values_supported?: Exclude<DigitalSignatureAlgorithm, 'none'>[];
+
+  /**
+   * JSON Web Encryption Key Wrap Algorithms for Revocation Endpoint JWT Bearer Client Assertion Encryption supported by the Identity Provider.
+   */
+  readonly revocation_endpoint_auth_encryption_alg_values_supported?: KeyManagementAlgorithm[];
+
+  /**
+   * JSON Web Encryption Content Encryption Algorithms for Revocation Endpoint JWT Bearer Client Assertion Encryption supported by the Identity Provider.
+   */
+  readonly revocation_endpoint_auth_encryption_enc_values_supported?: ContentEncryptionAlgorithm[];
 }

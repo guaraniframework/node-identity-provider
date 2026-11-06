@@ -91,4 +91,9 @@ export enum ErrorCode {
    * The Identity Provider does not support the requested Response Type.
    */
   UnsupportedResponseType = 'unsupported_response_type',
+
+  /**
+   * The Identity Provider does not support the requested Token Type.
+   */
+  UnsupportedTokenType = 'unsupported_token_type',
 }

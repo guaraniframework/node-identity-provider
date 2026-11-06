@@ -10,6 +10,7 @@ import { removeNullishValues } from '@guarani/primitives';
 import { CONTAINER } from '../../../constants';
 import { DataAccess } from '../../../data-access/data-access';
 import { SQLiteDataAccess } from '../../../data-access/sqlite/sqlite.data-access';
+import { InvalidClientError } from '../../../errors/invalid-client/invalid-client.error';
 import { InvalidRequestError } from '../../../errors/invalid-request/invalid-request.error';
 import { MethodNotAllowedError } from '../../../errors/method-not-allowed/method-not-allowed.error';
 import { NotFoundError } from '../../../errors/not-found/not-found.error';
@@ -60,6 +61,7 @@ describe('Node Identity Provider', () => {
       .addDiscoveryEndpoint()
       .addInteractionEndpoint()
       .addSettings(settings)
+      .addRevocationEndpoint()
       .addTokenEndpoint()
       .add(DatabaseSync, database)
       .add(JsonWebKeySet, jsonWebKeySet)
@@ -114,6 +116,15 @@ describe('Node Identity Provider', () => {
       const response = await agent.get('/oidc/interaction');
 
       expect(response.status).toBe(HttpResponseStatus.BadRequest);
+      expect(response.body).toStrictEqual(error.toJSON());
+    });
+
+    it('should have a Revocation Endpoint.', async () => {
+      const error = new InvalidClientError('No Client Authentication Method detected.');
+
+      const response = await agent.post('/oidc/revocation').set('Content-Type', 'application/x-www-form-urlencoded');
+
+      expect(response.status).toBe(HttpResponseStatus.Unauthorized);
       expect(response.body).toStrictEqual(error.toJSON());
     });
 

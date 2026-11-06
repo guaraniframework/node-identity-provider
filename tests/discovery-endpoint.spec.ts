@@ -42,6 +42,7 @@ describe('Discovery Endpoint', () => {
       authorization_endpoint: 'https://provider.example.com/oidc/authorization',
       interaction_endpoint: 'https://provider.example.com/oidc/interaction',
       token_endpoint: 'https://provider.example.com/oidc/token',
+      revocation_endpoint: 'https://provider.example.com/oidc/revocation',
       scopes_supported: [
         'openid',
         'profile',
@@ -70,6 +71,7 @@ describe('Discovery Endpoint', () => {
       code_challenge_methods_supported: ['S256'],
       authorization_response_iss_parameter_supported: false,
       interaction_endpoint_auth_methods_supported: ['client_secret_basic'],
+      revocation_endpoint_auth_methods_supported: ['client_secret_basic'],
     });
   });
 });
