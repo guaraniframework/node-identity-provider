@@ -70,7 +70,7 @@ export class RefreshTokenGrantType extends GrantType {
 
     const {
       client,
-      refreshToken: { user },
+      refreshToken: { login, user },
       scopes,
     } = context;
 
@@ -82,7 +82,7 @@ export class RefreshTokenGrantType extends GrantType {
         refreshToken = await this.dataAccess.rotateRefreshToken!(refreshToken);
       }
 
-      const accessToken = await this.dataAccess.createAccessToken(scopes, client, user, refreshToken);
+      const accessToken = await this.dataAccess.createAccessToken(scopes, client, user, login, refreshToken);
 
       return [accessToken, refreshToken];
     });

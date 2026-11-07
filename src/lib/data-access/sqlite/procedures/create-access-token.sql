@@ -3,11 +3,13 @@ INSERT INTO
         id,
         client_id,
         user_id,
+        login_id,
         refresh_token_id
     )
 VALUES (
         $id,
         $client_id,
         $user_id,
+        $login_id,
         $refresh_token_id
     ) RETURNING *;

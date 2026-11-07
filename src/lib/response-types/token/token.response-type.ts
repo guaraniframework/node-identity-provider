@@ -54,8 +54,9 @@ export class TokenResponseType extends ResponseType {
     });
 
     const { client, scopes, user } = context.session!.grant!.consent!;
+    const login = context.session!.activeLogin!;
 
-    const accessToken = await this.dataAccess.createAccessToken(scopes, client, user, null);
+    const accessToken = await this.dataAccess.createAccessToken(scopes, client, user, login, null);
     const response = createTokenResponse<TokenAuthorizationResponse>(accessToken);
 
     this.logger.debug(`[${this.constructor.name}] Completed handle()`, 'aca16c66-7827-4891-b039-ec7aedc407ec', {

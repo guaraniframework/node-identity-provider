@@ -68,10 +68,10 @@ export class AuthorizationCodeGrantType extends GrantType {
     const [accessToken, refreshToken, idToken] = await this.dataAccess.atomic(async () => {
       const refreshToken =
         typeof this.dataAccess.createRefreshToken === 'function' && client.grantTypes.includes('refresh_token')
-          ? await this.dataAccess.createRefreshToken(scopes, client, user)
+          ? await this.dataAccess.createRefreshToken(scopes, client, user, login)
           : null;
 
-      const accessToken = await this.dataAccess.createAccessToken(scopes, client, user, refreshToken);
+      const accessToken = await this.dataAccess.createAccessToken(scopes, client, user, login, refreshToken);
 
       const generateIdTokenOptions = removeNullishValues<GenerateIdTokenOptions>({
         maxAge:

@@ -62,21 +62,20 @@ describe('Resource Owner Password Credentials Grant Type', () => {
     const user: User = Object.assign<User, Partial<User>>(new User(), { id: 'user_id' });
     const scopes: Scope[] = ['foo', 'bar'].map((name) => Object.assign<Scope, Partial<Scope>>(new Scope(), { name }));
 
+    const accessToken: AccessToken = Object.assign<AccessToken, Partial<AccessToken>>(new AccessToken(), {
+      id: 'access_token_id',
+      type: 'Bearer',
+      scopes,
+      expiresAt: new Date(now + 86400000),
+    });
+
     const refreshToken: RefreshToken = Object.assign<RefreshToken, Partial<RefreshToken>>(new RefreshToken(), {
       id: 'refresh_token_id',
-      user,
     });
 
     const context: PasswordTokenContext = { parameters, grantType, client, user, scopes };
 
     it('should return a Resource Owner Password Credentials Token Response without a Refresh Token when the Identity Provider does not support it.', async () => {
-      const accessToken: AccessToken = Object.assign<AccessToken, Partial<AccessToken>>(new AccessToken(), {
-        id: 'access_token_id',
-        type: 'Bearer',
-        scopes,
-        expiresAt: new Date(now + 86400000),
-      });
-
       Reflect.deleteProperty(dataAccessMock, 'createRefreshToken');
 
       dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
@@ -91,18 +90,11 @@ describe('Resource Owner Password Credentials Grant Type', () => {
 
       Reflect.set(dataAccessMock, 'createRefreshToken', jest.fn());
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, null);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, null, null);
       expect(dataAccessMock.createRefreshToken).not.toHaveBeenCalled();
     });
 
     it('should return a Resource Owner Password Credentials Token Response without a Refresh Token when the Client does not support it.', async () => {
-      const accessToken: AccessToken = Object.assign<AccessToken, Partial<AccessToken>>(new AccessToken(), {
-        id: 'access_token_id',
-        type: 'Bearer',
-        scopes,
-        expiresAt: new Date(now + 86400000),
-      });
-
       Reflect.set(client, 'grantTypes', ['password']);
 
       dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
@@ -117,18 +109,11 @@ describe('Resource Owner Password Credentials Grant Type', () => {
 
       Reflect.set(client, 'grantTypes', ['password', 'refresh_token']);
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, null);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, null, null);
       expect(dataAccessMock.createRefreshToken).not.toHaveBeenCalled();
     });
 
     it('should return a Resource Owner Password Credentials Token Response with a Refresh Token.', async () => {
-      const accessToken: AccessToken = Object.assign<AccessToken, Partial<AccessToken>>(new AccessToken(), {
-        id: 'access_token_id',
-        type: 'Bearer',
-        scopes,
-        expiresAt: new Date(now + 86400000),
-      });
-
       dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
       dataAccessMock.createAccessToken.mockResolvedValueOnce(accessToken);
       dataAccessMock.createRefreshToken!.mockResolvedValueOnce(refreshToken);
@@ -141,8 +126,15 @@ describe('Resource Owner Password Credentials Grant Type', () => {
         refresh_token: 'refresh_token_id',
       });
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, refreshToken);
-      expect(dataAccessMock.createRefreshToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(
+        scopes,
+        client,
+        user,
+        null,
+        refreshToken,
+      );
+
+      expect(dataAccessMock.createRefreshToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, null);
     });
   });
 });

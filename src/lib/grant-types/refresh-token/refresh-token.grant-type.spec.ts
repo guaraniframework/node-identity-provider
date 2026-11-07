@@ -5,6 +5,7 @@ import { RefreshTokenTokenContext } from '../../context/token/refresh-token/refr
 import { DataAccess } from '../../data-access/data-access';
 import { AccessToken } from '../../entities/access-token';
 import { Client } from '../../entities/client';
+import { Login } from '../../entities/login';
 import { RefreshToken } from '../../entities/refresh-token';
 import { Scope } from '../../entities/scope';
 import { User } from '../../entities/user';
@@ -88,22 +89,30 @@ describe('Refresh Token Grant Type', () => {
     const client: Client = Object.assign<Client, Partial<Client>>(new Client(), { id: 'client_id' });
     const user: User = Object.assign<User, Partial<User>>(new User(), { id: 'user_id' });
     const scopes: Scope[] = ['foo', 'bar'].map((name) => Object.assign<Scope, Partial<Scope>>(new Scope(), { name }));
+    const login: Login = Object.assign<Login, Partial<Login>>(new Login(), { id: 'login_id', user });
+
+    const accessToken: AccessToken = Object.assign<AccessToken, Partial<AccessToken>>(new AccessToken(), {
+      id: 'access_token_id',
+      type: 'Bearer',
+      scopes,
+      expiresAt: new Date(now + 86400000),
+    });
 
     const refreshToken: RefreshToken = Object.assign<RefreshToken, Partial<RefreshToken>>(new RefreshToken(), {
       id: 'refresh_token_id',
+      login,
+      user,
+    });
+
+    const newRefreshToken: RefreshToken = Object.assign<RefreshToken, Partial<RefreshToken>>(new RefreshToken(), {
+      id: 'new_refresh_token_id',
+      login,
       user,
     });
 
     const context: RefreshTokenTokenContext = { parameters, grantType, client, refreshToken, scopes };
 
     it('should return a Refresh Token Token Response without Refresh Token Rotation.', async () => {
-      const accessToken: AccessToken = Object.assign<AccessToken, Partial<AccessToken>>(new AccessToken(), {
-        id: 'access_token_id',
-        type: 'Bearer',
-        scopes,
-        expiresAt: new Date(now + 86400000),
-      });
-
       Reflect.set(settingsMock, 'enableRefreshTokenRotation', false);
 
       dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
@@ -119,22 +128,18 @@ describe('Refresh Token Grant Type', () => {
 
       Reflect.set(settingsMock, 'enableRefreshTokenRotation', true);
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, refreshToken);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(
+        scopes,
+        client,
+        user,
+        login,
+        refreshToken,
+      );
+
       expect(dataAccessMock.rotateRefreshToken).not.toHaveBeenCalled();
     });
 
     it('should return a Refresh Token Token Response with Refresh Token Rotation.', async () => {
-      const accessToken: AccessToken = Object.assign<AccessToken, Partial<AccessToken>>(new AccessToken(), {
-        id: 'access_token_id',
-        type: 'Bearer',
-        scopes,
-        expiresAt: new Date(now + 86400000),
-      });
-
-      const newRefreshToken: RefreshToken = Object.assign<RefreshToken, Partial<RefreshToken>>(new RefreshToken(), {
-        id: 'new_refresh_token_id',
-      });
-
       dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
       dataAccessMock.createAccessToken.mockResolvedValueOnce(accessToken);
       dataAccessMock.rotateRefreshToken!.mockResolvedValueOnce(newRefreshToken);
@@ -147,7 +152,14 @@ describe('Refresh Token Grant Type', () => {
         refresh_token: 'new_refresh_token_id',
       });
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, newRefreshToken);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(
+        scopes,
+        client,
+        user,
+        login,
+        newRefreshToken,
+      );
+
       expect(dataAccessMock.rotateRefreshToken).toHaveBeenCalledExactlyOnceWith(refreshToken);
     });
   });

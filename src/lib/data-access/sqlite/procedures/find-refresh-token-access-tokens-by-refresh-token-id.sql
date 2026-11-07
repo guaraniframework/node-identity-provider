@@ -7,6 +7,7 @@ SELECT
     valid_after,
     client_id,
     user_id,
+    login_id,
     refresh_token_id
 FROM access_tokens
 WHERE

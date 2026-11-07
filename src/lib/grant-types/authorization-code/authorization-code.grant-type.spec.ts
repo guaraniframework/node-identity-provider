@@ -117,12 +117,9 @@ describe('Authorization Code Grant Type', () => {
         type: 'Bearer',
         scopes,
         expiresAt: new Date(now + 86400000),
-        user,
       });
 
-      refreshToken = Object.assign<RefreshToken, Partial<RefreshToken>>(new RefreshToken(), {
-        id: 'refresh_token_id',
-      });
+      refreshToken = Object.assign<RefreshToken, Partial<RefreshToken>>(new RefreshToken(), { id: 'refresh_token_id' });
 
       context = {
         parameters,
@@ -148,7 +145,7 @@ describe('Authorization Code Grant Type', () => {
         scope: 'openid foo bar',
       });
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, null);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, login, null);
       expect(dataAccessMock.revokeAuthorizationCode).toHaveBeenCalledExactlyOnceWith(authorizationCode);
 
       expect(dataAccessMock.createRefreshToken).toBeUndefined();
@@ -169,7 +166,7 @@ describe('Authorization Code Grant Type', () => {
         scope: 'openid foo bar',
       });
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, null);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, login, null);
       expect(dataAccessMock.revokeAuthorizationCode).toHaveBeenCalledExactlyOnceWith(authorizationCode);
 
       expect(dataAccessMock.createRefreshToken).not.toHaveBeenCalled();
@@ -190,7 +187,7 @@ describe('Authorization Code Grant Type', () => {
         scope: 'foo bar',
       });
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, null);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, login, null);
       expect(dataAccessMock.revokeAuthorizationCode).toHaveBeenCalledExactlyOnceWith(authorizationCode);
 
       expect(dataAccessMock.createRefreshToken).toBeUndefined();
@@ -211,7 +208,7 @@ describe('Authorization Code Grant Type', () => {
         scope: 'foo bar',
       });
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, null);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, login, null);
       expect(dataAccessMock.revokeAuthorizationCode).toHaveBeenCalledExactlyOnceWith(authorizationCode);
 
       expect(dataAccessMock.createRefreshToken).not.toHaveBeenCalled();
@@ -233,8 +230,15 @@ describe('Authorization Code Grant Type', () => {
         refresh_token: 'refresh_token_id',
       });
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, refreshToken);
-      expect(dataAccessMock.createRefreshToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(
+        scopes,
+        client,
+        user,
+        login,
+        refreshToken,
+      );
+
+      expect(dataAccessMock.createRefreshToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, login);
       expect(dataAccessMock.revokeAuthorizationCode).toHaveBeenCalledExactlyOnceWith(authorizationCode);
 
       expect(idTokenHandlerMock.generateIdToken).not.toHaveBeenCalled();
@@ -255,8 +259,15 @@ describe('Authorization Code Grant Type', () => {
         refresh_token: 'refresh_token_id',
       });
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, refreshToken);
-      expect(dataAccessMock.createRefreshToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(
+        scopes,
+        client,
+        user,
+        login,
+        refreshToken,
+      );
+
+      expect(dataAccessMock.createRefreshToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, login);
       expect(dataAccessMock.revokeAuthorizationCode).toHaveBeenCalledExactlyOnceWith(authorizationCode);
 
       expect(idTokenHandlerMock.generateIdToken).not.toHaveBeenCalled();
@@ -277,7 +288,7 @@ describe('Authorization Code Grant Type', () => {
         id_token: 'id_token',
       });
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, null);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, login, null);
       expect(idTokenHandlerMock.generateIdToken).toHaveBeenCalledExactlyOnceWith(login, consent, {
         accessToken,
         authorizationCode,
@@ -306,7 +317,7 @@ describe('Authorization Code Grant Type', () => {
         id_token: 'id_token',
       });
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, null);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, login, null);
       expect(idTokenHandlerMock.generateIdToken).toHaveBeenCalledExactlyOnceWith(login, consent, {
         accessToken,
         authorizationCode,
@@ -336,8 +347,15 @@ describe('Authorization Code Grant Type', () => {
         id_token: 'id_token',
       });
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, refreshToken);
-      expect(dataAccessMock.createRefreshToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(
+        scopes,
+        client,
+        user,
+        login,
+        refreshToken,
+      );
+
+      expect(dataAccessMock.createRefreshToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, login);
       expect(idTokenHandlerMock.generateIdToken).toHaveBeenCalledExactlyOnceWith(login, consent, {
         accessToken,
         authorizationCode,

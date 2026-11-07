@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     valid_after INTEGER NOT NULL DEFAULT (unixepoch('now')),
     client_id BLOB NOT NULL,
     user_id BLOB NOT NULL,
+    login_id BLOB NULL,
     FOREIGN KEY (client_id) REFERENCES clients (id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (login_id) REFERENCES logins (id) ON DELETE CASCADE
 ) STRICT;

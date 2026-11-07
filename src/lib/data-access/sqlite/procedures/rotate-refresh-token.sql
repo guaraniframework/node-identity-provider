@@ -10,14 +10,16 @@ INSERT INTO
         expires_at,
         valid_after,
         client_id,
-        user_id
+        user_id,
+        login_id
     )
 VALUES (
         $id,
         $expires_at,
         $valid_after,
         $client_id,
-        $user_id
+        $user_id,
+        $login_id
     );
 
 UPDATE access_tokens

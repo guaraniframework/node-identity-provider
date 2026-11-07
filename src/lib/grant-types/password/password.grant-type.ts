@@ -54,10 +54,10 @@ export class PasswordGrantType extends GrantType {
     const [accessToken, refreshToken] = await this.dataAccess.atomic(async () => {
       const refreshToken =
         typeof this.dataAccess.createRefreshToken === 'function' && client.grantTypes.includes('refresh_token')
-          ? await this.dataAccess.createRefreshToken(scopes, client, user)
+          ? await this.dataAccess.createRefreshToken(scopes, client, user, null)
           : null;
 
-      const accessToken = await this.dataAccess.createAccessToken(scopes, client, user, refreshToken);
+      const accessToken = await this.dataAccess.createAccessToken(scopes, client, user, null, refreshToken);
 
       return [accessToken, refreshToken];
     });
