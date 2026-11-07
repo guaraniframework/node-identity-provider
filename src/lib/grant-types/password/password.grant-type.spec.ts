@@ -91,7 +91,7 @@ describe('Resource Owner Password Credentials Grant Type', () => {
 
       Reflect.set(dataAccessMock, 'createRefreshToken', jest.fn());
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, null);
       expect(dataAccessMock.createRefreshToken).not.toHaveBeenCalled();
     });
 
@@ -117,7 +117,7 @@ describe('Resource Owner Password Credentials Grant Type', () => {
 
       Reflect.set(client, 'grantTypes', ['password', 'refresh_token']);
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, null);
       expect(dataAccessMock.createRefreshToken).not.toHaveBeenCalled();
     });
 
@@ -141,7 +141,7 @@ describe('Resource Owner Password Credentials Grant Type', () => {
         refresh_token: 'refresh_token_id',
       });
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, refreshToken);
       expect(dataAccessMock.createRefreshToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user);
     });
   });

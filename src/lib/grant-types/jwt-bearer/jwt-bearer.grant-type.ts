@@ -54,7 +54,7 @@ export class JwtBearerGrantType extends GrantType {
 
     const { client, scopes, user } = context;
 
-    const accessToken = await this.dataAccess.createAccessToken(scopes, client, user);
+    const accessToken = await this.dataAccess.createAccessToken(scopes, client, user, null);
     const response = createTokenResponse<JwtBearerTokenResponse>(accessToken);
 
     this.logger.debug(`[${this.constructor.name}] Completed handle()`, 'aaef6e9c-c924-4d9b-bd75-0c25ac28a684', {

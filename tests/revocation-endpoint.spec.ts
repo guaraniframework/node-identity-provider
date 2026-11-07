@@ -178,11 +178,11 @@ describe('Authorization and Token Endpoints', () => {
     expect(revocationResponse.status).toEqual(HttpResponseStatus.OK);
 
     await expect(dataAccess.findAccessTokenById(accessToken.id)).resolves.toStrictEqual<AccessToken>(
-      expect.objectContaining<AccessToken>({ ...accessToken, revokedAt: expect.any(Date) }),
+      expect.objectContaining<Partial<AccessToken>>({ id: accessToken.id, revokedAt: expect.any(Date) }),
     );
 
     await expect(dataAccess.findRefreshTokenById(refreshToken.id)).resolves.toStrictEqual<RefreshToken>(
-      expect.objectContaining<RefreshToken>({ ...refreshToken, revokedAt: null }),
+      expect.objectContaining<Partial<RefreshToken>>({ id: refreshToken.id, revokedAt: null }),
     );
   });
 
@@ -200,11 +200,11 @@ describe('Authorization and Token Endpoints', () => {
     expect(revocationResponse.status).toEqual(HttpResponseStatus.OK);
 
     await expect(dataAccess.findAccessTokenById(accessToken.id)).resolves.toStrictEqual<AccessToken>(
-      expect.objectContaining<AccessToken>({ ...accessToken, revokedAt: expect.any(Date) }),
+      expect.objectContaining<Partial<AccessToken>>({ id: accessToken.id, revokedAt: expect.any(Date) }),
     );
 
     await expect(dataAccess.findRefreshTokenById(refreshToken.id)).resolves.toStrictEqual<RefreshToken>(
-      expect.objectContaining<RefreshToken>({ ...refreshToken, revokedAt: expect.any(Date) }),
+      expect.objectContaining<Partial<RefreshToken>>({ id: refreshToken.id, revokedAt: expect.any(Date) }),
     );
   });
 });

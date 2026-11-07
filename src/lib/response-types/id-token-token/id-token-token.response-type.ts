@@ -71,7 +71,7 @@ export class IdTokenTokenResponseType extends ResponseType {
         nonce: nonce ?? undefined!,
       });
 
-      const accessToken = await this.dataAccess.createAccessToken(scopes, client, user);
+      const accessToken = await this.dataAccess.createAccessToken(scopes, client, user, null);
       const idToken = await this.idTokenHandler.generateIdToken(login, consent, {
         accessToken,
         ...generateIdTokenOptions,

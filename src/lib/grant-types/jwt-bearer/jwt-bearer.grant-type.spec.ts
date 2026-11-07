@@ -75,7 +75,7 @@ describe('JWT Bearer Grant Type', () => {
         scope: 'foo bar',
       });
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, null);
     });
   });
 });

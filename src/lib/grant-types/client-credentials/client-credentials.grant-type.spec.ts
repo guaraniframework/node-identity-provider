@@ -70,7 +70,7 @@ describe('Client Credentials Grant Type', () => {
         scope: 'foo bar',
       });
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, null);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, null, null);
     });
   });
 });

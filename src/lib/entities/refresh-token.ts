@@ -1,3 +1,4 @@
+import { AccessToken } from './access-token';
 import { Client } from './client';
 import { Scope } from './scope';
 import { User } from './user';
@@ -45,6 +46,11 @@ export class RefreshToken implements NodeJS.Dict<unknown> {
    * User that granted the Refresh Token to the Client.
    */
   public readonly user!: User;
+
+  /**
+   * Access Tokens associated to the Refresh Token.
+   */
+  public readonly accessTokens!: AccessToken[];
 
   /**
    * Additional Refresh Token Parameters.

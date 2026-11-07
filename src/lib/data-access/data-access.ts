@@ -31,9 +31,15 @@ export abstract class DataAccess {
    * @param scopes Scopes granted to the Client.
    * @param client Client requesting Authorization.
    * @param user User that granted Authorization.
+   * @param refreshToken Refresh Token associated to the Access Token.
    * @returns Created Access Token.
    */
-  public abstract createAccessToken(scopes: Scope[], client: Client, user: User | null): Promise<AccessToken>;
+  public abstract createAccessToken(
+    scopes: Scope[],
+    client: Client,
+    user: User | null,
+    refreshToken: RefreshToken | null,
+  ): Promise<AccessToken>;
 
   /**
    * Creates an Authorization Code to be exchanged by the Client at the Token Endpoint for an Access Token.

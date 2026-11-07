@@ -119,7 +119,7 @@ describe('Refresh Token Grant Type', () => {
 
       Reflect.set(settingsMock, 'enableRefreshTokenRotation', true);
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, refreshToken);
       expect(dataAccessMock.rotateRefreshToken).not.toHaveBeenCalled();
     });
 
@@ -147,7 +147,7 @@ describe('Refresh Token Grant Type', () => {
         refresh_token: 'new_refresh_token_id',
       });
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, newRefreshToken);
       expect(dataAccessMock.rotateRefreshToken).toHaveBeenCalledExactlyOnceWith(refreshToken);
     });
   });

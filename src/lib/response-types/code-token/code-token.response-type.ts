@@ -62,7 +62,7 @@ export class CodeTokenResponseType extends ResponseType {
     const { client, scopes, user } = consent;
 
     const [accessToken, authorizationCode] = await this.dataAccess.atomic(async () => {
-      const accessToken = await this.dataAccess.createAccessToken(scopes, client, user);
+      const accessToken = await this.dataAccess.createAccessToken(scopes, client, user, null);
       const authorizationCode = await this.dataAccess.createAuthorizationCode(parameters, login, consent);
 
       return [accessToken, authorizationCode];
