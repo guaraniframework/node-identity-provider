@@ -14,6 +14,7 @@ import { SQLiteDataAccess } from '../data-access/sqlite/sqlite.data-access';
 import { AuthorizationEndpoint } from '../endpoints/authorization/authorization.endpoint';
 import { DiscoveryEndpoint } from '../endpoints/discovery/discovery.endpoint';
 import { Endpoint } from '../endpoints/endpoint';
+import { ENDPOINT_REGISTRY } from '../endpoints/endpoint.registry';
 import { InteractionEndpoint } from '../endpoints/interaction/interaction.endpoint';
 import { RevocationEndpoint } from '../endpoints/revocation/revocation.endpoint';
 import { TokenEndpoint } from '../endpoints/token/token.endpoint';
@@ -23,6 +24,15 @@ import { ScopeHandler } from '../handlers/scope/scope.handler';
 import { IdentityProvider } from '../http/providers/identity-provider';
 import { ConsoleLogger } from '../loggers/console/console.logger';
 import { Logger } from '../loggers/logger';
+import { FragmentResponseMode } from '../response-modes/fragment/fragment.response-mode';
+import { QueryResponseMode } from '../response-modes/query/query.response-mode';
+import { ResponseMode } from '../response-modes/response-mode';
+import { RESPONSE_MODE_REGISTRY } from '../response-modes/response-mode.registry';
+import { CodeResponseType } from '../response-types/code/code.response-type';
+import { IdTokenResponseType } from '../response-types/id-token/id-token.response-type';
+import { IdTokenTokenResponseType } from '../response-types/id-token-token/id-token-token.response-type';
+import { ResponseType } from '../response-types/response-type';
+import { RESPONSE_TYPE_REGISTRY } from '../response-types/response-type.registry';
 import { Settings } from '../settings/settings';
 import { SubjectType } from '../subject-types/subject-type';
 import { SUBJECT_TYPE_REGISTRY } from '../subject-types/subject-type.registry';
@@ -145,9 +155,9 @@ export class IdentityProviderFactory {
    * @throws {TypeError} The provided Settings is invalid.
    * @returns Identity Provider Factory.
    */
-  public addSettings(settings: Settings | Factory<Settings>): IdentityProviderFactory {
-    if (this._isClass(settings)) {
-      throw new TypeError('The Settings Entry must be an object or a factory.');
+  public addSettings(settings: Settings): IdentityProviderFactory {
+    if (!this._inherits(settings, Settings) || settings === (Settings as any)) {
+      throw new TypeError('The Settings Entry must be an object.');
     }
 
     this.container.delete(Settings);
@@ -253,15 +263,12 @@ export class IdentityProviderFactory {
    */
   public create<T extends IdentityProvider>(provider: Constructor<T>): T {
     this.checkRequiredEndpoints();
+    this.checkIdToken();
 
     this.container.delete(IdentityProvider);
 
     if (!this.container.isRegistered(SubjectType)) {
       this.addSubjectTypes(['public']);
-    }
-
-    if ((this.container.get(Settings) as Settings).idTokenSignatureAlgorithms.length !== 0) {
-      this.addContainerEntry(IdTokenHandler);
     }
 
     this.addContainerEntry(IdentityProvider, provider);
@@ -333,9 +340,55 @@ export class IdentityProviderFactory {
 
     requiredEndpoints.forEach((requiredEndpoint) => {
       if (!registeredEndpoints.includes(requiredEndpoint)) {
-        throw new TypeError(`Missing required Endpoint "${requiredEndpoint.name}".`);
+        const endpointName = Object.entries(ENDPOINT_REGISTRY).find(([, endpoint]) => {
+          return endpoint === requiredEndpoint;
+        })![0];
+
+        throw new TypeError(`Missing required Endpoint "${endpointName}".`);
       }
     });
+  }
+
+  private checkIdToken(): void {
+    const requiredResponseTypes: Constructor<ResponseType>[] = [
+      CodeResponseType,
+      IdTokenResponseType,
+      IdTokenTokenResponseType,
+    ];
+
+    const requiredResponseModes: Constructor<ResponseMode>[] = [FragmentResponseMode, QueryResponseMode];
+
+    const settings = this.container.get(Settings) as Settings;
+    const registeredResponseTypes = this.container.getAll(ResponseType) as Constructor<ResponseType>[];
+    const registeredResponseModes = this.container.getAll(ResponseMode) as Constructor<ResponseMode>[];
+
+    if (settings.idTokenSignatureAlgorithms.length !== 0) {
+      if (!settings.idTokenSignatureAlgorithms.includes('RS256')) {
+        throw new TypeError('Missing required ID Token Digital Signature Algorithm "RS256".');
+      }
+
+      requiredResponseTypes.forEach((requiredResponseType) => {
+        if (!registeredResponseTypes.includes(requiredResponseType)) {
+          const responseTypeName = Object.entries(RESPONSE_TYPE_REGISTRY).find(([, responseType]) => {
+            return responseType === requiredResponseType;
+          })![0];
+
+          throw new TypeError(`Missing required Response Type "${responseTypeName}".`);
+        }
+      });
+
+      requiredResponseModes.forEach((requiredResponseMode) => {
+        if (!registeredResponseModes.includes(requiredResponseMode)) {
+          const responseModeName = Object.entries(RESPONSE_MODE_REGISTRY).find(([, responseMode]) => {
+            return responseMode === requiredResponseMode;
+          })![0];
+
+          throw new TypeError(`Missing required Response Mode "${responseModeName}".`);
+        }
+      });
+
+      this.addContainerEntry(IdTokenHandler);
+    }
   }
 
   // #region Helper Methods

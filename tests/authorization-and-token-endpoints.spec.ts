@@ -1,14 +1,11 @@
-import * as cookiejar from 'cookiejar';
-import http, { ClientRequest, OutgoingHttpHeaders } from 'http';
-import https from 'https';
+import { CookieAccessInfo } from 'cookiejar';
+import http, { OutgoingHttpHeaders } from 'http';
 import qs from 'querystring';
-import { PassThrough } from 'stream';
 import request from 'supertest';
 import TestAgent from 'supertest/lib/agent';
 
 import { getContainer } from '@guarani/di';
-import { JsonWebKeySet, jwe, jwt, RsaJsonWebKey } from '@guarani/jose';
-import { jsonStringify } from '@guarani/primitives';
+import { JsonWebKeySet, jwe, jwt } from '@guarani/jose';
 
 import { CONTAINER } from '../src/lib/constants';
 import { DataAccess } from '../src/lib/data-access/data-access';
@@ -34,49 +31,8 @@ import { LoginDecisionInteractionResponse } from '../src/lib/responses/interacti
 import { AuthorizationCodeTokenResponse } from '../src/lib/responses/token/authorization-code/authorization-code.token-response';
 import { Settings } from '../src/lib/settings/settings';
 import { addParametersToUrl } from '../src/lib/utils/add-parameters-to-url/add-parameters-to-url';
+import { getClientJsonWebKey } from '../src/lib/utils/get-client-jsonwebkey/get-client-jsonwebkey';
 import { createTestProvider } from './support/create-test-provider';
-
-const clientRsaKeyWrapJsonWebKey = new RsaJsonWebKey({
-  kty: 'RSA',
-  n:
-    'sXchDaQebHnPiGvyDOAT4saGEUetSyo9MKLOoWFsueri23bOdgWp4Dy1WlUzewbg' +
-    'BHod5pcM9H95GQRV3JDXboIRROSBigeC5yjU1hGzHHyXss8UDprecbAYxknTcQkh' +
-    'slANGRUZmdTOQ5qTRsLAt6BTYuyvVRdhS8exSZEy_c4gs_7svlJJQ4H9_NxsiIoL' +
-    'wAEk7-Q3UXERGYw_75IDrGA84-lA_-Ct4eTlXHBIY2EaV7t7LjJaynVJCpkv4LKj' +
-    'TTAumiGUIuQhrNhZLuF_RJLqHpM2kgWFLU7-VTdL1VbC2tejvcI2BlMkEpk1BzBZ' +
-    'I0KQB0GaDWFLN-aEAw3vRw',
-  e: 'AQAB',
-  d:
-    'VFCWOqXr8nvZNyaaJLXdnNPXZKRaWCjkU5Q2egQQpTBMwhprMzWzpR8Sxq1OPThh' +
-    '_J6MUD8Z35wky9b8eEO0pwNS8xlh1lOFRRBoNqDIKVOku0aZb-rynq8cxjDTLZQ6' +
-    'Fz7jSjR1Klop-YKaUHc9GsEofQqYruPhzSA-QgajZGPbE_0ZaVDJHfyd7UUBUKun' +
-    'FMScbflYAAOYJqVIVwaYR5zWEEceUjNnTNo_CVSj-VvXLO5VZfCUAVLgW4dpf1Sr' +
-    'tZjSt34YLsRarSb127reG_DUwg9Ch-KyvjT1SkHgUWRVGcyly7uvVGRSDwsXypdr' +
-    'NinPA4jlhoNdizK2zF2CWQ',
-  p:
-    '9gY2w6I6S6L0juEKsbeDAwpd9WMfgqFoeA9vEyEUuk4kLwBKcoe1x4HG68ik918h' +
-    'dDSE9vDQSccA3xXHOAFOPJ8R9EeIAbTi1VwBYnbTp87X-xcPWlEPkrdoUKW60tgs' +
-    '1aNd_Nnc9LEVVPMS390zbFxt8TN_biaBgelNgbC95sM',
-  q:
-    'uKlCKvKv_ZJMVcdIs5vVSU_6cPtYI1ljWytExV_skstvRSNi9r66jdd9-yBhVfuG' +
-    '4shsp2j7rGnIio901RBeHo6TPKWVVykPu1iYhQXw1jIABfw-MVsN-3bQ76WLdt2S' +
-    'DxsHs7q7zPyUyHXmps7ycZ5c72wGkUwNOjYelmkiNS0',
-  dp:
-    'w0kZbV63cVRvVX6yk3C8cMxo2qCM4Y8nsq1lmMSYhG4EcL6FWbX5h9yuvngs4iLE' +
-    'Fk6eALoUS4vIWEwcL4txw9LsWH_zKI-hwoReoP77cOdSL4AVcraHawlkpyd2TWjE' +
-    '5evgbhWtOxnZee3cXJBkAi64Ik6jZxbvk-RR3pEhnCs',
-  dq:
-    'o_8V14SezckO6CNLKs_btPdFiO9_kC1DsuUTd2LAfIIVeMZ7jn1Gus_Ff7B7IVx3' +
-    'p5KuBGOVF8L-qifLb6nQnLysgHDh132NDioZkhH7mI7hPG-PYE_odApKdnqECHWw' +
-    '0J-F0JWnUd6D2B_1TvF9mXA2Qx-iGYn8OVV1Bsmp6qU',
-  qi:
-    'eNho5yRBEBxhGBtQRww9QirZsB66TrfFReG_CcteI1aCneT0ELGhYlRlCtUkTRcl' +
-    'IfuEPmNsNDPbLoLqqCVznFbvdB7x-Tl-m0l_eFTj2KiqwGqE9PZB9nNTwMVvH3VR' +
-    'RSLWACvPnSiwP8N5Usy-WRXS-V7TbpxIhvepTfE0NNo',
-  alg: 'RSA-OAEP',
-  kid: 'rsa-keywrap-key',
-  use: 'enc',
-});
 
 describe('Authorization and Token Endpoints', () => {
   let server: http.Server;
@@ -148,7 +104,7 @@ describe('Authorization and Token Endpoints', () => {
     expect(authorizationResponse.status).toBe(HttpResponseStatus.SeeOther);
     expect(authorizationResponseLocationUrl.href).toBe(authorizationRequestUrl.href);
 
-    sessionId = agent.jar.getCookie(settings.sessionCookie, cookiejar.CookieAccessInfo.All)?.value!;
+    sessionId = agent.jar.getCookie(settings.sessionCookie, CookieAccessInfo.All)?.value!;
     expect(sessionId).toBeString();
 
     session = (await dataAccess.findSessionById(sessionId))!;
@@ -163,7 +119,7 @@ describe('Authorization and Token Endpoints', () => {
     const authorizationResponseLocationUrl = new URL(authorizationResponse.headers['location']!);
 
     expect(authorizationResponse.status).toBe(HttpResponseStatus.SeeOther);
-    expect(agent.jar.getCookie(settings.sessionCookie, cookiejar.CookieAccessInfo.All)?.value).toBe(sessionId);
+    expect(agent.jar.getCookie(settings.sessionCookie, CookieAccessInfo.All)?.value).toBe(sessionId);
 
     loginChallenge = authorizationResponseLocationUrl.searchParams.get('login_challenge')!;
     expect(loginChallenge).toBeString();
@@ -256,7 +212,7 @@ describe('Authorization and Token Endpoints', () => {
     const authorizationResponseLocationUrl = new URL(authorizationResponse.headers['location']!);
 
     expect(authorizationResponse.status).toBe(HttpResponseStatus.SeeOther);
-    expect(agent.jar.getCookie(settings.sessionCookie, cookiejar.CookieAccessInfo.All)?.value).toBe(sessionId);
+    expect(agent.jar.getCookie(settings.sessionCookie, CookieAccessInfo.All)?.value).toBe(sessionId);
 
     consentChallenge = authorizationResponseLocationUrl.searchParams.get('consent_challenge')!;
     expect(consentChallenge).toBeString();
@@ -355,7 +311,7 @@ describe('Authorization and Token Endpoints', () => {
     const authorizationResponseLocationUrl = new URL(authorizationResponse.headers['location']!);
 
     expect(authorizationResponse.status).toBe(HttpResponseStatus.SeeOther);
-    expect(agent.jar.getCookie(settings.sessionCookie, cookiejar.CookieAccessInfo.All)?.value).toBe(sessionId);
+    expect(agent.jar.getCookie(settings.sessionCookie, CookieAccessInfo.All)?.value).toBe(sessionId);
 
     const authorizationResponseData = qs.parse(authorizationResponseLocationUrl.search.substring(1));
 
@@ -384,17 +340,6 @@ describe('Authorization and Token Endpoints', () => {
   });
 
   it('POST /oidc/token', async () => {
-    const streamMock = new PassThrough();
-
-    jest.spyOn(https, 'get').mockImplementationOnce((_: any, callback: any) => {
-      callback(streamMock);
-
-      streamMock.write(Buffer.from(jsonStringify({ keys: [clientRsaKeyWrapJsonWebKey.toJSON()] }), 'utf8'));
-      streamMock.end();
-
-      return { on: jest.fn(), end: jest.fn() } as unknown as ClientRequest;
-    });
-
     const requestData: AuthorizationCodeTokenRequest = {
       grant_type: 'authorization_code',
       code,
@@ -439,14 +384,14 @@ describe('Authorization and Token Endpoints', () => {
     const { plaintext } = await jwe.compact.deserialize(idToken, {
       expectedContentEncryptionAlgorithms: ['A128GCM'],
       expectedKeyManagementAlgorithms: ['RSA-OAEP'],
-      jsonWebKey: clientRsaKeyWrapJsonWebKey,
+      jsonWebKey: await getClientJsonWebKey(refreshToken.client, (key) => key.use === 'enc'),
     });
 
     const {
       claims: { parameters: claims },
     } = await jwt.signed.deserialize(plaintext.toString('ascii'), {
-      expectedDigitalSignatureAlgorithms: ['ES256'],
-      jsonWebKey: jsonWebKeySet.get((jsonWebKey) => jsonWebKey.kid === '050c4e27-da77-4efe-a2d7-32dbd0fa0b62'),
+      expectedDigitalSignatureAlgorithms: ['RS256'],
+      jsonWebKey: jsonWebKeySet.get((jsonWebKey) => jsonWebKey.kid === '03bf969a-e23b-42f7-8955-199e52faa09f'),
     });
 
     expect(claims.iss).toBe(settings.issuer.href);

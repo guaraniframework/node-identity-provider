@@ -2,7 +2,7 @@ import { Buffer } from 'buffer';
 import { DatabaseSync } from 'node:sqlite';
 import { URL } from 'url';
 
-import { DependencyInjectionContainer, Factory, getContainer, Injectable } from '@guarani/di';
+import { DependencyInjectionContainer, getContainer, Injectable } from '@guarani/di';
 import { JsonWebKeySet } from '@guarani/jose';
 
 import { CONTAINER } from '../constants';
@@ -29,6 +29,23 @@ import { IdentityProviderFactory } from './identity-provider.factory';
 import { IdentityProviderFactoryEntry } from './identity-provider-factory.entry';
 
 const invalidTokens: any[] = [undefined, null, true, 1, 1.2, 1n, Buffer.alloc(1), () => {}, {}, []];
+
+const invalidSettings: any[] = [
+  undefined,
+  null,
+  true,
+  1,
+  1.2,
+  1n,
+  'a',
+  Symbol('a'),
+  Buffer,
+  Buffer.alloc(1),
+  () => 1,
+  {},
+  [],
+  Settings,
+];
 
 const invalidSubjectTypes: any[] = [
   undefined,
@@ -70,11 +87,6 @@ const loggerEntries: IdentityProviderFactoryEntry<Logger>[] = [
   ConsoleLogger,
   () => Object.create(ConsoleLogger.prototype),
   Object.create(ConsoleLogger.prototype),
-];
-
-const settingsEntries: (Settings | Factory<Settings>)[] = [
-  () => Object.create(Settings.prototype),
-  Object.create(Settings.prototype),
 ];
 
 describe('Identity Provider Factory', () => {
@@ -269,15 +281,18 @@ describe('Identity Provider Factory', () => {
   });
 
   describe('addSettings()', () => {
-    it('should throw when the provided Settings Entry is the Settings constructor.', () => {
-      expect(() => factory.addSettings(Settings as any)).toThrowWithMessage(
-        TypeError,
-        'The Settings Entry must be an object or a factory.',
-      );
-    });
+    it.each(invalidSettings)(
+      'should throw when the provided Settings Entry is the Settings constructor.',
+      (settings) => {
+        expect(() => factory.addSettings(settings)).toThrowWithMessage(
+          TypeError,
+          'The Settings Entry must be an object.',
+        );
+      },
+    );
 
-    it.each(settingsEntries)('should add the provided Settings to the Identity Provider Factory.', (settings) => {
-      expect(() => factory.addSettings(settings)).not.toThrow();
+    it('should add the provided Settings to the Identity Provider Factory.', () => {
+      expect(() => factory.addSettings(Object.create(Settings.prototype))).not.toThrow();
       expect(factory['container'].resolve(Settings)).toBeInstanceOf(Settings);
     });
   });
@@ -361,7 +376,75 @@ describe('Identity Provider Factory', () => {
 
       expect(() => factory.create(NodeIdentityProvider)).toThrowWithMessage(
         TypeError,
-        'Missing required Endpoint "AuthorizationEndpoint".',
+        'Missing required Endpoint "authorization".',
+      );
+    });
+
+    it('should throw when missing a required ID Token Digital Signature Algorithm.', () => {
+      const settings: Settings = Object.assign<Settings, Partial<Settings>>(Object.create(Settings.prototype), {
+        idTokenSignatureAlgorithms: ['ES256'],
+        idTokenKeyWrapAlgorithms: [],
+        idTokenContentEncryptionAlgorithms: [],
+      });
+
+      factory
+        .addAuthorizationEndpoint()
+        .addInteractionEndpoint()
+        .addRevocationEndpoint()
+        .addTokenEndpoint()
+        .addSettings(settings)
+        .add(DatabaseSync, Object.create(DatabaseSync.prototype))
+        .add(JsonWebKeySet, Object.create(JsonWebKeySet.prototype));
+
+      expect(() => factory.create(NodeIdentityProvider)).toThrowWithMessage(
+        TypeError,
+        'Missing required ID Token Digital Signature Algorithm "RS256".',
+      );
+    });
+
+    it('should throw when missing a required ID Token Response Type.', () => {
+      const settings: Settings = Object.assign<Settings, Partial<Settings>>(Object.create(Settings.prototype), {
+        idTokenSignatureAlgorithms: ['RS256'],
+        idTokenKeyWrapAlgorithms: [],
+        idTokenContentEncryptionAlgorithms: [],
+      });
+
+      factory
+        .addAuthorizationEndpoint()
+        .addInteractionEndpoint()
+        .addRevocationEndpoint()
+        .addTokenEndpoint()
+        .addSettings(settings)
+        .add(DatabaseSync, Object.create(DatabaseSync.prototype))
+        .add(JsonWebKeySet, Object.create(JsonWebKeySet.prototype));
+
+      expect(() => factory.create(NodeIdentityProvider)).toThrowWithMessage(
+        TypeError,
+        'Missing required Response Type "id_token".',
+      );
+    });
+
+    it('should throw when missing a required ID Token Response Mode.', () => {
+      const settings: Settings = Object.assign<Settings, Partial<Settings>>(Object.create(Settings.prototype), {
+        idTokenSignatureAlgorithms: ['RS256'],
+        idTokenKeyWrapAlgorithms: [],
+        idTokenContentEncryptionAlgorithms: [],
+      });
+
+      factory
+        .addAuthorizationEndpoint((options) => {
+          options.useResponseTypes(['code', 'id_token', 'id_token token']).useResponseModes(['query']).build();
+        })
+        .addInteractionEndpoint()
+        .addRevocationEndpoint()
+        .addTokenEndpoint()
+        .addSettings(settings)
+        .add(DatabaseSync, Object.create(DatabaseSync.prototype))
+        .add(JsonWebKeySet, Object.create(JsonWebKeySet.prototype));
+
+      expect(() => factory.create(NodeIdentityProvider)).toThrowWithMessage(
+        TypeError,
+        'Missing required Response Mode "fragment".',
       );
     });
 
@@ -399,13 +482,18 @@ describe('Identity Provider Factory', () => {
       let provider!: IdentityProvider;
 
       const settings: Settings = Object.assign<Settings, Partial<Settings>>(Object.create(Settings.prototype), {
-        idTokenSignatureAlgorithms: ['ES256'],
+        idTokenSignatureAlgorithms: ['ES256', 'RS256'],
         idTokenKeyWrapAlgorithms: [],
         idTokenContentEncryptionAlgorithms: [],
       });
 
       factory
-        .addAuthorizationEndpoint()
+        .addAuthorizationEndpoint((options) => {
+          options
+            .useResponseModes(['fragment', 'query'])
+            .useResponseTypes(['code', 'id_token', 'id_token token'])
+            .build();
+        })
         .addInteractionEndpoint()
         .addRevocationEndpoint()
         .addTokenEndpoint()
