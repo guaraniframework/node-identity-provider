@@ -115,7 +115,6 @@ export class LoginInteractionType extends InteractionType {
     const response: LoginContextInteractionResponse = {
       skip,
       request_url: url.href,
-      client_id: grant.client.id,
       context: removeNullishValues<LoginContextInteractionResponseContext>({
         prompts: grant.parameters.prompt?.split(' ') as Prompt[],
         display: grant.parameters.display as DisplayName,

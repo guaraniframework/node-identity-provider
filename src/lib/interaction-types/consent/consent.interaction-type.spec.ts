@@ -146,7 +146,6 @@ describe('Consent Interaction Type', () => {
         requested_scopes: ['openid', 'profile', 'email', 'phone', 'address'],
         subject_id: 'user_id',
         request_url: requestUrl.href,
-        client_id: 'client_id',
         context: { display: 'page', prompts: ['consent'], ui_locales: ['en-US'] },
       });
 
@@ -186,7 +185,6 @@ describe('Consent Interaction Type', () => {
         requested_scopes: ['openid', 'profile', 'email', 'phone', 'address'],
         subject_id: 'user_id',
         request_url: requestUrl.href,
-        client_id: 'client_id',
         context: {},
       });
 
@@ -209,7 +207,7 @@ describe('Consent Interaction Type', () => {
     });
 
     // #region Decision Accept
-    it('should return a valid first time Consent Decision Accept Interaction Response.', async () => {
+    it('should return a valid first time Consent Accept Decision Interaction Response.', async () => {
       const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         clients: [],
@@ -265,7 +263,7 @@ describe('Consent Interaction Type', () => {
       );
     });
 
-    it('should return a valid first time Consent Decision Accept Interaction Response for a Client previously registered at the Login.', async () => {
+    it('should return a valid first time Consent Accept Decision Interaction Response for a Client previously registered at the Login.', async () => {
       const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         clients: [client],
@@ -319,7 +317,7 @@ describe('Consent Interaction Type', () => {
       );
     });
 
-    it('should return a valid first time Consent Decision Accept Interaction Response with an "offline_access" Scope.', async () => {
+    it('should return a valid first time Consent Accept Decision Interaction Response with an "offline_access" Scope.', async () => {
       const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         clients: [client],
@@ -372,7 +370,7 @@ describe('Consent Interaction Type', () => {
       );
     });
 
-    it('should return a valid first time Consent Decision Accept Interaction Response without an "offline_access" Scope.', async () => {
+    it('should return a valid first time Consent Accept Decision Interaction Response without an "offline_access" Scope.', async () => {
       const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         clients: [client],
@@ -430,7 +428,7 @@ describe('Consent Interaction Type', () => {
       );
     });
 
-    it('should return a valid subsequent Consent Decision Accept Interaction Response.', async () => {
+    it('should return a valid subsequent Consent Accept Decision Interaction Response.', async () => {
       const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         clients: [client],

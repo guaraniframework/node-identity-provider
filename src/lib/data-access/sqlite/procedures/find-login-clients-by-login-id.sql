@@ -29,4 +29,6 @@ SELECT
     created_at,
     updated_at
 FROM clients
-    JOIN logins_clients ON logins_clients.login_id = $login_id;
+    JOIN logins_clients ON logins_clients.client_id = clients.id
+WHERE
+    logins_clients.login_id = $login_id;

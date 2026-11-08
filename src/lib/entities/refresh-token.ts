@@ -51,7 +51,7 @@ export class RefreshToken implements NodeJS.Dict<unknown> {
   /**
    * Login of the User that granted the Refresh Token to the Client.
    */
-  public readonly login!: Login;
+  public readonly login!: Login | null;
 
   /**
    * Access Tokens associated to the Refresh Token.

@@ -104,7 +104,6 @@ export class ConsentInteractionType extends InteractionType {
       requested_scopes: parameters.scope.split(' '),
       subject_id: subjectType.calculateSubjectIdentifier(session.activeLogin!.user, client),
       request_url: url.href,
-      client_id: client.id,
       context: removeNullishValues<ConsentContextInteractionResponseContext>({
         prompts: parameters.prompt?.split(' ') as Prompt[],
         display: parameters.display as DisplayName,

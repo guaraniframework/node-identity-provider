@@ -68,6 +68,7 @@ export async function createTestProvider(): Promise<NodeIdentityProvider> {
     idTokenSignatureAlgorithms: ['RS256'],
     idTokenKeyWrapAlgorithms: ['RSA-OAEP'],
     idTokenContentEncryptionAlgorithms: ['A128GCM'],
+    jwtBearerGrantSigningAlgorithms: ['RS256'],
     uiLocales: ['en-US'],
     acrValues: ['urn:guarani:acr:1fa', 'urn:guarani:acr:2fa'],
     interactions: {
@@ -77,19 +78,47 @@ export async function createTestProvider(): Promise<NodeIdentityProvider> {
       loginUrl: 'https://provider.example.com/auth/login',
       registrationUrl: 'https://provider.example.com/auth/registration',
     },
+    enableRefreshTokenRotation: true,
   });
 
   const provider = new IdentityProviderFactory()
     .addAuthorizationEndpoint((options) => {
-      options.useResponseModes(['fragment', 'query']).useResponseTypes(['code', 'id_token', 'id_token token']).build();
+      options
+        .useDisplays(['page', 'popup', 'touch', 'wap'])
+        .usePKCEs(['S256', 'plain'])
+        .useResponseModes(['form_post', 'fragment', 'query'])
+        .useResponseTypes([
+          'code',
+          'code id_token',
+          'code id_token token',
+          'code token',
+          'id_token',
+          'id_token token',
+          'none',
+          'token',
+        ]);
     })
     .addDiscoveryEndpoint()
-    .addInteractionEndpoint()
+    .addInteractionEndpoint((options) => {
+      options.useClientAuthenticationMethods(['client_secret_basic']);
+    })
     .addLogger(new ConsoleLogger(LoggerLevel.ERROR))
-    .addRevocationEndpoint()
+    .addRevocationEndpoint((options) => {
+      options.useClientAuthenticationMethods(['client_secret_basic']);
+    })
     .addSettings(settings)
     .addSubjectTypes(['pairwise', 'public'])
-    .addTokenEndpoint()
+    .addTokenEndpoint((options) => {
+      options
+        .useClientAuthenticationMethods(['client_secret_basic'])
+        .useGrantTypes([
+          'authorization_code',
+          'client_credentials',
+          'password',
+          'refresh_token',
+          'urn:ietf:params:oauth:grant-type:jwt-bearer',
+        ]);
+    })
     .add(DatabaseSync, new DatabaseSync(':memory:'))
     .add(JsonWebKeySet, jsonWebKeySet)
     .create(NodeIdentityProvider);

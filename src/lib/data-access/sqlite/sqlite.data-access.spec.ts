@@ -924,7 +924,28 @@ describe('SQLite Data Access', () => {
       await expect(dataAccess.findRefreshTokenById('00000000-0000-0000-0000-000000000000')).resolves.toBeNull();
     });
 
-    it('should return the Refresh Token of the provided Identifier.', async () => {
+    it('should return the Refresh Token of the provided Identifier without a Login and Access Tokens.', async () => {
+      let refreshToken!: RefreshToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+
+      const { id: refreshTokenId } = await dataAccess.createRefreshToken(scopes, client, user, null);
+
+      await expect(async () => {
+        refreshToken = (await dataAccess.findRefreshTokenById(refreshTokenId))!;
+      }).resolves.not.toThrow();
+
+      expect(refreshToken).toBeInstanceOf(RefreshToken);
+      expect(refreshToken.id).toBe(refreshTokenId);
+      expect(refreshToken.client.id).toBe(client.id);
+      expect(refreshToken.user.id).toBe(user.id);
+      expect(refreshToken.login).toBeNull();
+      expect(refreshToken.accessTokens).toBeEmpty();
+    });
+
+    it('should return the Refresh Token of the provided Identifier with a Login and without Access Tokens.', async () => {
       let refreshToken!: RefreshToken;
 
       const scopes = await dataAccess.getScopes();
@@ -943,11 +964,41 @@ describe('SQLite Data Access', () => {
       expect(refreshToken.id).toBe(refreshTokenId);
       expect(refreshToken.client.id).toBe(client.id);
       expect(refreshToken.user.id).toBe(user.id);
-      expect(refreshToken.login.id).toBe(login.id);
+      expect(refreshToken.login!.id).toBe(login.id);
       expect(refreshToken.accessTokens).toBeEmpty();
     });
 
-    it('should return the Refresh Token of the provided Identifier with Access Tokens.', async () => {
+    it('should return the Refresh Token of the provided Identifier without a Login and with Access Tokens.', async () => {
+      let refreshToken!: RefreshToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+
+      refreshToken = await dataAccess.createRefreshToken(scopes, client, user, null);
+      const refreshTokenId = refreshToken.id;
+
+      expect(refreshToken.accessTokens).toBeEmpty();
+
+      const accessToken1 = await dataAccess.createAccessToken(scopes, client, user, null, refreshToken);
+      const accessToken2 = await dataAccess.createAccessToken(scopes, client, user, null, refreshToken);
+
+      await expect(async () => {
+        refreshToken = (await dataAccess.findRefreshTokenById(refreshTokenId))!;
+      }).resolves.not.toThrow();
+
+      expect(refreshToken).toBeInstanceOf(RefreshToken);
+      expect(refreshToken.id).toBe(refreshTokenId);
+      expect(refreshToken.client.id).toBe(client.id);
+      expect(refreshToken.user.id).toBe(user.id);
+      expect(refreshToken.login).toBeNull();
+      expect(refreshToken.accessTokens.map((accessToken) => accessToken.id)).toStrictEqual<string[]>([
+        accessToken1.id,
+        accessToken2.id,
+      ]);
+    });
+
+    it('should return the Refresh Token of the provided Identifier with a Login and Access Tokens.', async () => {
       let refreshToken!: RefreshToken;
 
       const scopes = await dataAccess.getScopes();
@@ -972,7 +1023,7 @@ describe('SQLite Data Access', () => {
       expect(refreshToken.id).toBe(refreshTokenId);
       expect(refreshToken.client.id).toBe(client.id);
       expect(refreshToken.user.id).toBe(user.id);
-      expect(refreshToken.login.id).toBe(login.id);
+      expect(refreshToken.login!.id).toBe(login.id);
       expect(refreshToken.accessTokens.map((accessToken) => accessToken.id)).toStrictEqual<string[]>([
         accessToken1.id,
         accessToken2.id,
@@ -1751,7 +1802,41 @@ describe('SQLite Data Access', () => {
       await dataAccess.seed();
     });
 
-    it('should rotate the old Refresh Token.', async () => {
+    it('should rotate the old Refresh Token without a Login.', async () => {
+      let newRefreshToken!: RefreshToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+
+      const oldRefreshToken = await dataAccess.createRefreshToken(scopes, client, user, null);
+
+      // Needed because sometimes it thinks it's the same transaction somehow.
+      await setTimeout(1000);
+
+      await expect(async () => {
+        newRefreshToken = await dataAccess.rotateRefreshToken(oldRefreshToken);
+      }).resolves.not.toThrow();
+
+      expect(newRefreshToken).toBeInstanceOf(RefreshToken);
+
+      expect(newRefreshToken.id).not.toBe(oldRefreshToken.id);
+      expect(newRefreshToken.scopes).toStrictEqual<Scope[]>(expect.arrayContaining<Scope>(oldRefreshToken.scopes));
+      expect(newRefreshToken.createdAt.getTime()).toBeGreaterThan(oldRefreshToken.createdAt.getTime());
+      expect(newRefreshToken.expiresAt.getTime()).toBe(oldRefreshToken.expiresAt.getTime());
+      expect(newRefreshToken.validAfter.getTime()).toBe(newRefreshToken.validAfter.getTime());
+      expect(newRefreshToken.client.id).toBe(oldRefreshToken.client.id);
+      expect(newRefreshToken.user.id).toBe(oldRefreshToken.user.id);
+      expect(newRefreshToken.login).toBeNull();
+
+      await expect(async () => {
+        return (await dataAccess.findRefreshTokenById(oldRefreshToken.id))!.revokedAt;
+      }).resolves.toBeDate();
+
+      expect(newRefreshToken.revokedAt).toBeNull();
+    });
+
+    it('should rotate the old Refresh Token with a Login.', async () => {
       let newRefreshToken!: RefreshToken;
 
       const scopes = await dataAccess.getScopes();
@@ -1778,7 +1863,7 @@ describe('SQLite Data Access', () => {
       expect(newRefreshToken.validAfter.getTime()).toBe(newRefreshToken.validAfter.getTime());
       expect(newRefreshToken.client.id).toBe(oldRefreshToken.client.id);
       expect(newRefreshToken.user.id).toBe(oldRefreshToken.user.id);
-      expect(newRefreshToken.login.id).toBe(oldRefreshToken.login.id);
+      expect(newRefreshToken.login!.id).toBe(oldRefreshToken.login!.id);
 
       await expect(async () => {
         return (await dataAccess.findRefreshTokenById(oldRefreshToken.id))!.revokedAt;
@@ -1787,7 +1872,55 @@ describe('SQLite Data Access', () => {
       expect(newRefreshToken.revokedAt).toBeNull();
     });
 
-    it('should rotate the old Refresh Token and update its associated Access Tokens.', async () => {
+    it('should rotate the old Refresh Token and update its associated Access Tokens without a Login.', async () => {
+      let newRefreshToken!: RefreshToken;
+      let accessToken1!: AccessToken;
+      let accessToken2!: AccessToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+
+      const oldRefreshToken = await dataAccess.createRefreshToken(scopes, client, user, null);
+
+      accessToken1 = await dataAccess.createAccessToken(scopes, client, user, null, oldRefreshToken);
+      accessToken2 = await dataAccess.createAccessToken(scopes, client, user, null, oldRefreshToken);
+
+      expect(accessToken1.refreshToken!.id).toBe(oldRefreshToken.id);
+      expect(accessToken2.refreshToken!.id).toBe(oldRefreshToken.id);
+
+      // Needed because sometimes it thinks it's the same transaction somehow.
+      await setTimeout(1000);
+
+      await expect(async () => {
+        newRefreshToken = await dataAccess.rotateRefreshToken(oldRefreshToken);
+      }).resolves.not.toThrow();
+
+      expect(newRefreshToken).toBeInstanceOf(RefreshToken);
+
+      expect(newRefreshToken.id).not.toBe(oldRefreshToken.id);
+      expect(newRefreshToken.scopes).toStrictEqual<Scope[]>(expect.arrayContaining<Scope>(oldRefreshToken.scopes));
+      expect(newRefreshToken.createdAt.getTime()).toBeGreaterThan(oldRefreshToken.createdAt.getTime());
+      expect(newRefreshToken.expiresAt.getTime()).toBe(oldRefreshToken.expiresAt.getTime());
+      expect(newRefreshToken.validAfter.getTime()).toBe(newRefreshToken.validAfter.getTime());
+      expect(newRefreshToken.client.id).toBe(oldRefreshToken.client.id);
+      expect(newRefreshToken.user.id).toBe(oldRefreshToken.user.id);
+      expect(newRefreshToken.login).toBeNull();
+
+      await expect(async () => {
+        return (await dataAccess.findRefreshTokenById(oldRefreshToken.id))!.revokedAt;
+      }).resolves.toBeDate();
+
+      expect(newRefreshToken.revokedAt).toBeNull();
+
+      accessToken1 = (await dataAccess.findAccessTokenById(accessToken1.id))!;
+      accessToken2 = (await dataAccess.findAccessTokenById(accessToken2.id))!;
+
+      expect(accessToken1.refreshToken!.id).toBe(newRefreshToken.id);
+      expect(accessToken2.refreshToken!.id).toBe(newRefreshToken.id);
+    });
+
+    it('should rotate the old Refresh Token and update its associated Access Tokens with a Login.', async () => {
       let newRefreshToken!: RefreshToken;
       let accessToken1!: AccessToken;
       let accessToken2!: AccessToken;
@@ -1822,7 +1955,7 @@ describe('SQLite Data Access', () => {
       expect(newRefreshToken.validAfter.getTime()).toBe(newRefreshToken.validAfter.getTime());
       expect(newRefreshToken.client.id).toBe(oldRefreshToken.client.id);
       expect(newRefreshToken.user.id).toBe(oldRefreshToken.user.id);
-      expect(newRefreshToken.login.id).toBe(oldRefreshToken.login.id);
+      expect(newRefreshToken.login!.id).toBe(oldRefreshToken.login!.id);
 
       await expect(async () => {
         return (await dataAccess.findRefreshTokenById(oldRefreshToken.id))!.revokedAt;

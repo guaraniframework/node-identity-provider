@@ -328,7 +328,12 @@ export class SQLiteDataAccess extends DataAccess {
    * @param login Login of the User that granted Authorization.
    * @returns Created Refresh Token.
    */
-  public async createRefreshToken(scopes: Scope[], client: Client, user: User, login: Login): Promise<RefreshToken> {
+  public async createRefreshToken(
+    scopes: Scope[],
+    client: Client,
+    user: User,
+    login: Login | null,
+  ): Promise<RefreshToken> {
     const id = randomUUIDv7();
 
     const refreshTokenSql = this._procedure('create-refresh-token.sql');
@@ -336,7 +341,7 @@ export class SQLiteDataAccess extends DataAccess {
       id: this._toUUIDBuffer(id),
       client_id: this._toUUIDBuffer(client.id),
       user_id: this._toUUIDBuffer(user.id),
-      login_id: this._toUUIDBuffer(login.id),
+      login_id: login ? this._toUUIDBuffer(login.id) : null,
     })!;
 
     const scopesIds = scopes.map((scope) => scope.id);
@@ -773,7 +778,7 @@ export class SQLiteDataAccess extends DataAccess {
       .replaceAll('$valid_after', "(unixepoch('now'))")
       .replaceAll('$client_id', `X'${refreshToken.client.id.replaceAll('-', '')}'`)
       .replaceAll('$user_id', `X'${refreshToken.user.id.replaceAll('-', '')}'`)
-      .replaceAll('$login_id', `X'${refreshToken.login.id.replaceAll('-', '')}'`);
+      .replaceAll('$login_id', refreshToken.login ? `X'${refreshToken.login.id.replaceAll('-', '')}'` : 'NULL');
 
     this.database.exec(refreshTokenSql);
 
@@ -1203,7 +1208,9 @@ export class SQLiteDataAccess extends DataAccess {
       validAfter: new Date((refreshTokenParameters['valid_after']! as number) * 1000),
       client: this._findClientById(this._toUUIDString(refreshTokenParameters['client_id'] as Uint8Array))!,
       user: this._findUserById(this._toUUIDString(refreshTokenParameters['user_id'] as Uint8Array))!,
-      login: this._findLoginById(this._toUUIDString(refreshTokenParameters['login_id'] as Uint8Array), null)!,
+      login: refreshTokenParameters['login_id']
+        ? this._findLoginById(this._toUUIDString(refreshTokenParameters['login_id'] as Uint8Array), null)!
+        : null,
     });
 
     Reflect.set(refreshToken, 'accessTokens', this._findRefreshTokenAccessTokensByRefreshTokenId(refreshToken));
@@ -1232,7 +1239,9 @@ export class SQLiteDataAccess extends DataAccess {
         validAfter: new Date((accessTokenParameters['valid_after']! as number) * 1000),
         client: this._findClientById(this._toUUIDString(accessTokenParameters['client_id'] as Uint8Array))!,
         user: this._findUserById(this._toUUIDString(accessTokenParameters['user_id'] as Uint8Array))!,
-        login: this._findLoginById(this._toUUIDString(accessTokenParameters['login_id'] as Uint8Array), null)!,
+        login: accessTokenParameters['login_id']
+          ? this._findLoginById(this._toUUIDString(accessTokenParameters['login_id'] as Uint8Array), null)!
+          : null,
         refreshToken,
       });
     });
@@ -1435,7 +1444,7 @@ export class SQLiteDataAccess extends DataAccess {
     scopes: Scope[],
     client: Client,
     user: User,
-    login: Login,
+    login: Login | null,
     accessTokens: AccessToken[],
   ): RefreshToken {
     return Object.assign<RefreshToken, RefreshToken>(new RefreshToken(), {

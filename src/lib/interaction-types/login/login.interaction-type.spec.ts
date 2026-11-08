@@ -153,7 +153,6 @@ describe('Login Interaction Type', () => {
 
         await expect(interactionType.handleContext(context)).resolves.toStrictEqual<LoginContextInteractionResponse>({
           skip: false,
-          client_id: client.id,
           request_url: requestUrl.href,
           context: removeNullishValues<LoginContextInteractionResponseContext>({
             display: 'page',
@@ -198,7 +197,6 @@ describe('Login Interaction Type', () => {
 
       await expect(interactionType.handleContext(context)).resolves.toStrictEqual<LoginContextInteractionResponse>({
         skip: false,
-        client_id: client.id,
         request_url: requestUrl.href,
         context: removeNullishValues<LoginContextInteractionResponseContext>({
           display: 'page',
@@ -241,7 +239,6 @@ describe('Login Interaction Type', () => {
 
         await expect(interactionType.handleContext(context)).resolves.toStrictEqual<LoginContextInteractionResponse>({
           skip: true,
-          client_id: client.id,
           request_url: requestUrl.href,
           context: removeNullishValues<LoginContextInteractionResponseContext>({
             display: 'page',
@@ -286,7 +283,6 @@ describe('Login Interaction Type', () => {
 
       await expect(interactionType.handleContext(context)).resolves.toStrictEqual<LoginContextInteractionResponse>({
         skip: true,
-        client_id: client.id,
         request_url: requestUrl.href,
         context: removeNullishValues<LoginContextInteractionResponseContext>({
           display: 'page',
