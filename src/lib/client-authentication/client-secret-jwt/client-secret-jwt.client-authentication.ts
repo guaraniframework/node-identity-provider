@@ -37,6 +37,7 @@ export class ClientSecretJwtClientAuthentication extends JwtBearerClientAssertio
     protected override readonly settings: Settings,
   ) {
     super(logger, dataAccess, settings);
+    this.checkRequiredAlgorithms();
   }
 
   /**

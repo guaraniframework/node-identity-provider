@@ -198,6 +198,39 @@ describe('Private Key JWT Client Authentication', () => {
     });
   });
 
+  describe('constructor', () => {
+    it('should throw when missing a required JWT Bearer Client Assertion Algorithm.', () => {
+      container.clear();
+
+      const settingsMock = jest.mocked<Settings>(
+        Object.assign<Settings, Partial<Settings>>(Object.create(Settings.prototype), {
+          issuer: new URL('https://provider.example.com'),
+          clientAuthenticationSigningAlgorithms: ['HS256'],
+          clientAuthenticationEncryptionKeyWrapAlgorithms: ['RSA-OAEP'],
+          clientAuthenticationEncryptionContentEncryptionAlgorithms: ['A128GCM'],
+        }),
+      );
+
+      container.bind(Logger).toValue(loggerMock);
+      container.bind(DataAccess).toValue(dataAccessMock);
+      container.bind(Settings).toValue(settingsMock);
+      container.bind(PrivateKeyJwtClientAuthentication).toSelf().asSingleton();
+
+      const error = new TypeError(
+        'Missing a required JSON Web Signature Digital Signature Algorithm for JWT Bearer Client Assertion "private_key_jwt".',
+      );
+
+      expect(() => container.resolve(PrivateKeyJwtClientAuthentication)).toThrowWithMessage(TypeError, error.message);
+
+      expect(loggerMock.fatal).toHaveBeenCalledExactlyOnceWith(
+        '[PrivateKeyJwtClientAuthentication] Missing a required JSON Web Signature Digital Signature Algorithm for JWT Bearer Client Assertion "private_key_jwt"',
+        '8620ea0b-7794-4e82-8789-6fa74f1d74ae',
+        null,
+        error,
+      );
+    });
+  });
+
   describe('getClient()', () => {
     let parameters: JwtBearerClientAssertionParameters;
 

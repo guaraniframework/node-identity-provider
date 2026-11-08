@@ -50,6 +50,7 @@ export class PrivateKeyJwtClientAuthentication extends JwtBearerClientAssertion 
     protected override readonly settings: Settings,
   ) {
     super(logger, dataAccess, settings);
+    this.checkRequiredAlgorithms();
   }
 
   /**

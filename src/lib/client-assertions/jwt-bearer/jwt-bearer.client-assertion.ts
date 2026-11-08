@@ -227,4 +227,28 @@ export abstract class JwtBearerClientAssertion extends ClientAssertion {
     client: Client,
     header: JsonWebSignatureHeaderParameters,
   ): Promise<JsonWebKey>;
+
+  /**
+   * Checks if at least one of the required JSON Web Signature Digital Signature Algorithms was provided.
+   *
+   * *note: this method must only be called at the constructor of a concrete Client Assertion.*
+   *
+   * @throws {TypeError} Missing a required JSON Web Signature Digital Signature Algorithm.
+   */
+  protected checkRequiredAlgorithms(): void {
+    if (!this.settings.clientAuthenticationSigningAlgorithms.some((algorithm) => this.algorithms.includes(algorithm))) {
+      const error = new TypeError(
+        `Missing a required JSON Web Signature Digital Signature Algorithm for JWT Bearer Client Assertion "${this.name}".`,
+      );
+
+      this.logger.fatal(
+        `[${this.constructor.name}] Missing a required JSON Web Signature Digital Signature Algorithm for JWT Bearer Client Assertion "${this.name}"`,
+        '8620ea0b-7794-4e82-8789-6fa74f1d74ae',
+        null,
+        error,
+      );
+
+      throw error;
+    }
+  }
 }
