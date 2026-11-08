@@ -130,7 +130,7 @@ describe('Select Account Decision Interaction Request Validator', () => {
         expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
           '[SelectAccountDecisionInteractionValidator] Invalid parameter "login_challenge"',
           '2c588c79-2a0c-4792-894d-6a0aa77616fb',
-          { parameters, client_id: client.id },
+          { parameters, client },
           error,
         );
       },
@@ -149,7 +149,7 @@ describe('Select Account Decision Interaction Request Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[SelectAccountDecisionInteractionValidator] Invalid Login Challenge',
         '5f2827db-0bab-4d40-8411-fc3b5d159cba',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
     });
@@ -170,7 +170,7 @@ describe('Select Account Decision Interaction Request Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[SelectAccountDecisionInteractionValidator] The Grant was not issued to this Client',
         'c3eeb57e-2cfa-4fda-a221-a8078c14c5e7',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
     });
@@ -196,7 +196,7 @@ describe('Select Account Decision Interaction Request Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[SelectAccountDecisionInteractionValidator] Expired Grant',
         '1106c4ca-796d-4779-a10b-f9296437c74e',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
     });
@@ -220,7 +220,7 @@ describe('Select Account Decision Interaction Request Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[SelectAccountDecisionInteractionValidator] Invalid parameter "login_id"',
         '8e880ded-283c-4e10-9b7f-bdd274530ae9',
-        { parameters, grant_id: grant.id },
+        { parameters, grant },
         error,
       );
     });
@@ -251,7 +251,7 @@ describe('Select Account Decision Interaction Request Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[SelectAccountDecisionInteractionValidator] Invalid Login Identifier',
         '9be0a21e-aa0e-4d97-ac99-ef6cc696e4bc',
-        { parameters, grant_id: grant.id },
+        { parameters, grant },
         error,
       );
     });
@@ -288,7 +288,7 @@ describe('Select Account Decision Interaction Request Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[SelectAccountDecisionInteractionValidator] Expired Login',
         'c90b253f-4b57-4d8d-817c-68daa89a3a23',
-        { parameters, login_id: login.id },
+        { parameters, login },
         error,
       );
     });

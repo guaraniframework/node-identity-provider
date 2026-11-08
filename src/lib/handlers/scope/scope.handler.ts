@@ -73,7 +73,7 @@ export class ScopeHandler {
    */
   public async getAllowedScopes(client: Client, requestedScopes: string[]): Promise<Scope[]> {
     this.logger.debug(`[${this.constructor.name}] Called getAllowedScopes()`, '6f0da132-367c-4f7c-bf83-95a6fc655f28', {
-      client_id: client.id,
+      client,
       requested_scopes: requestedScopes,
     });
 
@@ -81,11 +81,7 @@ export class ScopeHandler {
       this.logger.debug(
         `[${this.constructor.name}] Completed getAllowedScopes()`,
         '0b453fad-5cfd-4003-aa6d-93bbd8a6f7f9',
-        {
-          client_id: client.id,
-          requested_scopes: requestedScopes,
-          allowed_scopes: client.scopes.map((scope) => scope.name),
-        },
+        { client, requested_scopes: requestedScopes, allowed_scopes: client.scopes.map((scope) => scope.name) },
       );
 
       return client.scopes;
@@ -100,7 +96,7 @@ export class ScopeHandler {
         this.logger.error(
           `[${this.constructor.name}] The Client is not allowed to request the Scope "${scope}"`,
           '345c0252-3622-460b-a940-9997c35fee38',
-          { client_id: client.id, requested_scopes: requestedScopes },
+          { client, requested_scopes: requestedScopes },
           error,
         );
 
@@ -113,7 +109,7 @@ export class ScopeHandler {
     this.logger.debug(
       `[${this.constructor.name}] Completed getAllowedScopes()`,
       '0ed273d8-04d3-40ac-b53b-5a8a00ba8034',
-      { client_id: client.id, requested_scopes: requestedScopes, allowed_scopes: allowedScopes },
+      { client, requested_scopes: requestedScopes, allowed_scopes: allowedScopes },
     );
 
     return await this.dataAccess.getScopesByName(allowedScopes);

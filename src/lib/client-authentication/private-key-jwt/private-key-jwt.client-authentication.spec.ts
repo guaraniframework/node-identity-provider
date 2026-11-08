@@ -339,7 +339,7 @@ describe('Private Key JWT Client Authentication', () => {
         expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
           "[PrivateKeyJwtClientAuthentication] Failed to obtain the Client's Client Assertion Sign JSON Web Key",
           'cd722fbb-4708-427a-a588-c1f1f85feca0',
-          { client_id: rsaClient.id, header: { alg: 'RS256', kid: 'rsa-sign-key' } },
+          { client: rsaClient, header: { alg: 'RS256', kid: 'rsa-sign-key' } },
           error,
         );
       },

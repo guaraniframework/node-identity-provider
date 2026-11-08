@@ -36,7 +36,7 @@ export class PublicSubjectType extends SubjectType {
     this.logger.debug(
       `[${this.constructor.name}] Called calculateSubjectIdentifier()`,
       '6641c638-d7c4-45fc-8faa-6b3f0af2d774',
-      { user_id: user.id, client_id: client.id },
+      { user, client },
     );
 
     const subjectIdentifier = user.id;
@@ -44,7 +44,7 @@ export class PublicSubjectType extends SubjectType {
     this.logger.debug(
       `[${this.constructor.name}] Completed calculateSubjectIdentifier()`,
       '36e716db-34a6-4928-a667-5e07d3d6298e',
-      { user_id: user.id, client_id: client.id, subject_identifier: subjectIdentifier },
+      { user, client, subject_identifier: subjectIdentifier },
     );
 
     return subjectIdentifier;
@@ -61,13 +61,13 @@ export class PublicSubjectType extends SubjectType {
     this.logger.debug(
       `[${this.constructor.name}] Called retrieveSubjectIdentifier()`,
       'bf6356bf-4880-4df1-ae65-c9f85a2744b2',
-      { subject_identifier: subjectIdentifier, client_id: client.id },
+      { subject_identifier: subjectIdentifier, client },
     );
 
     this.logger.debug(
       `[${this.constructor.name}] Completed retrieveSubjectIdentifier()`,
       '5f1f6369-37b5-43b7-8680-1af5ec717a4d',
-      { subject_identifier: subjectIdentifier, client_id: client.id, local_subject_identifier: subjectIdentifier },
+      { subject_identifier: subjectIdentifier, client, local_subject_identifier: subjectIdentifier },
     );
 
     return subjectIdentifier;

@@ -154,7 +154,7 @@ export class RefreshTokenTokenValidator extends TokenValidator<RefreshTokenToken
     this.logger.debug(
       `[${this.constructor.name}] Completed getRefreshToken()`,
       'a6bad51d-d594-4ee3-b021-243883a57b56',
-      { parameters, refresh_token_id: refreshToken.id },
+      { parameters, refresh_token: refreshToken },
     );
 
     return refreshToken;
@@ -179,8 +179,8 @@ export class RefreshTokenTokenValidator extends TokenValidator<RefreshTokenToken
   ): Promise<Scope[]> {
     this.logger.debug(`[${this.constructor.name}] Called getScopes()`, '4692dd7c-451a-414c-a279-48e5b3b50d7a', {
       parameters,
-      refresh_token_id: refreshToken.id,
-      client_id: client.id,
+      refresh_token: refreshToken,
+      client,
     });
 
     if (!('scope' in parameters)) {
@@ -188,8 +188,8 @@ export class RefreshTokenTokenValidator extends TokenValidator<RefreshTokenToken
 
       this.logger.debug(`[${this.constructor.name}] Completed getScopes()`, '327e87d2-dc47-4a7f-9f53-4962317a3e73', {
         parameters,
-        refresh_token_id: refreshToken.id,
-        client_id: client.id,
+        refresh_token: refreshToken,
+        client,
         allowed_scopes: allowedScopes.map((scope) => scope.name),
       });
 
@@ -202,7 +202,7 @@ export class RefreshTokenTokenValidator extends TokenValidator<RefreshTokenToken
       this.logger.error(
         `[${this.constructor.name}] Invalid parameter "scope"`,
         '104ded58-99fd-4791-91cb-a65ae8fc166b',
-        { parameters, refresh_token_id: refreshToken.id, client_id: client.id },
+        { parameters, refresh_token: refreshToken, client },
         error,
       );
 
@@ -223,7 +223,7 @@ export class RefreshTokenTokenValidator extends TokenValidator<RefreshTokenToken
         this.logger.error(
           `[${this.constructor.name}] The Scope "${allowedScope}" was not previously granted`,
           '83f97acd-b875-481f-b6a1-5b9ce33ec1ab',
-          { parameters, refresh_token_id: refreshToken.id, client_id: client.id },
+          { parameters, refresh_token: refreshToken, client },
           error,
         );
 
@@ -233,8 +233,8 @@ export class RefreshTokenTokenValidator extends TokenValidator<RefreshTokenToken
 
     this.logger.debug(`[${this.constructor.name}] Completed getScopes()`, '741c978f-b0a2-4037-b8b6-23d38d62e069', {
       parameters,
-      refresh_token_id: refreshToken.id,
-      client_id: client.id,
+      refresh_token: refreshToken,
+      client,
       allowed_scopes: allowedScopesNames,
     });
 
@@ -250,8 +250,8 @@ export class RefreshTokenTokenValidator extends TokenValidator<RefreshTokenToken
    */
   private checkRefreshToken(refreshToken: RefreshToken, client: Client): void {
     this.logger.debug(`[${this.constructor.name}] Called checkRefreshToken()`, '28a4ba06-2991-4b81-a213-fe7c332161c6', {
-      refresh_token_id: refreshToken.id,
-      client_id: client.id,
+      refresh_token: refreshToken,
+      client,
     });
 
     if (!secureStringCompare(client.id, refreshToken.client.id)) {
@@ -260,7 +260,7 @@ export class RefreshTokenTokenValidator extends TokenValidator<RefreshTokenToken
       this.logger.error(
         `[${this.constructor.name}] Mismatching Client Identifier`,
         '84ca7dde-d9aa-4169-aa37-ea758facb3c4',
-        { refresh_token_id: refreshToken.id, client_id: client.id },
+        { refresh_token: refreshToken, client },
         error,
       );
 
@@ -275,7 +275,7 @@ export class RefreshTokenTokenValidator extends TokenValidator<RefreshTokenToken
       this.logger.error(
         `[${this.constructor.name}] Refresh Token not yet valid`,
         '9f576636-3175-4b0b-94cd-b58a8a46f471',
-        { refresh_token_id: refreshToken.id, client_id: client.id },
+        { refresh_token: refreshToken, client },
         error,
       );
 
@@ -288,7 +288,7 @@ export class RefreshTokenTokenValidator extends TokenValidator<RefreshTokenToken
       this.logger.error(
         `[${this.constructor.name}] Expired Refresh Token`,
         '8993e731-ab0f-4e95-93e4-e98c9f3ece55',
-        { refresh_token_id: refreshToken.id, client_id: client.id },
+        { refresh_token: refreshToken, client },
         error,
       );
 
@@ -301,7 +301,7 @@ export class RefreshTokenTokenValidator extends TokenValidator<RefreshTokenToken
       this.logger.error(
         `[${this.constructor.name}] Revoked Refresh Token`,
         'b4a9ed5f-b13c-49cc-abf3-2ca0b0a64cd0',
-        { refresh_token_id: refreshToken.id, client_id: client.id },
+        { refresh_token: refreshToken, client },
         error,
       );
 
@@ -311,7 +311,7 @@ export class RefreshTokenTokenValidator extends TokenValidator<RefreshTokenToken
     this.logger.debug(
       `[${this.constructor.name}] Completed checkRefreshToken()`,
       '274aa6d0-2a01-4899-a1c8-ee958a8b016b',
-      { refresh_token_id: refreshToken.id, client_id: client.id },
+      { refresh_token: refreshToken, client },
     );
   }
 }

@@ -164,7 +164,7 @@ export class LoginInteractionType extends InteractionType {
     }
 
     this.logger.debug(`[${this.constructor.name}] Completed handleDecision()`, '0980f8ca-571f-4d22-a36a-f16823284124', {
-      decision,
+      context,
       response,
     });
 

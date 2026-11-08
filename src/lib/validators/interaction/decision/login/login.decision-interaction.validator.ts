@@ -133,7 +133,7 @@ export class LoginDecisionInteractionValidator extends DecisionInteractionValida
   private async getGrant(parameters: LoginDecisionInteractionRequest, client: Client): Promise<Grant> {
     this.logger.debug(`[${this.constructor.name}] Called getGrant()`, 'cf34b45d-6dc8-455f-8717-9e1796c3e725', {
       parameters,
-      client_id: client.id,
+      client,
     });
 
     if (!('login_challenge' in parameters) || !isNonEmptyString(parameters.login_challenge)) {
@@ -142,7 +142,7 @@ export class LoginDecisionInteractionValidator extends DecisionInteractionValida
       this.logger.error(
         `[${this.constructor.name}] Invalid parameter "login_challenge"`,
         '256c4032-69d7-42b7-9531-6a6fb1665169',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -157,7 +157,7 @@ export class LoginDecisionInteractionValidator extends DecisionInteractionValida
       this.logger.error(
         `[${this.constructor.name}] Invalid Login Challenge`,
         '29753f1d-034b-47dd-8b02-fbccaf22107b',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -170,7 +170,7 @@ export class LoginDecisionInteractionValidator extends DecisionInteractionValida
       this.logger.error(
         `[${this.constructor.name}] The Grant was not issued to this Client`,
         '0825051f-6751-4f0a-871e-75def43520e3',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -185,7 +185,7 @@ export class LoginDecisionInteractionValidator extends DecisionInteractionValida
       this.logger.error(
         `[${this.constructor.name}] Expired Grant`,
         '3824dacd-e50c-4739-9a92-0e95e5f1c437',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -194,8 +194,8 @@ export class LoginDecisionInteractionValidator extends DecisionInteractionValida
 
     this.logger.debug(`[${this.constructor.name}] Completed getGrant()`, '965789b1-b457-4b8d-ae1d-b8f32333ae20', {
       parameters,
-      client_id: client.id,
-      grant_id: grant.id,
+      client,
+      grant,
     });
 
     return grant;
@@ -259,7 +259,7 @@ export class LoginDecisionInteractionValidator extends DecisionInteractionValida
   private async getUser(parameters: LoginAcceptDecisionInteractionRequest, client: Client): Promise<User> {
     this.logger.debug(`[${this.constructor.name}] Called getUser()`, '9711a8ff-91f5-4668-955d-07a2c8de7b81', {
       parameters,
-      client_id: client.id,
+      client,
     });
 
     if (!('subject_id' in parameters) || !isNonEmptyString(parameters.subject_id)) {
@@ -268,7 +268,7 @@ export class LoginDecisionInteractionValidator extends DecisionInteractionValida
       this.logger.error(
         `[${this.constructor.name}] Invalid parameter "subject_id"`,
         '6ca68f17-282c-49f0-ba8e-72b19e27791e',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -286,7 +286,7 @@ export class LoginDecisionInteractionValidator extends DecisionInteractionValida
       this.logger.error(
         `[${this.constructor.name}] Invalid Subject Identifier`,
         '54ee3b7e-1e91-49df-a9d7-a2c5cb767e55',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -295,8 +295,8 @@ export class LoginDecisionInteractionValidator extends DecisionInteractionValida
 
     this.logger.debug(`[${this.constructor.name}] Completed getUser()`, 'fba8c2eb-33ab-499d-8400-c0e91690550b', {
       parameters,
-      client_id: client.id,
-      user: user.id,
+      client,
+      user,
     });
 
     return user;

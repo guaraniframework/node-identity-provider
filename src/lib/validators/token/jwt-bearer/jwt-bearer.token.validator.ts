@@ -128,7 +128,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
     this.logger.debug(
       `[${this.constructor.name}] Called getSubjectFromAssertion()`,
       'f8bcb301-0ce8-4d5f-abcc-66331f32ed7d',
-      { request, parameters, client_id: client.id },
+      { request, parameters, client },
     );
 
     if (!('assertion' in parameters) || !isNonEmptyString(parameters.assertion)) {
@@ -137,7 +137,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
       this.logger.error(
         `[${this.constructor.name}] Invalid parameter "assertion"`,
         'beb456cd-ce83-4b95-b595-4373f6d42695',
-        { request, parameters, client_id: client.id },
+        { request, parameters, client },
         error,
       );
 
@@ -191,7 +191,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
         this.logger.error(
           `[${this.constructor.name}] The Client tried to use the JSON Web Signature Algorithm "none"`,
           'c9353b6a-02c1-425c-bc71-b8765c4e1b3a',
-          { request, parameters, client_id: client.id },
+          { request, parameters, client },
           error,
         );
 
@@ -204,7 +204,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
         this.logger.error(
           `[${this.constructor.name}] Unsupported JSON Web Signature Algorithm "${header.alg}"`,
           'ed9ac8df-0bad-4f38-85c7-7bfbe3410d7e',
-          { request, parameters, client_id: client.id },
+          { request, parameters, client },
           error,
         );
 
@@ -226,7 +226,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
         this.logger.error(
           `[${this.constructor.name}] Could not find the User of the Assertion`,
           '5e0d0a94-11d3-4a91-9b3e-085511a77a07',
-          { request, parameters, client_id: client.id },
+          { request, parameters, client },
           error,
         );
 
@@ -236,7 +236,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
       this.logger.debug(
         `[${this.constructor.name}] Completed getSubjectFromAssertion()`,
         '0c1d3b8c-e9fb-4c59-8d40-feeb96a73545',
-        { request, parameters, client_id: client.id, user_id: user.id },
+        { request, parameters, client, user },
       );
 
       return user;
@@ -250,7 +250,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
       this.logger.error(
         `[${this.constructor.name}] Invalid JSON Web Token Assertion`,
         '07fe7cd3-1cae-4ac0-bb32-14574ae8ef59',
-        { request, parameters, client_id: client.id },
+        { request, parameters, client },
         error,
       );
 
@@ -272,7 +272,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
   private async getScopes(parameters: JwtBearerTokenRequest, client: Client): Promise<Scope[]> {
     this.logger.debug(`[${this.constructor.name}] Called getScopes()`, '95fcf005-c370-4a9a-9a7b-82abe8a58d1c', {
       parameters,
-      client_id: client.id,
+      client,
     });
 
     if ('scope' in parameters && !isNonEmptyString(parameters.scope)) {
@@ -281,7 +281,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
       this.logger.error(
         `[${this.constructor.name}] Invalid parameter "scope"`,
         '1c4db530-a5ac-4587-93f7-ad9313812094',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -296,7 +296,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
       this.logger.error(
         `[${this.constructor.name}] Cannot request an OpenID Connect Scope using this Grant Type`,
         'c19a1ace-0ed9-4b5e-829c-704b9c3d2b4c',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -308,7 +308,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
 
     this.logger.debug(`[${this.constructor.name}] Completed getScopes()`, '245ded41-ede5-411b-9c1a-402fe47f0cfc', {
       parameters,
-      client_id: client.id,
+      client,
       allowed_scopes: allowedScopes.map((scope) => scope.name),
     });
 
@@ -328,7 +328,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
     header: JsonWebSignatureHeaderParameters,
   ): Promise<JsonWebKey> {
     this.logger.debug(`[${this.constructor.name}] Called getClientKey()`, 'c98ecc74-6692-4f43-991c-089b45957e8e', {
-      client_id: client.id,
+      client,
       header,
     });
 
@@ -352,7 +352,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
     }
 
     this.logger.debug(`[${this.constructor.name}] Completed getClientKey()`, 'd2739d6e-daa9-46c8-a915-56509180febe', {
-      client_id: client.id,
+      client,
       header,
       jwk: jsonWebKey,
     });

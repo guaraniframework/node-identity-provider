@@ -171,7 +171,7 @@ export class CodeTokenAuthorizationValidator extends AuthorizationValidator<Code
     this.logger.debug(
       `[${this.constructor.name}] Completed getCodeChallengeMethod()`,
       'd02df81e-a5d3-4a3a-8fc0-72b1aeda7f35',
-      { parameters, code_challenge_method: codeChallengeMethod },
+      { parameters, code_challenge_method: codeChallengeMethod.name },
     );
 
     return codeChallengeMethod;

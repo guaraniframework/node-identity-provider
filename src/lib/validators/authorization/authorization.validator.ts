@@ -196,7 +196,7 @@ export abstract class AuthorizationValidator<
 
     this.logger.debug(`[${this.constructor.name}] Completed getClient()`, 'baa138ec-e496-473d-8075-383a0e3c0b36', {
       parameters,
-      client_id: client.id,
+      client,
     });
 
     return client;
@@ -214,7 +214,7 @@ export abstract class AuthorizationValidator<
   protected getRedirectUri(parameters: AuthorizationRequest, client: Client): URL {
     this.logger.debug(`[${this.constructor.name}] Called getRedirectUri()`, 'ef6568e0-4fb0-48a7-a5ee-dd502f6a420f', {
       parameters,
-      client_id: client.id,
+      client,
     });
 
     if (!isNonEmptyString(parameters.redirect_uri) || !URL.canParse(parameters.redirect_uri)) {
@@ -223,7 +223,7 @@ export abstract class AuthorizationValidator<
       this.logger.error(
         `[${this.constructor.name}] Invalid parameter "redirect_uri"`,
         '2640d903-baf0-47e7-a420-56972f111aa2',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -238,7 +238,7 @@ export abstract class AuthorizationValidator<
       this.logger.error(
         `[${this.constructor.name}] The Redirect URI must not have a fragment component`,
         'eb620184-39a8-4af4-ba60-7b4dace21448',
-        { parameters, client_id: client.id, redirect_uri: redirectUri.href },
+        { parameters, client, redirect_uri: redirectUri.href },
         error,
       );
 
@@ -253,7 +253,7 @@ export abstract class AuthorizationValidator<
       this.logger.error(
         `[${this.constructor.name}] Invalid Redirect URI`,
         '484f7e9a-dbab-4d47-b2c7-1d7c4351f2e9',
-        { parameters, client_id: client.id, redirect_uri: redirectUri.href },
+        { parameters, client, redirect_uri: redirectUri.href },
         error,
       );
 
@@ -262,7 +262,7 @@ export abstract class AuthorizationValidator<
 
     this.logger.debug(`[${this.constructor.name}] Completed getRedirectUri()`, '40887ea5-a47a-4e1b-bec9-198606e8d1cb', {
       parameters,
-      client_id: client.id,
+      client,
       redirect_uri: redirectUri.href,
     });
 
@@ -280,7 +280,7 @@ export abstract class AuthorizationValidator<
   protected getResponseType(parameters: AuthorizationRequest, client: Client): ResponseType {
     this.logger.debug(`[${this.constructor.name}] Called getResponseType()`, 'cde50a8f-8b94-4e10-8124-cee957cf51c2', {
       parameters,
-      client_id: client.id,
+      client,
     });
 
     const name = parameters.response_type!.split(' ').sort().join(' ') as ResponseTypeName;
@@ -294,7 +294,7 @@ export abstract class AuthorizationValidator<
       this.logger.error(
         `[${this.constructor.name}] The Client is not allowed to request the Response Type "${responseType.name}"`,
         'abfa0812-dd05-4784-9c52-d8c1ed2c9be2',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -304,7 +304,7 @@ export abstract class AuthorizationValidator<
     this.logger.debug(
       `[${this.constructor.name}] Completed getResponseType()`,
       '5f1b6a8b-c1e2-4628-9a6f-01ab31078d0c',
-      { parameters, client_id: client.id, response_type: responseType.name },
+      { parameters, client, response_type: responseType.name },
     );
 
     return responseType;
@@ -324,7 +324,7 @@ export abstract class AuthorizationValidator<
   protected async getScopes(parameters: AuthorizationRequest, client: Client): Promise<Scope[]> {
     this.logger.debug(`[${this.constructor.name}] Called getScopes()`, '3d805d51-5e4a-4bfb-ad41-5c1d75aa286a', {
       parameters,
-      client_id: client.id,
+      client,
     });
 
     if (!isNonEmptyString(parameters.scope)) {
@@ -333,7 +333,7 @@ export abstract class AuthorizationValidator<
       this.logger.error(
         `[${this.constructor.name}] Invalid parameter "scope"`,
         '73f82992-2002-4283-b63e-53c50e8cae6d',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -346,7 +346,7 @@ export abstract class AuthorizationValidator<
 
     this.logger.debug(`[${this.constructor.name}] Completed getScopes()`, '3d9e2615-27f4-4770-9279-4a63eec109f5', {
       parameters,
-      client_id: client.id,
+      client,
       allowed_scopes: allowedScopes.map((scope) => scope.name),
     });
 
@@ -927,7 +927,7 @@ export abstract class AuthorizationValidator<
 
     this.logger.debug(`[${this.constructor.name}] Completed findSession()`, '82c262b5-4df7-49dc-996a-bc565f0c584d', {
       cookies,
-      session_id: session?.id ?? null,
+      session,
     });
 
     return session;
@@ -980,7 +980,7 @@ export abstract class AuthorizationValidator<
   protected async checkGrant(grant: Grant, client: Client, parameters: AuthorizationRequest): Promise<void> {
     this.logger.debug(`[${this.constructor.name}] Called checkGrant()`, '63571aea-2c2f-4a41-817c-15b57e976ad4', {
       grant,
-      client_id: client.id,
+      client,
       parameters,
     });
 
@@ -992,7 +992,7 @@ export abstract class AuthorizationValidator<
       this.logger.error(
         `[${this.constructor.name}] Invalid Grant`,
         '2fb222ee-bc9c-4d8f-9d5c-92582e56ec7d',
-        { grant, client_id: client.id, parameters },
+        { grant, client, parameters },
         error,
       );
 
@@ -1007,7 +1007,7 @@ export abstract class AuthorizationValidator<
       this.logger.error(
         `[${this.constructor.name}] Expired Grant`,
         'b4efe738-033e-4041-9d87-2921f2185276',
-        { grant, client_id: client.id, parameters },
+        { grant, client, parameters },
         error,
       );
 
@@ -1022,7 +1022,7 @@ export abstract class AuthorizationValidator<
       this.logger.error(
         `[${this.constructor.name}] One or more parameters changed since the initial Authorization Request`,
         '80670caa-b8b3-4bd9-84bf-0b4a496c4169',
-        { grant, client_id: client.id, parameters },
+        { grant, client, parameters },
         error,
       );
 
@@ -1031,7 +1031,7 @@ export abstract class AuthorizationValidator<
 
     this.logger.debug(`[${this.constructor.name}] Completed checkGrant()`, '6ec4ca4b-358b-4b44-9676-b29c79ae32e1', {
       grant,
-      client_id: client.id,
+      client,
       parameters,
     });
   }

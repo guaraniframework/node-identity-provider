@@ -222,7 +222,7 @@ export class ClientSecretBasicClientAuthentication extends ClientAuthentication 
 
     this.logger.debug(`[${this.constructor.name}] Completed authenticate()`, '7776d17f-926e-4e29-be9c-ad3484ec961b', {
       request,
-      client_id: client.id,
+      client,
     });
 
     return client;

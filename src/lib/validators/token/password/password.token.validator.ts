@@ -157,7 +157,7 @@ export class PasswordTokenValidator extends TokenValidator<PasswordTokenContext>
 
     this.logger.debug(`[${this.constructor.name}] Completed getUser()`, '96a191cc-ba61-4a7c-964d-79a0da63953f', {
       parameters,
-      user_id: user.id,
+      user,
     });
 
     return user;
@@ -177,7 +177,7 @@ export class PasswordTokenValidator extends TokenValidator<PasswordTokenContext>
   private async getScopes(parameters: PasswordTokenRequest, client: Client): Promise<Scope[]> {
     this.logger.debug(`[${this.constructor.name}] Called getScopes()`, '75a3ea4e-12a0-42f9-aa66-695acce470dd', {
       parameters,
-      client_id: client.id,
+      client,
     });
 
     if ('scope' in parameters && !isNonEmptyString(parameters.scope)) {
@@ -186,7 +186,7 @@ export class PasswordTokenValidator extends TokenValidator<PasswordTokenContext>
       this.logger.error(
         `[${this.constructor.name}] Invalid parameter "scope"`,
         'd9fa30eb-68a0-452e-820a-e09c12ca1985',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -201,7 +201,7 @@ export class PasswordTokenValidator extends TokenValidator<PasswordTokenContext>
       this.logger.error(
         `[${this.constructor.name}] Cannot request an OpenID Connect Scope using this Grant Type`,
         'c41be21b-1c2d-4190-bf57-4fdc9bed832a',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -213,7 +213,7 @@ export class PasswordTokenValidator extends TokenValidator<PasswordTokenContext>
 
     this.logger.debug(`[${this.constructor.name}] Completed getScopes()`, 'ebf9c3c0-de48-4931-8f73-5b748280c064', {
       parameters,
-      client_id: client.id,
+      client,
       allowed_scopes: allowedScopes.map((scope) => scope.name),
     });
 

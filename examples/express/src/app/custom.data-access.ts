@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { Injectable } from '@guarani/di';
+import { JsonWebKey } from '@guarani/jose';
 
 import { SQLiteDataAccess } from '../../../../src/lib/data-access/sqlite/sqlite.data-access';
 import { Client } from '../../../../src/lib/entities/client';
@@ -29,6 +30,10 @@ export class CustomDataAccess extends SQLiteDataAccess {
     });
 
     return clients;
+  }
+
+  public override async findJsonWebKeyByKeyId(id: string): Promise<JsonWebKey | null> {
+    return this.jsonWebKeySet.find((jsonWebKey) => jsonWebKey.kid === id);
   }
 
   public async findLoginsByIds(ids: string[]): Promise<Login[]> {
@@ -59,6 +64,26 @@ export class CustomDataAccess extends SQLiteDataAccess {
     );
 
     return logins;
+  }
+
+  public override async getClientAssertionSignJsonWebKey(): Promise<JsonWebKey> {
+    return this.jsonWebKeySet.get((jsonWebKey) => jsonWebKey.kid === '03bf969a-e23b-42f7-8955-199e52faa09f');
+  }
+
+  public override async getClientAssertionUnwrapJsonWebKey(): Promise<JsonWebKey> {
+    return this.jsonWebKeySet.get((jsonWebKey) => jsonWebKey.kid === '72876294-6f85-43f6-bb3d-e80e9dca9553');
+  }
+
+  public override async getJwtBearerGrantUnwrapJsonWebKey(): Promise<JsonWebKey> {
+    return this.jsonWebKeySet.get((jsonWebKey) => jsonWebKey.kid === '72876294-6f85-43f6-bb3d-e80e9dca9553');
+  }
+
+  public override async getSignJsonWebKey(): Promise<JsonWebKey> {
+    return this.jsonWebKeySet.get((jsonWebKey) => jsonWebKey.kid === '03bf969a-e23b-42f7-8955-199e52faa09f');
+  }
+
+  public override async getUnwrapJsonWebKey(): Promise<JsonWebKey> {
+    return this.jsonWebKeySet.get((jsonWebKey) => jsonWebKey.kid === '72876294-6f85-43f6-bb3d-e80e9dca9553');
   }
 
   public async saveUser(user: User): Promise<void> {

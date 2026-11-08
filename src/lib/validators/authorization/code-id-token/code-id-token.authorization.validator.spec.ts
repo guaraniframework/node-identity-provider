@@ -185,7 +185,7 @@ describe('Code & ID Token Authorization Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[CodeIdTokenAuthorizationValidator] Missing required Scope "openid"',
         '0519720b-d7c3-4edb-9860-4b52dfe24bb9',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
     });

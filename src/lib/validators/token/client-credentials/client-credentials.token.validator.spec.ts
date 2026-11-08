@@ -128,7 +128,7 @@ describe('Client Credentials Token Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[ClientCredentialsTokenValidator] Invalid parameter "scope"',
         'b1a3f287-6d9e-4c3a-afca-8d0ad49a0a02',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
     });
@@ -146,7 +146,7 @@ describe('Client Credentials Token Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[ClientCredentialsTokenValidator] Cannot request an OpenID Connect Scope using this Grant Type',
         'ee831a1e-7c87-40ad-a08e-359267640195',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
     });

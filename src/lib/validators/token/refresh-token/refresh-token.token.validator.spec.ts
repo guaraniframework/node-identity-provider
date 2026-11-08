@@ -232,7 +232,7 @@ describe('Refresh Token Token Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[RefreshTokenTokenValidator] Invalid parameter "scope"',
         '104ded58-99fd-4791-91cb-a65ae8fc166b',
-        { parameters, refresh_token_id: refreshToken.id, client_id: client.id },
+        { parameters, refresh_token: refreshToken, client },
         error,
       );
     });
@@ -286,7 +286,7 @@ describe('Refresh Token Token Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[RefreshTokenTokenValidator] The Scope "baz" was not previously granted',
         '83f97acd-b875-481f-b6a1-5b9ce33ec1ab',
-        { parameters, refresh_token_id: refreshToken.id, client_id: client.id },
+        { parameters, refresh_token: refreshToken, client },
         error,
       );
     });
@@ -312,7 +312,7 @@ describe('Refresh Token Token Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[RefreshTokenTokenValidator] Mismatching Client Identifier',
         '84ca7dde-d9aa-4169-aa37-ea758facb3c4',
-        { refresh_token_id: refreshToken.id, client_id: client.id },
+        { refresh_token: refreshToken, client },
         error,
       );
     });
@@ -332,7 +332,7 @@ describe('Refresh Token Token Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[RefreshTokenTokenValidator] Refresh Token not yet valid',
         '9f576636-3175-4b0b-94cd-b58a8a46f471',
-        { refresh_token_id: refreshToken.id, client_id: client.id },
+        { refresh_token: refreshToken, client },
         error,
       );
     });
@@ -352,7 +352,7 @@ describe('Refresh Token Token Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[RefreshTokenTokenValidator] Expired Refresh Token',
         '8993e731-ab0f-4e95-93e4-e98c9f3ece55',
-        { refresh_token_id: refreshToken.id, client_id: client.id },
+        { refresh_token: refreshToken, client },
         error,
       );
     });
@@ -372,7 +372,7 @@ describe('Refresh Token Token Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[RefreshTokenTokenValidator] Revoked Refresh Token',
         'b4a9ed5f-b13c-49cc-abf3-2ca0b0a64cd0',
-        { refresh_token_id: refreshToken.id, client_id: client.id },
+        { refresh_token: refreshToken, client },
         error,
       );
     });

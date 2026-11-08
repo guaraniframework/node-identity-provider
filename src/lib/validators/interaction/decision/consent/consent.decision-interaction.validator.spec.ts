@@ -164,7 +164,7 @@ describe('Consent Decision Interaction Validator', () => {
         expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
           '[ConsentDecisionInteractionValidator] Invalid parameter "consent_challenge"',
           'e93cd171-debc-480c-a17b-92da2cfe263d',
-          { parameters, client_id: client.id },
+          { parameters, client },
           error,
         );
       },
@@ -183,7 +183,7 @@ describe('Consent Decision Interaction Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[ConsentDecisionInteractionValidator] Invalid Consent Challenge',
         '4e7a0b47-797e-4e8f-a716-10923b9b70c0',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
     });
@@ -204,7 +204,7 @@ describe('Consent Decision Interaction Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[ConsentDecisionInteractionValidator] The Grant was not issued to this Client',
         'ea6a88c5-adb4-4f54-8f97-879c848b1b31',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
     });
@@ -230,7 +230,7 @@ describe('Consent Decision Interaction Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[ConsentDecisionInteractionValidator] Expired Grant',
         'd25a5b81-c749-49d0-a8e6-1d5d3529d7f6',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
     });
@@ -267,7 +267,7 @@ describe('Consent Decision Interaction Validator', () => {
         expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
           '[ConsentDecisionInteractionValidator] No Active Login found',
           '77c50712-a8f8-4154-bbbb-e028616c149b',
-          { parameters, client_id: client.id },
+          { parameters, client },
           error,
         );
       },
@@ -373,7 +373,7 @@ describe('Consent Decision Interaction Validator', () => {
         expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
           '[ConsentDecisionInteractionValidator] Invalid parameter "granted_scope"',
           '9e47d7de-1242-40e2-9f72-102e2ebdb507',
-          { parameters, grant_id: grant.id },
+          { parameters, grant },
           error,
         );
       },
@@ -410,7 +410,7 @@ describe('Consent Decision Interaction Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[ConsentDecisionInteractionValidator] The Scope "baz" was not requested by the Client',
         '37aed28e-2f3b-4b24-8cb1-1438cc647cd5',
-        { parameters, grant_id: grant.id },
+        { parameters, grant },
         error,
       );
     });

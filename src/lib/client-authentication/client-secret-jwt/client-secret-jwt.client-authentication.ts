@@ -48,6 +48,20 @@ export class ClientSecretJwtClientAuthentication extends JwtBearerClientAssertio
    * @returns Client Secret as a JSON Web Key.
    */
   protected async getClientAssertionClientSignJsonWebKey(client: Client): Promise<JsonWebKey> {
-    return await getClientSecretAsJsonWebKey(client);
+    this.logger.debug(
+      `[${this.constructor.name}] Called getClientAssertionClientSignJsonWebKey()`,
+      '6fcfad51-563b-4dfd-b84c-88d04cc4b0f5',
+      { client },
+    );
+
+    const jsonWebKey = await getClientSecretAsJsonWebKey(client);
+
+    this.logger.debug(
+      `[${this.constructor.name}] Completed getClientAssertionClientSignJsonWebKey()`,
+      '9528b056-c80e-4cf4-9434-066798ee884e',
+      { client, jwk: jsonWebKey },
+    );
+
+    return jsonWebKey;
   }
 }

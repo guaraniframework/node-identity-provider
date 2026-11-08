@@ -105,7 +105,7 @@ export class CodeIdTokenAuthorizationValidator extends AuthorizationValidator<Co
   protected override async getScopes(parameters: CodeIdTokenAuthorizationRequest, client: Client): Promise<Scope[]> {
     this.logger.debug(`[${this.constructor.name}] Called getScopes()`, '48be36c3-5c45-4dfd-829b-b6e40217db1e', {
       parameters,
-      client_id: client.id,
+      client,
     });
 
     const scopes = await super.getScopes(parameters, client);
@@ -117,7 +117,7 @@ export class CodeIdTokenAuthorizationValidator extends AuthorizationValidator<Co
       this.logger.error(
         `[${this.constructor.name}] Missing required Scope "openid"`,
         '0519720b-d7c3-4edb-9860-4b52dfe24bb9',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -126,7 +126,7 @@ export class CodeIdTokenAuthorizationValidator extends AuthorizationValidator<Co
 
     this.logger.debug(`[${this.constructor.name}] Completed getScopes()`, '2bf2594b-8964-4ba5-9474-0cd3f92c9cc1', {
       parameters,
-      client_id: client.id,
+      client,
       allowed_scopes: allowedScopes,
     });
 
@@ -250,7 +250,7 @@ export class CodeIdTokenAuthorizationValidator extends AuthorizationValidator<Co
     this.logger.debug(
       `[${this.constructor.name}] Completed getCodeChallengeMethod()`,
       'fe9875ea-11c4-42c6-8b8d-18fa701b8dc8',
-      { parameters, code_challenge_method: codeChallengeMethod },
+      { parameters, code_challenge_method: codeChallengeMethod.name },
     );
 
     return codeChallengeMethod;

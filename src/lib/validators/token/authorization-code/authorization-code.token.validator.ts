@@ -136,7 +136,7 @@ export class AuthorizationCodeTokenValidator extends TokenValidator<Authorizatio
     this.logger.debug(
       `[${this.constructor.name}] Completed getAuthorizationCode()`,
       '6b775350-e8ae-4dd8-a752-5db1c49e0cc3',
-      { parameters, authorization_code_id: authorizationCode.id },
+      { parameters, authorization_code: authorizationCode },
     );
 
     return authorizationCode;
@@ -154,7 +154,7 @@ export class AuthorizationCodeTokenValidator extends TokenValidator<Authorizatio
   private getRedirectUri(parameters: AuthorizationCodeTokenRequest, client: Client): URL {
     this.logger.debug(`[${this.constructor.name}] Called getRedirectUri()`, '359b88e3-485b-4a1c-8af1-f5bd2cd5a123', {
       parameters,
-      client_id: client.id,
+      client,
     });
 
     if (
@@ -167,7 +167,7 @@ export class AuthorizationCodeTokenValidator extends TokenValidator<Authorizatio
       this.logger.error(
         `[${this.constructor.name}] Invalid parameter "redirect_uri"`,
         '743a7428-a1b8-4184-b815-c334f363a8cd',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -182,7 +182,7 @@ export class AuthorizationCodeTokenValidator extends TokenValidator<Authorizatio
       this.logger.error(
         `[${this.constructor.name}] The Redirect URI must not have a fragment component`,
         'db7a2571-f064-4d4f-9511-b93e80fe4ea8',
-        { parameters, client_id: client.id, redirect_uri: redirectUri.href },
+        { parameters, client, redirect_uri: redirectUri.href },
         error,
       );
 
@@ -197,7 +197,7 @@ export class AuthorizationCodeTokenValidator extends TokenValidator<Authorizatio
       this.logger.error(
         `[${this.constructor.name}] Invalid Redirect URI`,
         '747c1958-b29b-4b34-8ab4-4ca42086b81a',
-        { parameters, client_id: client.id, redirect_uri: redirectUri.href },
+        { parameters, client, redirect_uri: redirectUri.href },
         error,
       );
 
@@ -206,7 +206,7 @@ export class AuthorizationCodeTokenValidator extends TokenValidator<Authorizatio
 
     this.logger.debug(`[${this.constructor.name}] Completed getRedirectUri()`, 'b12cf04d-1c42-4975-92d0-5d9de931c878', {
       parameters,
-      client_id: client.id,
+      client,
       redirect_uri: redirectUri.href,
     });
 
@@ -266,12 +266,7 @@ export class AuthorizationCodeTokenValidator extends TokenValidator<Authorizatio
     this.logger.debug(
       `[${this.constructor.name}] Called checkAuthorizationCode()`,
       'cd5d2103-1e6e-4e46-90ac-0fe6fa2fb213',
-      {
-        authorization_code_id: authorizationCode.id,
-        client_id: client.id,
-        redirect_uri: redirectUri.href,
-        code_verifier: codeVerifier,
-      },
+      { authorization_code: authorizationCode, client, redirect_uri: redirectUri.href, code_verifier: codeVerifier },
     );
 
     const { consent, parameters } = authorizationCode;
@@ -282,12 +277,7 @@ export class AuthorizationCodeTokenValidator extends TokenValidator<Authorizatio
       this.logger.error(
         `[${this.constructor.name}] Mismatching Client Identifier`,
         '8165a641-0754-405b-b459-24c0abb9b2ec',
-        {
-          authorization_code_id: authorizationCode.id,
-          client_id: client.id,
-          redirect_uri: redirectUri.href,
-          code_verifier: codeVerifier,
-        },
+        { authorization_code: authorizationCode, client, redirect_uri: redirectUri.href, code_verifier: codeVerifier },
         error,
       );
 
@@ -302,12 +292,7 @@ export class AuthorizationCodeTokenValidator extends TokenValidator<Authorizatio
       this.logger.error(
         `[${this.constructor.name}] Authorization Code not yet valid`,
         '76f0b0eb-ec42-4d4a-8516-e352a7c3359c',
-        {
-          authorization_code_id: authorizationCode.id,
-          client_id: client.id,
-          redirect_uri: redirectUri.href,
-          code_verifier: codeVerifier,
-        },
+        { authorization_code: authorizationCode, client, redirect_uri: redirectUri.href, code_verifier: codeVerifier },
         error,
       );
 
@@ -320,12 +305,7 @@ export class AuthorizationCodeTokenValidator extends TokenValidator<Authorizatio
       this.logger.error(
         `[${this.constructor.name}] Expired Authorization Code`,
         '53207c70-ed20-40b3-9f00-1c0532a9b5f5',
-        {
-          authorization_code_id: authorizationCode.id,
-          client_id: client.id,
-          redirect_uri: redirectUri.href,
-          code_verifier: codeVerifier,
-        },
+        { authorization_code: authorizationCode, client, redirect_uri: redirectUri.href, code_verifier: codeVerifier },
         error,
       );
 
@@ -338,12 +318,7 @@ export class AuthorizationCodeTokenValidator extends TokenValidator<Authorizatio
       this.logger.error(
         `[${this.constructor.name}] Revoked Authorization Code`,
         'dc99eb49-4683-4a34-af41-ab6bdf64e60f',
-        {
-          authorization_code_id: authorizationCode.id,
-          client_id: client.id,
-          redirect_uri: redirectUri.href,
-          code_verifier: codeVerifier,
-        },
+        { authorization_code: authorizationCode, client, redirect_uri: redirectUri.href, code_verifier: codeVerifier },
         error,
       );
 
@@ -356,12 +331,7 @@ export class AuthorizationCodeTokenValidator extends TokenValidator<Authorizatio
       this.logger.error(
         `[${this.constructor.name}] Mismatching Redirect URI`,
         '54c613b4-4c30-4466-beba-d529d5a2503b',
-        {
-          authorization_code_id: authorizationCode.id,
-          client_id: client.id,
-          redirect_uri: redirectUri.href,
-          code_verifier: codeVerifier,
-        },
+        { authorization_code: authorizationCode, client, redirect_uri: redirectUri.href, code_verifier: codeVerifier },
         error,
       );
 
@@ -376,12 +346,7 @@ export class AuthorizationCodeTokenValidator extends TokenValidator<Authorizatio
       this.logger.error(
         `[${this.constructor.name}] Mismatching PKCE Code Verifier`,
         '6664bf0d-2d4f-419c-b174-e9211dc6368f',
-        {
-          authorization_code_id: authorizationCode.id,
-          client_id: client.id,
-          redirect_uri: redirectUri.href,
-          code_verifier: codeVerifier,
-        },
+        { authorization_code: authorizationCode, client, redirect_uri: redirectUri.href, code_verifier: codeVerifier },
         error,
       );
 
@@ -391,12 +356,7 @@ export class AuthorizationCodeTokenValidator extends TokenValidator<Authorizatio
     this.logger.debug(
       `[${this.constructor.name}] Completed checkAuthorizationCode()`,
       '50133bbd-158a-4a54-ad89-373bbdf99865',
-      {
-        authorization_code_id: authorizationCode.id,
-        client_id: client.id,
-        redirect_uri: redirectUri.href,
-        code_verifier: codeVerifier,
-      },
+      { authorization_code: authorizationCode, client, redirect_uri: redirectUri.href, code_verifier: codeVerifier },
     );
   }
 }

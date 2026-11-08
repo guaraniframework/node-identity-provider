@@ -100,7 +100,7 @@ describe('Scope Handler', () => {
       expect(loggerMock.debug).toHaveBeenLastCalledWith(
         '[ScopeHandler] Completed getAllowedScopes()',
         '0b453fad-5cfd-4003-aa6d-93bbd8a6f7f9',
-        { client_id: client.id, requested_scopes: [], allowed_scopes: ['foo', 'bar'] },
+        { client, requested_scopes: [], allowed_scopes: ['foo', 'bar'] },
       );
     });
 
@@ -115,7 +115,7 @@ describe('Scope Handler', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[ScopeHandler] The Client is not allowed to request the Scope "qux"',
         '345c0252-3622-460b-a940-9997c35fee38',
-        { client_id: client.id, requested_scopes: ['foo', 'qux'] },
+        { client, requested_scopes: ['foo', 'qux'] },
         error,
       );
     });
@@ -136,7 +136,7 @@ describe('Scope Handler', () => {
       expect(loggerMock.debug).toHaveBeenLastCalledWith(
         '[ScopeHandler] Completed getAllowedScopes()',
         '0ed273d8-04d3-40ac-b53b-5a8a00ba8034',
-        { client_id: client.id, requested_scopes: scopes, allowed_scopes: scopes },
+        { client, requested_scopes: scopes, allowed_scopes: scopes },
       );
     });
   });

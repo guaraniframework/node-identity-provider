@@ -193,7 +193,7 @@ export abstract class JwtBearerClientAssertion extends ClientAssertion {
 
       this.logger.debug(`[${this.constructor.name}] Completed getClient()`, 'c89ad02e-6bbf-42cc-a232-4ec84a835bad', {
         request,
-        client_id: client.id,
+        client,
       });
 
       return client;

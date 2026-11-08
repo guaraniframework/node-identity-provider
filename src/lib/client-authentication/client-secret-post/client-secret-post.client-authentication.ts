@@ -173,7 +173,7 @@ export class ClientSecretPostClientAuthentication extends ClientAuthentication {
 
     this.logger.debug(`[${this.constructor.name}] Completed authenticate()`, 'bed88bc9-e88c-40b4-aa44-5b10608897f0', {
       request,
-      client_id: client.id,
+      client,
     });
 
     return client;

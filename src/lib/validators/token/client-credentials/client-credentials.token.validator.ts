@@ -92,7 +92,7 @@ export class ClientCredentialsTokenValidator extends TokenValidator<ClientCreden
   private async getScopes(parameters: ClientCredentialsTokenRequest, client: Client): Promise<Scope[]> {
     this.logger.debug(`[${this.constructor.name}] Called getScopes()`, 'f1f26e92-8f62-46cc-a01c-74eaf17623cc', {
       parameters,
-      client_id: client.id,
+      client,
     });
 
     if ('scope' in parameters && !isNonEmptyString(parameters.scope)) {
@@ -101,7 +101,7 @@ export class ClientCredentialsTokenValidator extends TokenValidator<ClientCreden
       this.logger.error(
         `[${this.constructor.name}] Invalid parameter "scope"`,
         'b1a3f287-6d9e-4c3a-afca-8d0ad49a0a02',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -116,7 +116,7 @@ export class ClientCredentialsTokenValidator extends TokenValidator<ClientCreden
       this.logger.error(
         `[${this.constructor.name}] Cannot request an OpenID Connect Scope using this Grant Type`,
         'ee831a1e-7c87-40ad-a08e-359267640195',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -128,7 +128,7 @@ export class ClientCredentialsTokenValidator extends TokenValidator<ClientCreden
 
     this.logger.debug(`[${this.constructor.name}] Completed getScopes()`, 'e06ff4e9-166b-4c15-af6e-8bd90001cdda', {
       parameters,
-      client_id: client.id,
+      client,
       allowed_scopes: allowedScopes.map((scope) => scope.name),
     });
 

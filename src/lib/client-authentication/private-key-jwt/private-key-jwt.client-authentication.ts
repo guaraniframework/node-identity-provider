@@ -68,7 +68,7 @@ export class PrivateKeyJwtClientAuthentication extends JwtBearerClientAssertion 
     this.logger.debug(
       `[${this.constructor.name}] Called getClientAssertionClientSignJsonWebKey()`,
       'dad5e475-9ed8-4d9a-9371-ae2ce3cbe8aa',
-      { client_id: client.id, header },
+      { client, header },
     );
 
     try {
@@ -81,7 +81,7 @@ export class PrivateKeyJwtClientAuthentication extends JwtBearerClientAssertion 
       this.logger.debug(
         `[${this.constructor.name}] Completed getClientAssertionClientSignJsonWebKey()`,
         '0cc291b6-9f7b-46a3-8f08-d0e5ead7e4ac',
-        { client_id: client.id, header, jwk: jsonWebKey },
+        { client, header, jwk: jsonWebKey },
       );
 
       return jsonWebKey;
@@ -91,7 +91,7 @@ export class PrivateKeyJwtClientAuthentication extends JwtBearerClientAssertion 
       this.logger.error(
         `[${this.constructor.name}] Failed to obtain the Client's Client Assertion Sign JSON Web Key`,
         'cd722fbb-4708-427a-a588-c1f1f85feca0',
-        { client_id: client.id, header },
+        { client, header },
         error,
       );
 

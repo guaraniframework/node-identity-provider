@@ -130,7 +130,7 @@ export class ConsentDecisionInteractionValidator extends DecisionInteractionVali
   private async getGrant(parameters: ConsentDecisionInteractionRequest, client: Client): Promise<Grant> {
     this.logger.debug(`[${this.constructor.name}] Called getGrant()`, 'd96a5e4b-6a14-4367-8e7a-82be6c8a57a9', {
       parameters,
-      client_id: client.id,
+      client,
     });
 
     if (!('consent_challenge' in parameters) || !isNonEmptyString(parameters.consent_challenge)) {
@@ -139,7 +139,7 @@ export class ConsentDecisionInteractionValidator extends DecisionInteractionVali
       this.logger.error(
         `[${this.constructor.name}] Invalid parameter "consent_challenge"`,
         'e93cd171-debc-480c-a17b-92da2cfe263d',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -154,7 +154,7 @@ export class ConsentDecisionInteractionValidator extends DecisionInteractionVali
       this.logger.error(
         `[${this.constructor.name}] Invalid Consent Challenge`,
         '4e7a0b47-797e-4e8f-a716-10923b9b70c0',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -167,7 +167,7 @@ export class ConsentDecisionInteractionValidator extends DecisionInteractionVali
       this.logger.error(
         `[${this.constructor.name}] The Grant was not issued to this Client`,
         'ea6a88c5-adb4-4f54-8f97-879c848b1b31',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -182,7 +182,7 @@ export class ConsentDecisionInteractionValidator extends DecisionInteractionVali
       this.logger.error(
         `[${this.constructor.name}] Expired Grant`,
         'd25a5b81-c749-49d0-a8e6-1d5d3529d7f6',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -211,7 +211,7 @@ export class ConsentDecisionInteractionValidator extends DecisionInteractionVali
       this.logger.error(
         `[${this.constructor.name}] No Active Login found`,
         '77c50712-a8f8-4154-bbbb-e028616c149b',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -220,8 +220,8 @@ export class ConsentDecisionInteractionValidator extends DecisionInteractionVali
 
     this.logger.debug(`[${this.constructor.name}] Completed getGrant()`, 'ee65e685-bb0d-45e3-bf75-2e607b193f48', {
       parameters,
-      client_id: client.id,
-      grant_id: grant.id,
+      client,
+      grant,
     });
 
     return grant;
@@ -286,7 +286,7 @@ export class ConsentDecisionInteractionValidator extends DecisionInteractionVali
   private async getGrantedScopes(parameters: ConsentAcceptDecisionInteractionRequest, grant: Grant): Promise<Scope[]> {
     this.logger.debug(`[${this.constructor.name}] Called getGrantedScopes()`, '0090a107-902f-4667-84a7-b79c6dc2cd2d', {
       parameters,
-      grant_id: grant.id,
+      grant,
     });
 
     if (!('granted_scope' in parameters) || !isNonEmptyString(parameters.granted_scope)) {
@@ -295,7 +295,7 @@ export class ConsentDecisionInteractionValidator extends DecisionInteractionVali
       this.logger.error(
         `[${this.constructor.name}] Invalid parameter "granted_scope"`,
         '9e47d7de-1242-40e2-9f72-102e2ebdb507',
-        { parameters, grant_id: grant.id },
+        { parameters, grant },
         error,
       );
 
@@ -313,7 +313,7 @@ export class ConsentDecisionInteractionValidator extends DecisionInteractionVali
         this.logger.error(
           `[${this.constructor.name}] The Scope "${grantedScope}" was not requested by the Client`,
           '37aed28e-2f3b-4b24-8cb1-1438cc647cd5',
-          { parameters, grant_id: grant.id },
+          { parameters, grant },
           error,
         );
 
@@ -324,7 +324,7 @@ export class ConsentDecisionInteractionValidator extends DecisionInteractionVali
     this.logger.debug(
       `[${this.constructor.name}] Completed getGrantedScopes()`,
       'c60bb988-1f8d-4e1d-a639-42eefadeab77',
-      { parameters, grant_id: grant.id, granted_scopes: grantedScopes },
+      { parameters, grant, granted_scopes: grantedScopes },
     );
 
     return await this.dataAccess.getScopesByName(grantedScopes);

@@ -294,7 +294,7 @@ describe('Authorization Validator', () => {
         expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
           '[CustomAuthorizationValidator] Invalid parameter "redirect_uri"',
           '2640d903-baf0-47e7-a420-56972f111aa2',
-          { parameters, client_id: client.id },
+          { parameters, client },
           error,
         );
       },
@@ -313,7 +313,7 @@ describe('Authorization Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[CustomAuthorizationValidator] The Redirect URI must not have a fragment component',
         'eb620184-39a8-4af4-ba60-7b4dace21448',
-        { parameters, client_id: client.id, redirect_uri: parameters.redirect_uri },
+        { parameters, client, redirect_uri: parameters.redirect_uri },
         error,
       );
     });
@@ -331,7 +331,7 @@ describe('Authorization Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[CustomAuthorizationValidator] Invalid Redirect URI',
         '484f7e9a-dbab-4d47-b2c7-1d7c4351f2e9',
-        { parameters, client_id: client.id, redirect_uri: parameters.redirect_uri },
+        { parameters, client, redirect_uri: parameters.redirect_uri },
         error,
       );
     });
@@ -347,7 +347,7 @@ describe('Authorization Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[CustomAuthorizationValidator] The Client is not allowed to request the Response Type "code"',
         'abfa0812-dd05-4784-9c52-d8c1ed2c9be2',
-        { parameters, client_id: tokenClient.id },
+        { parameters, client: tokenClient },
         error,
       );
     });
@@ -363,7 +363,7 @@ describe('Authorization Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[CustomAuthorizationValidator] Invalid parameter "scope"',
         '73f82992-2002-4283-b63e-53c50e8cae6d',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
     });
@@ -846,7 +846,7 @@ describe('Authorization Validator', () => {
         expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
           '[CustomAuthorizationValidator] Invalid Grant',
           '2fb222ee-bc9c-4d8f-9d5c-92582e56ec7d',
-          { grant, client_id: client.id, parameters },
+          { grant, client, parameters },
           error,
         );
 
@@ -879,7 +879,7 @@ describe('Authorization Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[CustomAuthorizationValidator] Expired Grant',
         'b4efe738-033e-4041-9d87-2921f2185276',
-        { grant, client_id: client.id, parameters },
+        { grant, client, parameters },
         error,
       );
 
@@ -912,7 +912,7 @@ describe('Authorization Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[CustomAuthorizationValidator] One or more parameters changed since the initial Authorization Request',
         '80670caa-b8b3-4bd9-84bf-0b4a496c4169',
-        { grant, client_id: client.id, parameters },
+        { grant, client, parameters },
         error,
       );
 

@@ -115,7 +115,7 @@ describe('Login Context Interaction Validator', () => {
         expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
           '[LoginContextInteractionValidator] Invalid parameter "login_challenge"',
           'be8f4a90-f87f-47e8-be43-e012812de4a5',
-          { parameters, client_id: client.id },
+          { parameters, client },
           error,
         );
       },
@@ -134,7 +134,7 @@ describe('Login Context Interaction Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[LoginContextInteractionValidator] Invalid Login Challenge',
         '9f341c1d-289e-44df-a7cf-cb217c7e3d5c',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
     });
@@ -155,7 +155,7 @@ describe('Login Context Interaction Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[LoginContextInteractionValidator] The Grant was not issued to this Client',
         '377d13f6-103e-4876-971e-8fc930a5f4fc',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
     });
@@ -181,7 +181,7 @@ describe('Login Context Interaction Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[LoginContextInteractionValidator] Expired Grant',
         'eda960e1-3d46-4e9a-bb06-4bb6cc6f7773',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
     });

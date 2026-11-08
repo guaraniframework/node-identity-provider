@@ -110,7 +110,7 @@ export abstract class ContextInteractionValidator<
 
     this.logger.debug(`[${this.constructor.name}] Completed getClient()`, '7575633d-5383-420a-a1ed-7764f1f14cdc', {
       parameters,
-      client_id: client.id,
+      client,
     });
 
     return client;

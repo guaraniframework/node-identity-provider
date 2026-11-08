@@ -72,7 +72,7 @@ export class ClientAuthenticationHandler {
     this.logger.debug(`[${this.constructor.name}] Completed authenticate()`, 'bd5470d3-7477-4fa5-a577-d939e8dd90da', {
       request,
       methods: methodsNames,
-      client_id: client.id,
+      client,
     });
 
     return client;

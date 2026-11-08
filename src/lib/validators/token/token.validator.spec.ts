@@ -163,7 +163,7 @@ describe('Token Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[CustomTokenValidator] The Client is not allowed to request the Grant Type "authorization_code"',
         'dba5311f-567f-4934-bd2b-8ae387783cb7',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
     });

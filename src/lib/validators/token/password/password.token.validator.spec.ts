@@ -232,7 +232,7 @@ describe('Resource Owner Password Credentials Token Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[PasswordTokenValidator] Invalid parameter "scope"',
         'd9fa30eb-68a0-452e-820a-e09c12ca1985',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
     });
@@ -251,7 +251,7 @@ describe('Resource Owner Password Credentials Token Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[PasswordTokenValidator] Cannot request an OpenID Connect Scope using this Grant Type',
         'c41be21b-1c2d-4190-bf57-4fdc9bed832a',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
     });

@@ -144,7 +144,7 @@ export class NoneClientAuthentication extends ClientAuthentication {
 
     this.logger.debug(`[${this.constructor.name}] Completed authenticate()`, '84f8bbe4-6691-4158-a6bc-bde45ac4775e', {
       request,
-      client_id: client.id,
+      client,
     });
 
     return client;

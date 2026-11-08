@@ -88,7 +88,7 @@ export abstract class InteractionValidator<
     this.logger.debug(
       `[${this.constructor.name}] Completed getInteractionType()`,
       '707f8cfb-5430-427a-bfc3-55b89079509e',
-      { parameters },
+      { parameters, interaction_type: interactionType.name },
     );
 
     return interactionType;
