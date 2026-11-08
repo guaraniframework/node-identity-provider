@@ -74,7 +74,6 @@ export class RefreshTokenGrantType extends GrantType {
       scopes,
     } = context;
 
-    // TODO: Add ID Token support.
     const [accessToken, refreshToken] = await this.dataAccess.atomic(async () => {
       let refreshToken = context.refreshToken;
 
