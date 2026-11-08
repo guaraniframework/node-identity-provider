@@ -950,10 +950,7 @@ export abstract class AuthorizationValidator<
       { scopes: scopesNames, prompts, response_type: responseType.name },
     );
 
-    if (
-      scopesNames.includes('offline_access') &&
-      (!prompts.includes('consent') || !responseType.name.includes('code'))
-    ) {
+    if (scopesNames.includes('offline_access') && (!prompts.includes('consent') || responseType.name !== 'code')) {
       this.logger.debug(
         `[${this.constructor.name}] Removing "offline_access" scope`,
         '72b2b93c-21bb-449c-a032-dfde4ecfd007',

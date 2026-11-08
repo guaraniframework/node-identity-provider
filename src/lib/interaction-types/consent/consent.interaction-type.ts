@@ -175,7 +175,7 @@ export class ConsentInteractionType extends InteractionType {
 
       if (
         grantedScopes.some((grantedScope) => grantedScope.name === 'offline_access') &&
-        !grant.parameters.response_type.includes('code')
+        grant.parameters.response_type !== 'code'
       ) {
         this.logger.debug(
           `[${this.constructor.name}] Removing Scope "offline_access" for Response Type "${grant.parameters.response_type}"`,

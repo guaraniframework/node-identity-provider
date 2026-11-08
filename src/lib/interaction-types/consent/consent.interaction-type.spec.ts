@@ -196,7 +196,7 @@ describe('Consent Interaction Type', () => {
     let now: number;
 
     const grantParameters = {
-      response_type: 'code id_token',
+      response_type: 'code',
       display: 'page',
       prompt: 'consent',
       ui_locales: 'en',
@@ -385,7 +385,7 @@ describe('Consent Interaction Type', () => {
 
       const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
-        parameters: { ...grantParameters, response_type: 'id_token token' },
+        parameters: { ...grantParameters, response_type: 'code token' },
         interactions: [],
         expiresAt: new Date(now + 3600000),
         client,
@@ -422,7 +422,7 @@ describe('Consent Interaction Type', () => {
       );
 
       expect(loggerMock.debug).toHaveBeenCalledWith(
-        '[ConsentInteractionType] Removing Scope "offline_access" for Response Type "id_token token"',
+        '[ConsentInteractionType] Removing Scope "offline_access" for Response Type "code token"',
         '161dec91-0722-420d-917c-07235b9d7b32',
         { context },
       );

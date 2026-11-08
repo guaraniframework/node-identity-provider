@@ -112,7 +112,7 @@ describe('Authorization Validator', () => {
     ),
     jest.mocked<ResponseType>(
       Object.assign<ResponseType, Partial<ResponseType>>(Reflect.construct(ResponseType, []), {
-        name: 'token',
+        name: 'code token',
         defaultResponseMode: 'fragment',
       }),
     ),
@@ -147,7 +147,7 @@ describe('Authorization Validator', () => {
   const tokenClient: Client = Object.assign<Client, Partial<Client>>(new Client(), {
     id: 'client_id',
     redirectUris: [new URL('https://client.example.com/oidc/callback')],
-    responseTypes: ['token'],
+    responseTypes: ['code token'],
     scopes: ['openid', 'foo', 'bar', 'baz', 'qux'].map((scope) =>
       Object.assign<Scope, Partial<Scope>>(new Scope(), { name: scope }),
     ),
@@ -956,8 +956,8 @@ describe('Authorization Validator', () => {
       );
     });
 
-    it('should return an Authorization Context without the "offline_access" Scope if not requested together with a "code" Response Type.', async () => {
-      const request = requestFactory(HttpRequestMethod.GET, { response_type: 'token' });
+    it('should return an Authorization Context without the "offline_access" Scope if not requested together with the Response Type "code".', async () => {
+      const request = requestFactory(HttpRequestMethod.GET, { response_type: 'code token' });
       request.cookies[settingsMock.sessionCookie] = 'session_id';
 
       const scopes = ['openid', 'foo', 'bar', 'baz', 'offline_access'].map((scope) => {
