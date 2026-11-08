@@ -30,6 +30,11 @@ export class PasswordTokenValidator extends TokenValidator<PasswordTokenContext>
   public readonly name: GrantTypeName = 'password';
 
   /**
+   * Forbidden Scopes for the Grant Type of this Validator.
+   */
+  private readonly forbiddenScopes: string[] = ['openid', 'profile', 'email', 'phone', 'address', 'offline_access'];
+
+  /**
    * Instantiates a new Resource Owner Password Credentials Token Validator.
    *
    * @param logger Logger of the Identity Provider.
@@ -189,6 +194,20 @@ export class PasswordTokenValidator extends TokenValidator<PasswordTokenContext>
     }
 
     const scopes = parameters.scope?.split(' ') ?? [];
+
+    if (scopes.some((scope) => this.forbiddenScopes.includes(scope))) {
+      const error = new InvalidRequestError('Cannot request an OpenID Connect Scope using this Grant Type.');
+
+      this.logger.error(
+        `[${this.constructor.name}] Cannot request an OpenID Connect Scope using this Grant Type`,
+        'c41be21b-1c2d-4190-bf57-4fdc9bed832a',
+        { parameters, client_id: client.id },
+        error,
+      );
+
+      throw error;
+    }
+
     await this.scopeHandler.checkRequestedScopes(scopes);
     const allowedScopes = await this.scopeHandler.getAllowedScopes(client, scopes);
 

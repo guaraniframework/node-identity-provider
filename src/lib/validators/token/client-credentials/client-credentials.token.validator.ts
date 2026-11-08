@@ -27,6 +27,11 @@ export class ClientCredentialsTokenValidator extends TokenValidator<ClientCreden
   public readonly name: GrantTypeName = 'client_credentials';
 
   /**
+   * Forbidden Scopes for the Grant Type of this Validator.
+   */
+  private readonly forbiddenScopes: string[] = ['openid', 'profile', 'email', 'phone', 'address', 'offline_access'];
+
+  /**
    * Instantiates a new Client Credentials Token Validator.
    *
    * @param logger Logger of the Identity Provider.
@@ -104,6 +109,20 @@ export class ClientCredentialsTokenValidator extends TokenValidator<ClientCreden
     }
 
     const scopes = parameters.scope?.split(' ') ?? [];
+
+    if (scopes.some((scope) => this.forbiddenScopes.includes(scope))) {
+      const error = new InvalidRequestError('Cannot request an OpenID Connect Scope using this Grant Type.');
+
+      this.logger.error(
+        `[${this.constructor.name}] Cannot request an OpenID Connect Scope using this Grant Type`,
+        'ee831a1e-7c87-40ad-a08e-359267640195',
+        { parameters, client_id: client.id },
+        error,
+      );
+
+      throw error;
+    }
+
     await this.scopeHandler.checkRequestedScopes(scopes);
     const allowedScopes = await this.scopeHandler.getAllowedScopes(client, scopes);
 

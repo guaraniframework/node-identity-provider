@@ -37,6 +37,11 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
   public readonly name: GrantTypeName = 'urn:ietf:params:oauth:grant-type:jwt-bearer';
 
   /**
+   * Forbidden Scopes for the Grant Type of this Validator.
+   */
+  private readonly forbiddenScopes: string[] = ['openid', 'profile', 'email', 'phone', 'address', 'offline_access'];
+
+  /**
    * Instantiates a new JWT Bearer Token Validator.
    *
    * @param logger Logger of the Identity Provider.
@@ -284,6 +289,20 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
     }
 
     const scopes = parameters.scope?.split(' ') ?? [];
+
+    if (scopes.some((scope) => this.forbiddenScopes.includes(scope))) {
+      const error = new InvalidRequestError('Cannot request an OpenID Connect Scope using this Grant Type.');
+
+      this.logger.error(
+        `[${this.constructor.name}] Cannot request an OpenID Connect Scope using this Grant Type`,
+        'c19a1ace-0ed9-4b5e-829c-704b9c3d2b4c',
+        { parameters, client_id: client.id },
+        error,
+      );
+
+      throw error;
+    }
+
     await this.scopeHandler.checkRequestedScopes(scopes);
     const allowedScopes = await this.scopeHandler.getAllowedScopes(client, scopes);
 

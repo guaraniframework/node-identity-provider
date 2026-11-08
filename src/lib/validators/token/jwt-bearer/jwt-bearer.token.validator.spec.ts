@@ -223,6 +223,19 @@ describe('JWT Bearer Token Validator', () => {
     });
   });
 
+  describe('forbiddenScopes', () => {
+    it('should have ["openid", "profile", "email", "phone", "address", "offline_access"] as its value.', () => {
+      expect(validator['forbiddenScopes']).toStrictEqual<string[]>([
+        'openid',
+        'profile',
+        'email',
+        'phone',
+        'address',
+        'offline_access',
+      ]);
+    });
+  });
+
   describe('constructor', () => {
     it('should throw when not implementing the method DataAccess.getJwtBearerGrantUnwrapJsonWebKey().', () => {
       container.clear();
@@ -509,6 +522,29 @@ describe('JWT Bearer Token Validator', () => {
         expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
           '[JwtBearerTokenValidator] Invalid parameter "scope"',
           '1c4db530-a5ac-4587-93f7-ad9313812094',
+          { parameters, client_id: client.id },
+          error,
+        );
+      },
+    );
+
+    it.each([hmacNestedAssertion, hmacSignedAssertion, ellipticCurveNestedAssertion, ellipticCurveSignedAssertion])(
+      'should throw when the provided parameter "scope" is forbidden.',
+      async (assertion) => {
+        const request = requestFactory({ assertion, scope: 'openid' });
+
+        clientAuthenticationHandlerMock.authenticate.mockResolvedValueOnce(client);
+        dataAccessMock.getJwtBearerGrantUnwrapJsonWebKey!.mockResolvedValueOnce(unwrapJsonWebKey);
+        dataAccessMock.findUserById.mockResolvedValueOnce(user);
+
+        const error = new InvalidRequestError('Cannot request an OpenID Connect Scope using this Grant Type.');
+        await expect(validator.validate(request)).rejects.toThrowWithMessage(InvalidRequestError, error.description);
+
+        expect(superValidateSpy).toHaveBeenCalledExactlyOnceWith(request);
+
+        expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
+          '[JwtBearerTokenValidator] Cannot request an OpenID Connect Scope using this Grant Type',
+          'c19a1ace-0ed9-4b5e-829c-704b9c3d2b4c',
           { parameters, client_id: client.id },
           error,
         );

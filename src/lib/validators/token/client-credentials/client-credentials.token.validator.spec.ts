@@ -83,6 +83,19 @@ describe('Client Credentials Token Validator', () => {
     });
   });
 
+  describe('forbiddenScopes', () => {
+    it('should have ["openid", "profile", "email", "phone", "address", "offline_access"] as its value.', () => {
+      expect(validator['forbiddenScopes']).toStrictEqual<string[]>([
+        'openid',
+        'profile',
+        'email',
+        'phone',
+        'address',
+        'offline_access',
+      ]);
+    });
+  });
+
   describe('validate()', () => {
     let parameters!: ClientCredentialsTokenRequest;
 
@@ -115,6 +128,24 @@ describe('Client Credentials Token Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[ClientCredentialsTokenValidator] Invalid parameter "scope"',
         'b1a3f287-6d9e-4c3a-afca-8d0ad49a0a02',
+        { parameters, client_id: client.id },
+        error,
+      );
+    });
+
+    it('should throw when the provided parameter "scope" is forbidden.', async () => {
+      const request = requestFactory({ scope: 'openid' });
+
+      clientAuthenticationHandlerMock.authenticate.mockResolvedValueOnce(client);
+
+      const error = new InvalidRequestError('Cannot request an OpenID Connect Scope using this Grant Type.');
+      await expect(validator.validate(request)).rejects.toThrowWithMessage(InvalidRequestError, error.description);
+
+      expect(superValidateSpy).toHaveBeenCalledExactlyOnceWith(request);
+
+      expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
+        '[ClientCredentialsTokenValidator] Cannot request an OpenID Connect Scope using this Grant Type',
+        'ee831a1e-7c87-40ad-a08e-359267640195',
         { parameters, client_id: client.id },
         error,
       );
