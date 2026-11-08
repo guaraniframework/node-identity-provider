@@ -92,7 +92,8 @@ describe('Authorization Endpoint', () => {
   const idTokenHandlerMock = jest.mocked(IdTokenHandler.prototype);
 
   beforeAll(() => {
-    jest.useFakeTimers({ now: new Date(2026, 7, 12, 0, 0, 0, 0) });
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-08-12T00:00:00Z'));
   });
 
   beforeEach(() => {
@@ -598,7 +599,12 @@ describe('Authorization Endpoint', () => {
       expect(response.status).toBe(HttpResponseStatus.SeeOther);
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
 
-      expect(loggerMock.error).not.toHaveBeenCalled();
+      expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
+        '[AuthorizationEndpoint] Failed handle()',
+        '942251bd-b3a6-4577-bb54-4f9bdf9a1a41',
+        { request, response },
+        error,
+      );
     });
 
     it('should return an Error Response when the provided parameter "response_type" is invalid.', async () => {
@@ -612,10 +618,17 @@ describe('Authorization Endpoint', () => {
       expect(response.status).toBe(HttpResponseStatus.SeeOther);
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
 
-      expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
+      expect(loggerMock.error).toHaveBeenCalledWith(
         '[AuthorizationEndpoint] Invalid parameter "response_type"',
         '41df9486-e8d2-44ca-afaa-341e27c1cf25',
         { parameters },
+        error,
+      );
+
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        '[AuthorizationEndpoint] Failed handle()',
+        '942251bd-b3a6-4577-bb54-4f9bdf9a1a41',
+        { request, response },
         error,
       );
     });
@@ -631,10 +644,17 @@ describe('Authorization Endpoint', () => {
       expect(response.status).toBe(HttpResponseStatus.SeeOther);
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
 
-      expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
+      expect(loggerMock.error).toHaveBeenCalledWith(
         '[AuthorizationEndpoint] Unsupported Response Type "unknown"',
         'a63cff49-a503-42fb-a53f-c4fac3ce465b',
         { parameters },
+        error,
+      );
+
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        '[AuthorizationEndpoint] Failed handle()',
+        '942251bd-b3a6-4577-bb54-4f9bdf9a1a41',
+        { request, response },
         error,
       );
     });
@@ -771,6 +791,13 @@ describe('Authorization Endpoint', () => {
       expect(response.status).toBe(error.status);
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
 
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        '[AuthorizationEndpoint] Failed handle()',
+        'a47f5be3-65c0-405e-b352-fc95ede23549',
+        { request, response },
+        error,
+      );
+
       expect(dataAccessMock.createGrant).toHaveBeenCalledExactlyOnceWith(parameters, client, session);
       expect(dataAccessMock.saveSession).toHaveBeenCalledExactlyOnceWith(session);
       expect(dataAccessMock.removeGrant).toHaveBeenCalledExactlyOnceWith(grant);
@@ -809,6 +836,13 @@ describe('Authorization Endpoint', () => {
 
       expect(response.status).toBe(error.status);
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
+
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        '[AuthorizationEndpoint] Failed handle()',
+        'a47f5be3-65c0-405e-b352-fc95ede23549',
+        { request, response },
+        error,
+      );
 
       expect(dataAccessMock.createGrant).not.toHaveBeenCalled();
       expect(dataAccessMock.removeGrant).toHaveBeenCalledExactlyOnceWith(grant);
@@ -924,6 +958,13 @@ describe('Authorization Endpoint', () => {
       expect(response.status).toBe(error.status);
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
 
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        '[AuthorizationEndpoint] Failed handle()',
+        'a47f5be3-65c0-405e-b352-fc95ede23549',
+        { request, response },
+        error,
+      );
+
       expect(dataAccessMock.createGrant).toHaveBeenCalledExactlyOnceWith(parameters, client, session);
       expect(dataAccessMock.saveSession).toHaveBeenCalledExactlyOnceWith(session);
       expect(dataAccessMock.removeGrant).toHaveBeenCalledExactlyOnceWith(grant);
@@ -964,6 +1005,13 @@ describe('Authorization Endpoint', () => {
 
       expect(response.status).toBe(error.status);
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
+
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        '[AuthorizationEndpoint] Failed handle()',
+        'a47f5be3-65c0-405e-b352-fc95ede23549',
+        { request, response },
+        error,
+      );
 
       expect(dataAccessMock.createGrant).not.toHaveBeenCalled();
       expect(dataAccessMock.removeGrant).toHaveBeenCalledExactlyOnceWith(grant);
@@ -1253,6 +1301,13 @@ describe('Authorization Endpoint', () => {
       expect(response.status).toBe(error.status);
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
 
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        '[AuthorizationEndpoint] Failed handle()',
+        'a47f5be3-65c0-405e-b352-fc95ede23549',
+        { request, response },
+        error,
+      );
+
       expect(dataAccessMock.createGrant).toHaveBeenCalledExactlyOnceWith(parameters, client, session);
       expect(dataAccessMock.saveSession).toHaveBeenCalledExactlyOnceWith(session);
       expect(dataAccessMock.removeGrant).toHaveBeenCalledExactlyOnceWith(grant);
@@ -1292,6 +1347,13 @@ describe('Authorization Endpoint', () => {
 
       expect(response.status).toBe(error.status);
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
+
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        '[AuthorizationEndpoint] Failed handle()',
+        'a47f5be3-65c0-405e-b352-fc95ede23549',
+        { request, response },
+        error,
+      );
 
       expect(dataAccessMock.createGrant).not.toHaveBeenCalled();
       expect(dataAccessMock.removeGrant).toHaveBeenCalledExactlyOnceWith(grant);
@@ -1410,6 +1472,13 @@ describe('Authorization Endpoint', () => {
       expect(response.status).toBe(error.status);
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
 
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        '[AuthorizationEndpoint] Failed handle()',
+        'a47f5be3-65c0-405e-b352-fc95ede23549',
+        { request, response },
+        error,
+      );
+
       expect(dataAccessMock.createGrant).toHaveBeenCalledExactlyOnceWith(parameters, client, session);
       expect(dataAccessMock.saveSession).toHaveBeenCalledExactlyOnceWith(session);
       expect(dataAccessMock.logout).toHaveBeenCalledExactlyOnceWith(login, session);
@@ -1453,6 +1522,13 @@ describe('Authorization Endpoint', () => {
 
       expect(response.status).toBe(error.status);
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
+
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        '[AuthorizationEndpoint] Failed handle()',
+        'a47f5be3-65c0-405e-b352-fc95ede23549',
+        { request, response },
+        error,
+      );
 
       expect(dataAccessMock.createGrant).toHaveBeenCalledExactlyOnceWith(parameters, client, session);
       expect(dataAccessMock.saveSession).toHaveBeenCalledExactlyOnceWith(session);
@@ -1580,6 +1656,13 @@ describe('Authorization Endpoint', () => {
       expect(response.status).toBe(error.status);
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
 
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        '[AuthorizationEndpoint] Failed handle()',
+        'a47f5be3-65c0-405e-b352-fc95ede23549',
+        { request, response },
+        error,
+      );
+
       expect(dataAccessMock.createGrant).not.toHaveBeenCalled();
       expect(dataAccessMock.logout).toHaveBeenCalledExactlyOnceWith(login, session);
       expect(dataAccessMock.removeGrant).toHaveBeenCalledExactlyOnceWith(grant);
@@ -1622,6 +1705,13 @@ describe('Authorization Endpoint', () => {
 
         expect(response.status).toBe(error.status);
         expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
+
+        expect(loggerMock.error).toHaveBeenCalledWith(
+          '[AuthorizationEndpoint] Failed handle()',
+          'a47f5be3-65c0-405e-b352-fc95ede23549',
+          { request, response },
+          error,
+        );
 
         expect(dataAccessMock.createGrant).not.toHaveBeenCalled();
         expect(dataAccessMock.logout).toHaveBeenCalledExactlyOnceWith(oldLogin, session);
@@ -1666,6 +1756,13 @@ describe('Authorization Endpoint', () => {
 
         expect(response.status).toBe(error.status);
         expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
+
+        expect(loggerMock.error).toHaveBeenCalledWith(
+          '[AuthorizationEndpoint] Failed handle()',
+          'a47f5be3-65c0-405e-b352-fc95ede23549',
+          { request, response },
+          error,
+        );
 
         expect(dataAccessMock.createGrant).not.toHaveBeenCalled();
         expect(dataAccessMock.logout).toHaveBeenCalledExactlyOnceWith(oldLogin, session);
@@ -1835,6 +1932,13 @@ describe('Authorization Endpoint', () => {
       expect(response.status).toBe(error.status);
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
 
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        '[AuthorizationEndpoint] Failed handle()',
+        'a47f5be3-65c0-405e-b352-fc95ede23549',
+        { request, response },
+        error,
+      );
+
       expect(dataAccessMock.createGrant).toHaveBeenCalledExactlyOnceWith(parameters, client, session);
       expect(dataAccessMock.saveSession).toHaveBeenCalledExactlyOnceWith(session);
       expect(dataAccessMock.inactivateSessionActiveLogin).toHaveBeenCalledExactlyOnceWith(session);
@@ -1878,6 +1982,13 @@ describe('Authorization Endpoint', () => {
       expect(response.status).toBe(error.status);
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
 
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        '[AuthorizationEndpoint] Failed handle()',
+        'a47f5be3-65c0-405e-b352-fc95ede23549',
+        { request, response },
+        error,
+      );
+
       expect(dataAccessMock.createGrant).not.toHaveBeenCalled();
       expect(dataAccessMock.inactivateSessionActiveLogin).toHaveBeenCalledExactlyOnceWith(session);
       expect(dataAccessMock.removeGrant).toHaveBeenCalledExactlyOnceWith(grant);
@@ -1920,6 +2031,13 @@ describe('Authorization Endpoint', () => {
 
       expect(response.status).toBe(error.status);
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
+
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        '[AuthorizationEndpoint] Failed handle()',
+        'a47f5be3-65c0-405e-b352-fc95ede23549',
+        { request, response },
+        error,
+      );
 
       expect(dataAccessMock.saveGrant).not.toHaveBeenCalled();
       expect(dataAccessMock.removeGrant).toHaveBeenCalledExactlyOnceWith(grant);
@@ -2084,6 +2202,13 @@ describe('Authorization Endpoint', () => {
       expect(response.status).toBe(error.status);
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
 
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        '[AuthorizationEndpoint] Failed handle()',
+        'a47f5be3-65c0-405e-b352-fc95ede23549',
+        { request, response },
+        error,
+      );
+
       expect(dataAccessMock.saveGrant).not.toHaveBeenCalled();
       expect(dataAccessMock.removeConsent).toHaveBeenCalledExactlyOnceWith(expiredConsent);
       expect(dataAccessMock.removeGrant).toHaveBeenCalledExactlyOnceWith(grant);
@@ -2168,6 +2293,13 @@ describe('Authorization Endpoint', () => {
       expect(response.status).toBe(error.status);
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
 
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        '[AuthorizationEndpoint] Failed handle()',
+        'a47f5be3-65c0-405e-b352-fc95ede23549',
+        { request, response },
+        error,
+      );
+
       expect(dataAccessMock.findConsentByClientAndUser).not.toHaveBeenCalled();
       expect(dataAccessMock.saveGrant).not.toHaveBeenCalled();
       expect(dataAccessMock.removeConsent).toHaveBeenCalledExactlyOnceWith(expiredConsent);
@@ -2211,6 +2343,13 @@ describe('Authorization Endpoint', () => {
 
       expect(response.status).toBe(error.status);
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
+
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        '[AuthorizationEndpoint] Failed handle()',
+        'a47f5be3-65c0-405e-b352-fc95ede23549',
+        { request, response },
+        error,
+      );
 
       expect(dataAccessMock.findConsentByClientAndUser).not.toHaveBeenCalled();
       expect(dataAccessMock.saveGrant).not.toHaveBeenCalled();
@@ -2267,7 +2406,7 @@ describe('Authorization Endpoint', () => {
 
         const location = addParametersToUrl(new URL(context.redirectUri.href), authorizationResponse);
 
-        expect(response.status).toBe(303);
+        expect(response.status).toBe(HttpResponseStatus.SeeOther);
         expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
 
         if (dataAccessMock.findConsentByClientAndUser.mock.calls.length > 0) {
@@ -2332,7 +2471,7 @@ describe('Authorization Endpoint', () => {
 
       const location = addParametersToUrl(new URL(context.redirectUri.href), authorizationResponse);
 
-      expect(response.status).toBe(303);
+      expect(response.status).toBe(HttpResponseStatus.SeeOther);
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({ location: location.href });
 
       expect(dataAccessMock.createSession).not.toHaveBeenCalled();

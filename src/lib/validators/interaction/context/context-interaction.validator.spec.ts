@@ -6,7 +6,6 @@ import { removeNullishValues } from '@guarani/primitives';
 import { CONTAINER } from '../../../constants';
 import { ContextInteractionContext } from '../../../context/interaction/context/context-interaction-context';
 import { DataAccess } from '../../../data-access/data-access';
-import { EndpointName } from '../../../endpoints/endpoint-name.type';
 import { Client } from '../../../entities/client';
 import { InvalidClientError } from '../../../errors/invalid-client/invalid-client.error';
 import { InvalidRequestError } from '../../../errors/invalid-request/invalid-request.error';
@@ -65,18 +64,6 @@ describe('Context Interaction Validator', () => {
   afterEach(() => {
     container.clear();
     jest.resetAllMocks();
-  });
-
-  describe('endpoint', () => {
-    it('should have "interaction" as its value.', () => {
-      expect(validator.endpoint).toBe<EndpointName>('interaction');
-    });
-  });
-
-  describe('supportedHttpRequestMethods', () => {
-    it('should have ["GET"] as its value.', () => {
-      expect(validator.supportedHttpRequestMethods).toStrictEqual<HttpRequestMethod[]>([HttpRequestMethod.GET]);
-    });
   });
 
   describe('validate()', () => {

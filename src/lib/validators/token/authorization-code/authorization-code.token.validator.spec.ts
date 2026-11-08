@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer';
-import { stringify as stringifyQs } from 'querystring';
+import qs from 'querystring';
 import { URL } from 'url';
 
 import { getContainer } from '@guarani/di';
@@ -24,7 +24,6 @@ import { Logger } from '../../../loggers/logger';
 import { PKCE } from '../../../pkces/pkce';
 import { AuthorizationRequest } from '../../../requests/authorization/authorization-request';
 import { AuthorizationCodeTokenRequest } from '../../../requests/token/authorization-code/authorization-code.token-request';
-import { addParametersToUrl } from '../../../utils/add-parameters-to-url/add-parameters-to-url';
 import { TokenValidator } from '../token.validator';
 import { AuthorizationCodeTokenValidator } from './authorization-code.token.validator';
 
@@ -103,11 +102,11 @@ describe('Authorization Code Token Validator', () => {
       removeNullishValues<AuthorizationCodeTokenRequest>(Object.assign(parameters, data));
 
       return new HttpRequest({
-        body: Buffer.from(stringifyQs(parameters)),
+        body: Buffer.from(qs.stringify(parameters)),
         cookies: {},
         headers: { 'content-type': 'application/x-www-form-urlencoded' },
         method: HttpRequestMethod.POST,
-        url: addParametersToUrl('https://provider.example.com/oidc/token', parameters),
+        url: new URL('https://provider.example.com/oidc/token'),
       });
     };
 
@@ -191,7 +190,7 @@ describe('Authorization Code Token Validator', () => {
         expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
           '[AuthorizationCodeTokenValidator] Invalid parameter "redirect_uri"',
           '743a7428-a1b8-4184-b815-c334f363a8cd',
-          { parameters, client_id: client.id },
+          { parameters, client },
           error,
         );
       },
@@ -209,7 +208,7 @@ describe('Authorization Code Token Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[AuthorizationCodeTokenValidator] The Redirect URI must not have a fragment component',
         'db7a2571-f064-4d4f-9511-b93e80fe4ea8',
-        { parameters, client_id: client.id, redirect_uri: parameters.redirect_uri },
+        { parameters, client, redirect_uri: parameters.redirect_uri },
         error,
       );
     });
@@ -226,7 +225,7 @@ describe('Authorization Code Token Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[AuthorizationCodeTokenValidator] Invalid Redirect URI',
         '747c1958-b29b-4b34-8ab4-4ca42086b81a',
-        { parameters, client_id: client.id, redirect_uri: parameters.redirect_uri },
+        { parameters, client, redirect_uri: parameters.redirect_uri },
         error,
       );
     });
@@ -272,8 +271,8 @@ describe('Authorization Code Token Validator', () => {
         '[AuthorizationCodeTokenValidator] Mismatching Client Identifier',
         '8165a641-0754-405b-b459-24c0abb9b2ec',
         {
-          authorization_code_id: authorizationCode.id,
-          client_id: client.id,
+          authorization_code: authorizationCode,
+          client,
           redirect_uri: parameters.redirect_uri,
           code_verifier: parameters.code_verifier,
         },
@@ -296,8 +295,8 @@ describe('Authorization Code Token Validator', () => {
         '[AuthorizationCodeTokenValidator] Authorization Code not yet valid',
         '76f0b0eb-ec42-4d4a-8516-e352a7c3359c',
         {
-          authorization_code_id: authorizationCode.id,
-          client_id: client.id,
+          authorization_code: authorizationCode,
+          client,
           redirect_uri: parameters.redirect_uri,
           code_verifier: parameters.code_verifier,
         },
@@ -320,8 +319,8 @@ describe('Authorization Code Token Validator', () => {
         '[AuthorizationCodeTokenValidator] Expired Authorization Code',
         '53207c70-ed20-40b3-9f00-1c0532a9b5f5',
         {
-          authorization_code_id: authorizationCode.id,
-          client_id: client.id,
+          authorization_code: authorizationCode,
+          client,
           redirect_uri: parameters.redirect_uri,
           code_verifier: parameters.code_verifier,
         },
@@ -344,8 +343,8 @@ describe('Authorization Code Token Validator', () => {
         '[AuthorizationCodeTokenValidator] Revoked Authorization Code',
         'dc99eb49-4683-4a34-af41-ab6bdf64e60f',
         {
-          authorization_code_id: authorizationCode.id,
-          client_id: client.id,
+          authorization_code: authorizationCode,
+          client,
           redirect_uri: parameters.redirect_uri,
           code_verifier: parameters.code_verifier,
         },
@@ -368,8 +367,8 @@ describe('Authorization Code Token Validator', () => {
         '[AuthorizationCodeTokenValidator] Mismatching Redirect URI',
         '54c613b4-4c30-4466-beba-d529d5a2503b',
         {
-          authorization_code_id: authorizationCode.id,
-          client_id: client.id,
+          authorization_code: authorizationCode,
+          client,
           redirect_uri: parameters.redirect_uri,
           code_verifier: parameters.code_verifier,
         },
@@ -391,8 +390,8 @@ describe('Authorization Code Token Validator', () => {
         '[AuthorizationCodeTokenValidator] Mismatching PKCE Code Verifier',
         '6664bf0d-2d4f-419c-b174-e9211dc6368f',
         {
-          authorization_code_id: authorizationCode.id,
-          client_id: client.id,
+          authorization_code: authorizationCode,
+          client,
           redirect_uri: parameters.redirect_uri,
           code_verifier: parameters.code_verifier,
         },

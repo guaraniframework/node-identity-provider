@@ -14,7 +14,7 @@ export interface HttpRequestParameters {
   readonly method: HttpRequestMethod;
 
   /**
-   * Http Request Url.
+   * Http Request URL.
    */
   readonly url: URL;
 

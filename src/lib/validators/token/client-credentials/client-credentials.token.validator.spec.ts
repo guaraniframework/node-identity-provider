@@ -1,5 +1,6 @@
 import { Buffer } from 'buffer';
-import { stringify as stringifyQs } from 'querystring';
+import qs from 'querystring';
+import { URL } from 'url';
 
 import { getContainer } from '@guarani/di';
 import { removeNullishValues } from '@guarani/primitives';
@@ -20,7 +21,6 @@ import { HttpRequest } from '../../../http/request/http-request';
 import { HttpRequestMethod } from '../../../http/request/http-request-method.enum';
 import { Logger } from '../../../loggers/logger';
 import { ClientCredentialsTokenRequest } from '../../../requests/token/client-credentials/client-credentials.token-request';
-import { addParametersToUrl } from '../../../utils/add-parameters-to-url/add-parameters-to-url';
 import { TokenValidator } from '../token.validator';
 import { ClientCredentialsTokenValidator } from './client-credentials.token.validator';
 
@@ -83,6 +83,19 @@ describe('Client Credentials Token Validator', () => {
     });
   });
 
+  describe('forbiddenScopes', () => {
+    it('should have ["openid", "profile", "email", "phone", "address", "offline_access"] as its value.', () => {
+      expect(validator['forbiddenScopes']).toStrictEqual<string[]>([
+        'openid',
+        'profile',
+        'email',
+        'phone',
+        'address',
+        'offline_access',
+      ]);
+    });
+  });
+
   describe('validate()', () => {
     let parameters!: ClientCredentialsTokenRequest;
 
@@ -90,11 +103,11 @@ describe('Client Credentials Token Validator', () => {
       removeNullishValues<ClientCredentialsTokenRequest>(Object.assign(parameters, data));
 
       return new HttpRequest({
-        body: Buffer.from(stringifyQs(parameters)),
+        body: Buffer.from(qs.stringify(parameters)),
         cookies: {},
         headers: { 'content-type': 'application/x-www-form-urlencoded' },
         method: HttpRequestMethod.POST,
-        url: addParametersToUrl('https://provider.example.com/oidc/token', parameters),
+        url: new URL('https://provider.example.com/oidc/token'),
       });
     };
 
@@ -115,7 +128,25 @@ describe('Client Credentials Token Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[ClientCredentialsTokenValidator] Invalid parameter "scope"',
         'b1a3f287-6d9e-4c3a-afca-8d0ad49a0a02',
-        { parameters, client_id: client.id },
+        { parameters, client },
+        error,
+      );
+    });
+
+    it('should throw when the provided parameter "scope" is forbidden.', async () => {
+      const request = requestFactory({ scope: 'openid' });
+
+      clientAuthenticationHandlerMock.authenticate.mockResolvedValueOnce(client);
+
+      const error = new InvalidRequestError('Cannot request an OpenID Connect Scope using this Grant Type.');
+      await expect(validator.validate(request)).rejects.toThrowWithMessage(InvalidRequestError, error.description);
+
+      expect(superValidateSpy).toHaveBeenCalledExactlyOnceWith(request);
+
+      expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
+        '[ClientCredentialsTokenValidator] Cannot request an OpenID Connect Scope using this Grant Type',
+        'ee831a1e-7c87-40ad-a08e-359267640195',
+        { parameters, client },
         error,
       );
     });

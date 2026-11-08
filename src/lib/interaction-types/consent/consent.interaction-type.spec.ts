@@ -146,7 +146,6 @@ describe('Consent Interaction Type', () => {
         requested_scopes: ['openid', 'profile', 'email', 'phone', 'address'],
         subject_id: 'user_id',
         request_url: requestUrl.href,
-        client_id: 'client_id',
         context: { display: 'page', prompts: ['consent'], ui_locales: ['en-US'] },
       });
 
@@ -186,7 +185,6 @@ describe('Consent Interaction Type', () => {
         requested_scopes: ['openid', 'profile', 'email', 'phone', 'address'],
         subject_id: 'user_id',
         request_url: requestUrl.href,
-        client_id: 'client_id',
         context: {},
       });
 
@@ -198,7 +196,7 @@ describe('Consent Interaction Type', () => {
     let now: number;
 
     const grantParameters = {
-      response_type: 'code id_token',
+      response_type: 'code',
       display: 'page',
       prompt: 'consent',
       ui_locales: 'en',
@@ -209,7 +207,7 @@ describe('Consent Interaction Type', () => {
     });
 
     // #region Decision Accept
-    it('should return a valid first time Consent Decision Accept Interaction Response.', async () => {
+    it('should return a valid first time Consent Accept Decision Interaction Response.', async () => {
       const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         clients: [],
@@ -265,7 +263,7 @@ describe('Consent Interaction Type', () => {
       );
     });
 
-    it('should return a valid first time Consent Decision Accept Interaction Response for a Client previously registered at the Login.', async () => {
+    it('should return a valid first time Consent Accept Decision Interaction Response for a Client previously registered at the Login.', async () => {
       const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         clients: [client],
@@ -319,7 +317,7 @@ describe('Consent Interaction Type', () => {
       );
     });
 
-    it('should return a valid first time Consent Decision Accept Interaction Response with an "offline_access" Scope.', async () => {
+    it('should return a valid first time Consent Accept Decision Interaction Response with an "offline_access" Scope.', async () => {
       const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         clients: [client],
@@ -372,7 +370,7 @@ describe('Consent Interaction Type', () => {
       );
     });
 
-    it('should return a valid first time Consent Decision Accept Interaction Response without an "offline_access" Scope.', async () => {
+    it('should return a valid first time Consent Accept Decision Interaction Response without an "offline_access" Scope.', async () => {
       const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         clients: [client],
@@ -387,7 +385,7 @@ describe('Consent Interaction Type', () => {
 
       const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
         id: 'grant_id',
-        parameters: { ...grantParameters, response_type: 'id_token token' },
+        parameters: { ...grantParameters, response_type: 'code token' },
         interactions: [],
         expiresAt: new Date(now + 3600000),
         client,
@@ -424,13 +422,13 @@ describe('Consent Interaction Type', () => {
       );
 
       expect(loggerMock.debug).toHaveBeenCalledWith(
-        '[ConsentInteractionType] Removing Scope "offline_access" for Response Type "id_token token"',
+        '[ConsentInteractionType] Removing Scope "offline_access" for Response Type "code token"',
         '161dec91-0722-420d-917c-07235b9d7b32',
         { context },
       );
     });
 
-    it('should return a valid subsequent Consent Decision Accept Interaction Response.', async () => {
+    it('should return a valid subsequent Consent Accept Decision Interaction Response.', async () => {
       const login: Login = Object.assign<Login, Partial<Login>>(new Login(), {
         id: 'login_id',
         clients: [client],

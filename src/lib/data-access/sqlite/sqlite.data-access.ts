@@ -106,9 +106,17 @@ export class SQLiteDataAccess extends DataAccess {
    * @param scopes Scopes granted to the Client.
    * @param client Client requesting Authorization.
    * @param user User that granted Authorization.
+   * @param login Login of the User that granted Authorization.
+   * @param refreshToken Refresh Token associated to the Access Token.
    * @returns Created Access Token.
    */
-  public async createAccessToken(scopes: Scope[], client: Client, user: User | null): Promise<AccessToken> {
+  public async createAccessToken(
+    scopes: Scope[],
+    client: Client,
+    user: User | null,
+    login: Login | null,
+    refreshToken: RefreshToken | null,
+  ): Promise<AccessToken> {
     const id = randomUUIDv7();
 
     const accessTokenSql = this._procedure('create-access-token.sql');
@@ -116,6 +124,8 @@ export class SQLiteDataAccess extends DataAccess {
       id: this._toUUIDBuffer(id),
       client_id: this._toUUIDBuffer(client.id),
       user_id: user ? this._toUUIDBuffer(user.id) : null,
+      login_id: login ? this._toUUIDBuffer(login.id) : null,
+      refresh_token_id: refreshToken ? this._toUUIDBuffer(refreshToken.id) : null,
     })!;
 
     const scopesIds = scopes.map((scope) => scope.id);
@@ -139,6 +149,8 @@ export class SQLiteDataAccess extends DataAccess {
       validAfter: new Date((accessTokenParameters['valid_after'] as number) * 1000),
       client,
       user,
+      login,
+      refreshToken,
     });
   }
 
@@ -313,9 +325,15 @@ export class SQLiteDataAccess extends DataAccess {
    * @param scopes Scopes granted to the Client.
    * @param client Client requesting Authorization.
    * @param user User that granted Authorization.
+   * @param login Login of the User that granted Authorization.
    * @returns Created Refresh Token.
    */
-  public async createRefreshToken(scopes: Scope[], client: Client, user: User): Promise<RefreshToken> {
+  public async createRefreshToken(
+    scopes: Scope[],
+    client: Client,
+    user: User,
+    login: Login | null,
+  ): Promise<RefreshToken> {
     const id = randomUUIDv7();
 
     const refreshTokenSql = this._procedure('create-refresh-token.sql');
@@ -323,6 +341,7 @@ export class SQLiteDataAccess extends DataAccess {
       id: this._toUUIDBuffer(id),
       client_id: this._toUUIDBuffer(client.id),
       user_id: this._toUUIDBuffer(user.id),
+      login_id: login ? this._toUUIDBuffer(login.id) : null,
     })!;
 
     const scopesIds = scopes.map((scope) => scope.id);
@@ -336,7 +355,7 @@ export class SQLiteDataAccess extends DataAccess {
       .prepare(refreshTokenScopesSql)
       .run(...scopesIds.flatMap((scopeId) => [this._toUUIDBuffer(id), this._toUUIDBuffer(scopeId)]));
 
-    return this._instantiateRefreshToken(refreshTokenParameters, scopes, client, user);
+    return this._instantiateRefreshToken(refreshTokenParameters, scopes, client, user, login, []);
   }
 
   /**
@@ -733,8 +752,11 @@ export class SQLiteDataAccess extends DataAccess {
    * @param refreshToken Refresh Token to be revoked.
    */
   public async revokeRefreshToken(refreshToken: RefreshToken): Promise<void> {
-    const sql = this._procedure('revoke-refresh-token-by-id.sql');
-    this.database.prepare(sql).run({ id: this._toUUIDBuffer(refreshToken.id) });
+    const refreshTokenSql = this._procedure('revoke-refresh-token-by-id.sql');
+    const accessTokensSql = this._procedure('revoke-access-tokens-by-refresh-token-id.sql');
+
+    this.database.prepare(refreshTokenSql).run({ id: this._toUUIDBuffer(refreshToken.id) });
+    this.database.prepare(accessTokensSql).run({ refresh_token_id: this._toUUIDBuffer(refreshToken.id) });
   }
 
   /**
@@ -750,12 +772,13 @@ export class SQLiteDataAccess extends DataAccess {
     const id = randomUUIDv7();
 
     const refreshTokenSql = this._procedure('rotate-refresh-token.sql')
-      .replace('$old_refresh_token_id', `X'${refreshToken.id.replaceAll('-', '')}'`)
-      .replace('$id', `X'${id.replaceAll('-', '')}'`)
-      .replace('$expires_at', Math.ceil(refreshToken.expiresAt.getTime() / 1000).toString())
-      .replace('$valid_after', "(unixepoch('now'))")
-      .replace('$client_id', `X'${refreshToken.client.id.replaceAll('-', '')}'`)
-      .replace('$user_id', `X'${refreshToken.user.id.replaceAll('-', '')}'`);
+      .replaceAll('$old_refresh_token_id', `X'${refreshToken.id.replaceAll('-', '')}'`)
+      .replaceAll('$id', `X'${id.replaceAll('-', '')}'`)
+      .replaceAll('$expires_at', Math.ceil(refreshToken.expiresAt.getTime() / 1000).toString())
+      .replaceAll('$valid_after', "(unixepoch('now'))")
+      .replaceAll('$client_id', `X'${refreshToken.client.id.replaceAll('-', '')}'`)
+      .replaceAll('$user_id', `X'${refreshToken.user.id.replaceAll('-', '')}'`)
+      .replaceAll('$login_id', refreshToken.login ? `X'${refreshToken.login.id.replaceAll('-', '')}'` : 'NULL');
 
     this.database.exec(refreshTokenSql);
 
@@ -837,15 +860,15 @@ export class SQLiteDataAccess extends DataAccess {
       this.database.exec(file('0004-create-table-clients.sql'));
       this.database.exec(file('0005-create-table-client-secrets.sql'));
       this.database.exec(file('0006-create-table-client-scopes.sql'));
-      this.database.exec(file('0007-create-table-access-tokens.sql'));
-      this.database.exec(file('0008-create-table-access-token-scopes.sql'));
-      this.database.exec(file('0009-create-table-sessions.sql'));
-      this.database.exec(file('0010-create-table-logins.sql'));
-      this.database.exec(file('0011-create-table-logins-clients.sql'));
-      this.database.exec(file('0012-create-table-consents.sql'));
-      this.database.exec(file('0013-create-table-consent-scopes.sql'));
-      this.database.exec(file('0014-create-table-grants.sql'));
-      this.database.exec(file('0015-create-table-authorization-codes.sql'));
+      this.database.exec(file('0007-create-table-sessions.sql'));
+      this.database.exec(file('0008-create-table-logins.sql'));
+      this.database.exec(file('0009-create-table-logins-clients.sql'));
+      this.database.exec(file('0010-create-table-consents.sql'));
+      this.database.exec(file('0011-create-table-consent-scopes.sql'));
+      this.database.exec(file('0012-create-table-grants.sql'));
+      this.database.exec(file('0013-create-table-authorization-codes.sql'));
+      this.database.exec(file('0014-create-table-access-tokens.sql'));
+      this.database.exec(file('0015-create-table-access-token-scopes.sql'));
       this.database.exec(file('0016-create-table-refresh-tokens.sql'));
       this.database.exec(file('0017-create-table-refresh-token-scopes.sql'));
     });
@@ -864,15 +887,15 @@ export class SQLiteDataAccess extends DataAccess {
     await this.atomic(async () => {
       this.database.exec(file('0017-drop-table-refresh-token-scopes.sql'));
       this.database.exec(file('0016-drop-table-refresh-tokens.sql'));
-      this.database.exec(file('0015-drop-table-authorization-codes.sql'));
-      this.database.exec(file('0014-drop-table-grants.sql'));
-      this.database.exec(file('0013-drop-table-consent-scopes.sql'));
-      this.database.exec(file('0012-drop-table-consents.sql'));
-      this.database.exec(file('0011-drop-table-logins-clients.sql'));
-      this.database.exec(file('0010-drop-table-logins.sql'));
-      this.database.exec(file('0009-drop-table-sessions.sql'));
-      this.database.exec(file('0008-drop-table-access-token-scopes.sql'));
-      this.database.exec(file('0007-drop-table-access-tokens.sql'));
+      this.database.exec(file('0015-drop-table-access-token-scopes.sql'));
+      this.database.exec(file('0014-drop-table-access-tokens.sql'));
+      this.database.exec(file('0013-drop-table-authorization-codes.sql'));
+      this.database.exec(file('0012-drop-table-grants.sql'));
+      this.database.exec(file('0011-drop-table-consent-scopes.sql'));
+      this.database.exec(file('0010-drop-table-consents.sql'));
+      this.database.exec(file('0009-drop-table-logins-clients.sql'));
+      this.database.exec(file('0008-drop-table-logins.sql'));
+      this.database.exec(file('0007-drop-table-sessions.sql'));
       this.database.exec(file('0006-drop-table-client-scopes.sql'));
       this.database.exec(file('0005-drop-table-client-secrets.sql'));
       this.database.exec(file('0004-drop-table-clients.sql'));
@@ -926,6 +949,12 @@ export class SQLiteDataAccess extends DataAccess {
           null,
       user: accessTokenParameters['user_id']
         ? this._findUserById(this._toUUIDString(accessTokenParameters['user_id'] as Uint8Array))
+        : null,
+      login: accessTokenParameters['login_id']
+        ? this._findLoginById(this._toUUIDString(accessTokenParameters['login_id'] as Uint8Array), null)
+        : null,
+      refreshToken: accessTokenParameters['refresh_token_id']
+        ? this._findRefreshTokenById(this._toUUIDString(accessTokenParameters['refresh_token_id'] as Uint8Array))
         : null,
     });
   }
@@ -1168,7 +1197,7 @@ export class SQLiteDataAccess extends DataAccess {
       return null;
     }
 
-    return Object.assign<RefreshToken, Partial<RefreshToken>>(new RefreshToken(), {
+    const refreshToken: RefreshToken = Object.assign<RefreshToken, Partial<RefreshToken>>(new RefreshToken(), {
       id: this._toUUIDString(refreshTokenParameters['id'] as Uint8Array),
       scopes: this._findRefreshTokenScopesByRefreshTokenId(id),
       createdAt: new Date((refreshTokenParameters['created_at'] as number) * 1000),
@@ -1179,6 +1208,42 @@ export class SQLiteDataAccess extends DataAccess {
       validAfter: new Date((refreshTokenParameters['valid_after']! as number) * 1000),
       client: this._findClientById(this._toUUIDString(refreshTokenParameters['client_id'] as Uint8Array))!,
       user: this._findUserById(this._toUUIDString(refreshTokenParameters['user_id'] as Uint8Array))!,
+      login: refreshTokenParameters['login_id']
+        ? this._findLoginById(this._toUUIDString(refreshTokenParameters['login_id'] as Uint8Array), null)!
+        : null,
+    });
+
+    Reflect.set(refreshToken, 'accessTokens', this._findRefreshTokenAccessTokensByRefreshTokenId(refreshToken));
+
+    return refreshToken;
+  }
+
+  protected _findRefreshTokenAccessTokensByRefreshTokenId(refreshToken: RefreshToken): AccessToken[] {
+    const accessTokensSql = this._procedure('find-refresh-token-access-tokens-by-refresh-token-id.sql');
+    const accessTokensParameters = this.database
+      .prepare(accessTokensSql)
+      .all({ refresh_token_id: this._toUUIDBuffer(refreshToken.id) });
+
+    return accessTokensParameters.map((accessTokenParameters) => {
+      const accessTokenId = this._toUUIDString(accessTokenParameters['id'] as Uint8Array);
+
+      return Object.assign<AccessToken, AccessToken>(new AccessToken(), {
+        id: accessTokenId,
+        type: accessTokenParameters['type'] as AccessTokenType,
+        scopes: this._findAccessTokenScopesByAccessTokenId(accessTokenId),
+        createdAt: new Date((accessTokenParameters['created_at'] as number) * 1000),
+        expiresAt: new Date((accessTokenParameters['expires_at'] as number) * 1000),
+        revokedAt: accessTokenParameters['revoked_at']
+          ? new Date((accessTokenParameters['revoked_at'] as number) * 1000)
+          : null,
+        validAfter: new Date((accessTokenParameters['valid_after']! as number) * 1000),
+        client: this._findClientById(this._toUUIDString(accessTokenParameters['client_id'] as Uint8Array))!,
+        user: this._findUserById(this._toUUIDString(accessTokenParameters['user_id'] as Uint8Array))!,
+        login: accessTokenParameters['login_id']
+          ? this._findLoginById(this._toUUIDString(accessTokenParameters['login_id'] as Uint8Array), null)!
+          : null,
+        refreshToken,
+      });
     });
   }
 
@@ -1379,6 +1444,8 @@ export class SQLiteDataAccess extends DataAccess {
     scopes: Scope[],
     client: Client,
     user: User,
+    login: Login | null,
+    accessTokens: AccessToken[],
   ): RefreshToken {
     return Object.assign<RefreshToken, RefreshToken>(new RefreshToken(), {
       id: this._toUUIDString(parameters['id'] as Uint8Array),
@@ -1389,6 +1456,8 @@ export class SQLiteDataAccess extends DataAccess {
       validAfter: new Date((parameters['valid_after'] as number) * 1000),
       client,
       user,
+      login,
+      accessTokens,
     });
   }
 

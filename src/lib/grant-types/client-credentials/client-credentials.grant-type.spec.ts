@@ -51,16 +51,16 @@ describe('Client Credentials Grant Type', () => {
     const client: Client = Object.assign<Client, Partial<Client>>(new Client(), { id: 'client_id' });
     const scopes: Scope[] = ['foo', 'bar'].map((name) => Object.assign<Scope, Partial<Scope>>(new Scope(), { name }));
 
+    const accessToken: AccessToken = Object.assign<AccessToken, Partial<AccessToken>>(new AccessToken(), {
+      id: 'access_token_id',
+      type: 'Bearer',
+      scopes,
+      expiresAt: new Date(Date.now() + 86400000),
+    });
+
+    const context: ClientCredentialsTokenContext = { parameters, grantType, client, scopes };
+
     it('should return a Client Credentials Token Response.', async () => {
-      const context: ClientCredentialsTokenContext = { parameters, grantType, client, scopes };
-
-      const accessToken: AccessToken = Object.assign<AccessToken, Partial<AccessToken>>(new AccessToken(), {
-        id: 'access_token_id',
-        type: 'Bearer',
-        scopes,
-        expiresAt: new Date(Date.now() + 86400000),
-      });
-
       dataAccessMock.createAccessToken.mockResolvedValueOnce(accessToken);
 
       await expect(grantType.handle(context)).resolves.toStrictEqual<ClientCredentialsTokenResponse>({
@@ -70,7 +70,7 @@ describe('Client Credentials Grant Type', () => {
         scope: 'foo bar',
       });
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, null);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, null, null, null);
     });
   });
 });

@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer';
-import { stringify as stringifyQs } from 'querystring';
+import qs from 'querystring';
 import { URL } from 'url';
 
 import { getContainer, Injectable } from '@guarani/di';
@@ -297,7 +297,7 @@ describe('JWT Bearer Client Assertion', () => {
       removeNullishValues<JwtBearerClientAssertionParameters>(Object.assign(parameters, data));
 
       return new HttpRequest({
-        body: Buffer.from(stringifyQs(parameters)),
+        body: Buffer.from(qs.stringify(parameters)),
         cookies: {},
         headers: { 'content-type': 'application/x-www-form-urlencoded' },
         method: HttpRequestMethod.POST,

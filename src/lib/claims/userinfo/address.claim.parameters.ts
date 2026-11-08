@@ -13,17 +13,17 @@ export interface AddressClaimParameters extends NodeJS.Dict<unknown> {
   street_address?: string;
 
   /**
-   * City or locality of the User.
+   * City or Locality of the User.
    */
   locality?: string;
 
   /**
-   * State, province, prefecture of region of the User.
+   * State, Province, Prefecture or Region of the User.
    */
   region?: string;
 
   /**
-   * Zip code or Postal code of the User.
+   * Zip Code or Postal Code of the User.
    */
   postal_code?: string;
 

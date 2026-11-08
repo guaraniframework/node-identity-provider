@@ -31,9 +31,17 @@ export abstract class DataAccess {
    * @param scopes Scopes granted to the Client.
    * @param client Client requesting Authorization.
    * @param user User that granted Authorization.
+   * @param login Login of the User that granted Authorization.
+   * @param refreshToken Refresh Token associated to the Access Token.
    * @returns Created Access Token.
    */
-  public abstract createAccessToken(scopes: Scope[], client: Client, user: User | null): Promise<AccessToken>;
+  public abstract createAccessToken(
+    scopes: Scope[],
+    client: Client,
+    user: User | null,
+    login: Login | null,
+    refreshToken: RefreshToken | null,
+  ): Promise<AccessToken>;
 
   /**
    * Creates an Authorization Code to be exchanged by the Client at the Token Endpoint for an Access Token.
@@ -92,9 +100,15 @@ export abstract class DataAccess {
    * @param scopes Scopes granted to the Client.
    * @param client Client requesting Authorization.
    * @param user User that granted Authorization.
+   * @param login Login of the User that granted Authorization.
    * @returns Created Refresh Token.
    */
-  public abstract createRefreshToken?(scopes: Scope[], client: Client, user: User): Promise<RefreshToken>;
+  public abstract createRefreshToken?(
+    scopes: Scope[],
+    client: Client,
+    user: User,
+    login: Login | null,
+  ): Promise<RefreshToken>;
 
   /**
    * Creates a Session Entity to store the Sessions created at the Device for multi-account.

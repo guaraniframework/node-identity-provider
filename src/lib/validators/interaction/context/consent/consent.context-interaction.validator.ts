@@ -83,7 +83,7 @@ export class ConsentContextInteractionValidator extends ContextInteractionValida
   private async getGrant(parameters: ConsentContextInteractionRequest, client: Client): Promise<Grant> {
     this.logger.debug(`[${this.constructor.name}] Called getGrant()`, 'd0167c21-0a57-4882-b183-b1d5f89519cf', {
       parameters,
-      client_id: client.id,
+      client,
     });
 
     if (!('consent_challenge' in parameters) || !isNonEmptyString(parameters.consent_challenge)) {
@@ -92,7 +92,7 @@ export class ConsentContextInteractionValidator extends ContextInteractionValida
       this.logger.error(
         `[${this.constructor.name}] Invalid parameter "consent_challenge"`,
         'f23bd294-4050-4587-b082-a0602c60d831',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -107,7 +107,7 @@ export class ConsentContextInteractionValidator extends ContextInteractionValida
       this.logger.error(
         `[${this.constructor.name}] Invalid Consent Challenge`,
         '0694bac5-ddf7-4045-9aed-b61086e3e18b',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -120,7 +120,7 @@ export class ConsentContextInteractionValidator extends ContextInteractionValida
       this.logger.error(
         `[${this.constructor.name}] The Grant was not issued to this Client`,
         'f2a39eda-ffd9-4e7f-8e6a-81b590aae025',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -135,7 +135,7 @@ export class ConsentContextInteractionValidator extends ContextInteractionValida
       this.logger.error(
         `[${this.constructor.name}] Expired Grant`,
         'a81f618b-ba00-4f3f-ae41-6b4123b7f1b4',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -164,7 +164,7 @@ export class ConsentContextInteractionValidator extends ContextInteractionValida
       this.logger.error(
         `[${this.constructor.name}] No Active Login found`,
         '560cfa29-5ac8-4bc2-8b1d-51c8496432bd',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -173,8 +173,8 @@ export class ConsentContextInteractionValidator extends ContextInteractionValida
 
     this.logger.debug(`[${this.constructor.name}] Completed getGrant()`, '553759d8-1d65-4b16-b84b-19f8c792f4a7', {
       parameters,
-      client_id: client.id,
-      grant_id: grant.id,
+      client,
+      grant,
     });
 
     return grant;

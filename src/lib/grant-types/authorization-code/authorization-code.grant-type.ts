@@ -32,6 +32,7 @@ export class AuthorizationCodeGrantType extends GrantType {
    *
    * @param logger Logger of the Identity Provider.
    * @param dataAccess Data Access of the Identity Provider.
+   * @param idTokenHandler ID Token Handler of the Identity Provider.
    */
   public constructor(
     private readonly logger: Logger,
@@ -65,12 +66,12 @@ export class AuthorizationCodeGrantType extends GrantType {
     const { scopes, user } = consent;
 
     const [accessToken, refreshToken, idToken] = await this.dataAccess.atomic(async () => {
-      const accessToken = await this.dataAccess.createAccessToken(scopes, client, user);
-
       const refreshToken =
         typeof this.dataAccess.createRefreshToken === 'function' && client.grantTypes.includes('refresh_token')
-          ? await this.dataAccess.createRefreshToken(scopes, client, user)
+          ? await this.dataAccess.createRefreshToken(scopes, client, user, login)
           : null;
+
+      const accessToken = await this.dataAccess.createAccessToken(scopes, client, user, login, refreshToken);
 
       const generateIdTokenOptions = removeNullishValues<GenerateIdTokenOptions>({
         maxAge:

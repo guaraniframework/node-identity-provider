@@ -69,6 +69,7 @@ export class CodeResponseType extends ResponseType {
     });
 
     const { parameters } = context;
+
     const login = context.session!.activeLogin!;
     const consent = context.session!.grant!.consent!;
 

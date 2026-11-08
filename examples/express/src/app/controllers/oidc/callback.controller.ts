@@ -1,6 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { Request, Response } from 'express';
-import { stringify as stringifyQs } from 'querystring';
+import qs from 'querystring';
 import { URL } from 'url';
 
 import { getContainer } from '@guarani/di';
@@ -34,7 +34,7 @@ class Controller {
 
     const client = (await this.dataAccess.findClientById(request.signedCookies['client_id']))!;
 
-    const body = stringifyQs({
+    const body = qs.stringify({
       grant_type: 'authorization_code',
       code: parameters.code as string,
       redirect_uri: 'https://localhost:4000/oidc/callback',
@@ -64,7 +64,7 @@ class Controller {
 
   private redirectToErrorPage(response: Response, parameters: NodeJS.Dict<any>): void {
     const url = new URL('https://localhost:4000/oidc/error');
-    url.search = stringifyQs(parameters);
+    url.search = qs.stringify(parameters);
 
     return response.redirect(303, url.href);
   }

@@ -1,5 +1,6 @@
 import { Buffer } from 'buffer';
-import { stringify as stringifyQs } from 'querystring';
+import qs from 'querystring';
+import { URL } from 'url';
 
 import { getContainer } from '@guarani/di';
 import { removeNullishValues } from '@guarani/primitives';
@@ -23,7 +24,6 @@ import { HttpRequest } from '../../../http/request/http-request';
 import { HttpRequestMethod } from '../../../http/request/http-request-method.enum';
 import { Logger } from '../../../loggers/logger';
 import { PasswordTokenRequest } from '../../../requests/token/password/password.token-request';
-import { addParametersToUrl } from '../../../utils/add-parameters-to-url/add-parameters-to-url';
 import { TokenValidator } from '../token.validator';
 import { PasswordTokenValidator } from './password.token.validator';
 
@@ -101,6 +101,19 @@ describe('Resource Owner Password Credentials Token Validator', () => {
     });
   });
 
+  describe('forbiddenScopes', () => {
+    it('should have ["openid", "profile", "email", "phone", "address", "offline_access"] as its value.', () => {
+      expect(validator['forbiddenScopes']).toStrictEqual<string[]>([
+        'openid',
+        'profile',
+        'email',
+        'phone',
+        'address',
+        'offline_access',
+      ]);
+    });
+  });
+
   describe('constructor', () => {
     it('should throw when not implementing the method DataAccess.findUserByResourceOwnerCredentials().', () => {
       container.clear();
@@ -138,11 +151,11 @@ describe('Resource Owner Password Credentials Token Validator', () => {
       removeNullishValues<PasswordTokenRequest>(Object.assign(parameters, data));
 
       return new HttpRequest({
-        body: Buffer.from(stringifyQs(parameters)),
+        body: Buffer.from(qs.stringify(parameters)),
         cookies: {},
         headers: { 'content-type': 'application/x-www-form-urlencoded' },
         method: HttpRequestMethod.POST,
-        url: addParametersToUrl('https://provider.example.com/oidc/token', parameters),
+        url: new URL('https://provider.example.com/oidc/token'),
       });
     };
 
@@ -219,7 +232,26 @@ describe('Resource Owner Password Credentials Token Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[PasswordTokenValidator] Invalid parameter "scope"',
         'd9fa30eb-68a0-452e-820a-e09c12ca1985',
-        { parameters, client_id: client.id },
+        { parameters, client },
+        error,
+      );
+    });
+
+    it('should throw when the provided parameter "scope" is forbidden.', async () => {
+      const request = requestFactory({ scope: 'openid' });
+
+      clientAuthenticationHandlerMock.authenticate.mockResolvedValueOnce(client);
+      dataAccessMock.findUserByResourceOwnerCredentials!.mockResolvedValueOnce(user);
+
+      const error = new InvalidRequestError('Cannot request an OpenID Connect Scope using this Grant Type.');
+      await expect(validator.validate(request)).rejects.toThrowWithMessage(InvalidRequestError, error.description);
+
+      expect(superValidateSpy).toHaveBeenCalledExactlyOnceWith(request);
+
+      expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
+        '[PasswordTokenValidator] Cannot request an OpenID Connect Scope using this Grant Type',
+        'c41be21b-1c2d-4190-bf57-4fdc9bed832a',
+        { parameters, client },
         error,
       );
     });

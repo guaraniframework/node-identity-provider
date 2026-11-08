@@ -1,3 +1,4 @@
+import { Buffer } from 'buffer';
 import { OutgoingHttpHeaders } from 'http';
 import { URL } from 'url';
 

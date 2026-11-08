@@ -33,7 +33,7 @@ export class IdTokenHandler {
   /**
    * Instantiates a new ID Token Handler.
    *
-   * @param logger Logger of the Authorization Server.
+   * @param logger Logger of the Identity Provider.
    * @param dataAccess Data Access of the Identity Provider.
    * @param settings Settings of the Identity Provider.
    * @param subjectTypes Subject Types of the Identity Provider.
@@ -146,7 +146,11 @@ export class IdTokenHandler {
 
     const signKey = await this.dataAccess.getSignJsonWebKey!();
     const userinfo = await this.dataAccess.getUserinfo!(user, scopes);
-    const claims = Object.assign(this.createIdTokenClaims(user, client, login, options), userinfo);
+
+    const claims: IdTokenClaimsParameters = Object.assign(
+      this.createIdTokenClaims(user, client, login, options),
+      userinfo,
+    );
 
     const jwsHeader = removeNullishValues<JsonWebSignatureHeaderParameters>({
       alg: client.idTokenSignedResponseAlgorithm!,
@@ -200,8 +204,8 @@ export class IdTokenHandler {
   public async checkIdTokenHint(idToken: string, client: Client, login: Login): Promise<boolean> {
     this.logger.debug(`[${this.constructor.name}] Called checkIdTokenHint()`, '492bfa48-4c2e-473d-9e74-8ec6982195d8', {
       id_token: idToken,
-      client_id: client.id,
-      login_id: login.id,
+      client,
+      login,
     });
 
     let result: boolean;
@@ -237,7 +241,7 @@ export class IdTokenHandler {
       this.logger.debug(
         `[${this.constructor.name}] Completed checkIdTokenHint()`,
         '492bfa48-4c2e-473d-9e74-8ec6982195d8',
-        { id_token: idToken, client_id: client.id, login_id: login.id, result },
+        { id_token: idToken, client, login, result },
       );
     } catch (error: unknown) {
       result = false;
@@ -245,7 +249,7 @@ export class IdTokenHandler {
       this.logger.debug(
         `[${this.constructor.name}] Completed checkIdTokenHint()`,
         '38262405-94c5-4c0b-88cc-b73ade6f3aed',
-        { id_token: idToken, client_id: client.id, login_id: login.id, result, error },
+        { id_token: idToken, client, login, result, error },
       );
     }
 
@@ -260,13 +264,13 @@ export class IdTokenHandler {
    */
   private getSubjectType(client: Client): SubjectType {
     this.logger.debug(`[${this.constructor.name}] Called getSubjectType()`, 'e3ae5bc6-2180-4683-9056-743a868aacab', {
-      client_id: client.id,
+      client,
     });
 
     const subjectType = this.subjectTypes.find((subjectType) => subjectType.name === client.subjectType)!;
 
     this.logger.debug(`[${this.constructor.name}] Completed getSubjectType()`, '9c9b27e8-e5fd-4255-8c62-b1b4996ca34e', {
-      client_id: client.id,
+      client,
       subject_type: subjectType.name,
     });
 
@@ -291,7 +295,7 @@ export class IdTokenHandler {
     this.logger.debug(
       `[${this.constructor.name}] Called createIdTokenClaims()`,
       '31e113ec-eaf5-44fe-96d0-45010396afb7',
-      { user_id: user.id, client_id: client.id, login_id: login.id, options },
+      { user, client, login, options },
     );
 
     const now = Math.ceil(Date.now() / 1000);
@@ -332,7 +336,7 @@ export class IdTokenHandler {
     this.logger.debug(
       `[${this.constructor.name}] Completed createIdTokenClaims()`,
       'fe8adb9b-19ef-4603-b1b0-28b28c8d0f28',
-      { user_id: user.id, client_id: client.id, login_id: login.id, options, id_token_claims: idTokenClaims },
+      { user, client, login, options, id_token_claims: idTokenClaims },
     );
 
     return idTokenClaims;
@@ -349,13 +353,14 @@ export class IdTokenHandler {
    * @param alg JSON Web Signature Algorithm used to create the ID Token.
    * @returns Base64Url encoded left hash of the provided Identifier.
    */
-  private getLeftHash(token: string, alg: DigitalSignatureAlgorithm): string {
+  // TODO: Add support for EdDSA, Ed25519 and Ed448.
+  private getLeftHash(token: string, alg: Exclude<DigitalSignatureAlgorithm, 'none'>): string {
     this.logger.debug(`[${this.constructor.name}] Called getLeftHash()`, '180356e0-2325-4956-9b76-57c5af4ec8df', {
       token,
       alg,
     });
 
-    const hashAlgorithm = `sha${alg.substring(2)}`;
+    const hashAlgorithm = `sha${alg.substring(2, 5)}`;
     const hash = createHash(hashAlgorithm).update(token, 'ascii').digest();
     const leftHash = hash.subarray(0, hash.length / 2).toString('base64url');
 
@@ -378,14 +383,14 @@ export class IdTokenHandler {
   private async decryptIdToken(idToken: string, client: Client): Promise<string> {
     this.logger.debug(`[${this.constructor.name}] Called decryptIdToken()`, '5456fa44-ba0d-4d12-a0b6-032ec1167fa4', {
       id_token: idToken,
-      client_id: client.id,
+      client,
     });
 
     if (idToken.split('.').length === 3) {
       this.logger.debug(
         `[${this.constructor.name}] Completed decryptIdToken()`,
         '31256083-3c6a-4f00-b6b3-ea16318ba5cb',
-        { id_token: idToken, client_id: client.id, decrypted_id_token: idToken },
+        { id_token: idToken, client, decrypted_id_token: idToken },
       );
 
       return idToken;
@@ -403,7 +408,7 @@ export class IdTokenHandler {
 
     this.logger.debug(`[${this.constructor.name}] Completed decryptIdToken()`, '78721235-68b8-4bab-8562-65708dce3eb0', {
       id_token: idToken,
-      client_id: client.id,
+      client,
       decrypted_id_token: decryptedIdToken,
     });
 

@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer';
-import { stringify as stringifyQs } from 'querystring';
+import qs from 'querystring';
 import { URL } from 'url';
 
 import { getContainer } from '@guarani/di';
@@ -124,6 +124,39 @@ describe('Client Secret JWT Client Authentication', () => {
     });
   });
 
+  describe('constructor', () => {
+    it('should throw when missing a required JWT Bearer Client Assertion Algorithm.', () => {
+      container.clear();
+
+      const settingsMock = jest.mocked<Settings>(
+        Object.assign<Settings, Partial<Settings>>(Object.create(Settings.prototype), {
+          issuer: new URL('https://provider.example.com'),
+          clientAuthenticationSigningAlgorithms: ['RS256'],
+          clientAuthenticationEncryptionKeyWrapAlgorithms: ['RSA-OAEP'],
+          clientAuthenticationEncryptionContentEncryptionAlgorithms: ['A128GCM'],
+        }),
+      );
+
+      container.bind(Logger).toValue(loggerMock);
+      container.bind(DataAccess).toValue(dataAccessMock);
+      container.bind(Settings).toValue(settingsMock);
+      container.bind(ClientSecretJwtClientAuthentication).toSelf().asSingleton();
+
+      const error = new TypeError(
+        'Missing a required JSON Web Signature Digital Signature Algorithm for JWT Bearer Client Assertion "client_secret_jwt".',
+      );
+
+      expect(() => container.resolve(ClientSecretJwtClientAuthentication)).toThrowWithMessage(TypeError, error.message);
+
+      expect(loggerMock.fatal).toHaveBeenCalledExactlyOnceWith(
+        '[ClientSecretJwtClientAuthentication] Missing a required JSON Web Signature Digital Signature Algorithm for JWT Bearer Client Assertion "client_secret_jwt"',
+        '8620ea0b-7794-4e82-8789-6fa74f1d74ae',
+        null,
+        error,
+      );
+    });
+  });
+
   describe('getClient()', () => {
     let parameters: JwtBearerClientAssertionParameters;
 
@@ -158,7 +191,7 @@ describe('Client Secret JWT Client Authentication', () => {
       removeNullishValues<JwtBearerClientAssertionParameters>(Object.assign(parameters, data));
 
       return new HttpRequest({
-        body: Buffer.from(stringifyQs(parameters)),
+        body: Buffer.from(qs.stringify(parameters)),
         cookies: {},
         headers: { 'content-type': 'application/x-www-form-urlencoded' },
         method: HttpRequestMethod.POST,

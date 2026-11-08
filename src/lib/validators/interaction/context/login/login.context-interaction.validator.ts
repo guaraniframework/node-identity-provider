@@ -77,7 +77,7 @@ export class LoginContextInteractionValidator extends ContextInteractionValidato
   private async getGrant(parameters: LoginContextInteractionRequest, client: Client): Promise<Grant> {
     this.logger.debug(`[${this.constructor.name}] Called getGrant()`, '3a0a556f-24dd-4046-86ee-77cd050ac20a', {
       parameters,
-      client_id: client.id,
+      client,
     });
 
     if (!('login_challenge' in parameters) || !isNonEmptyString(parameters.login_challenge)) {
@@ -86,7 +86,7 @@ export class LoginContextInteractionValidator extends ContextInteractionValidato
       this.logger.error(
         `[${this.constructor.name}] Invalid parameter "login_challenge"`,
         'be8f4a90-f87f-47e8-be43-e012812de4a5',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -101,7 +101,7 @@ export class LoginContextInteractionValidator extends ContextInteractionValidato
       this.logger.error(
         `[${this.constructor.name}] Invalid Login Challenge`,
         '9f341c1d-289e-44df-a7cf-cb217c7e3d5c',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -114,7 +114,7 @@ export class LoginContextInteractionValidator extends ContextInteractionValidato
       this.logger.error(
         `[${this.constructor.name}] The Grant was not issued to this Client`,
         '377d13f6-103e-4876-971e-8fc930a5f4fc',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -129,7 +129,7 @@ export class LoginContextInteractionValidator extends ContextInteractionValidato
       this.logger.error(
         `[${this.constructor.name}] Expired Grant`,
         'eda960e1-3d46-4e9a-bb06-4bb6cc6f7773',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -138,8 +138,8 @@ export class LoginContextInteractionValidator extends ContextInteractionValidato
 
     this.logger.debug(`[${this.constructor.name}] Completed getGrant()`, '15f84b15-f763-4164-8cb1-d88af7a52598', {
       parameters,
-      client_id: client.id,
-      grant_id: grant.id,
+      client,
+      grant,
     });
 
     return grant;

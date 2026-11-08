@@ -740,7 +740,7 @@ describe('ID Token Handler', () => {
       expect(loggerMock.debug).toHaveBeenLastCalledWith(
         '[IdTokenHandler] Completed checkIdTokenHint()',
         '38262405-94c5-4c0b-88cc-b73ade6f3aed',
-        { id_token: nestedIdToken, client_id: nestedClient.id, login_id: login.id, result: false, error },
+        { id_token: nestedIdToken, client: nestedClient, login, result: false, error },
       );
     });
 
@@ -771,7 +771,7 @@ describe('ID Token Handler', () => {
       expect(loggerMock.debug).toHaveBeenLastCalledWith(
         '[IdTokenHandler] Completed checkIdTokenHint()',
         '38262405-94c5-4c0b-88cc-b73ade6f3aed',
-        { id_token: nestedIdToken, client_id: nestedClient.id, login_id: login.id, result: false, error },
+        { id_token: nestedIdToken, client: nestedClient, login, result: false, error },
       );
     });
 
@@ -801,7 +801,7 @@ describe('ID Token Handler', () => {
       expect(loggerMock.debug).toHaveBeenLastCalledWith(
         '[IdTokenHandler] Completed checkIdTokenHint()',
         '38262405-94c5-4c0b-88cc-b73ade6f3aed',
-        { id_token: signedIdToken, client_id: nestedClient.id, login_id: login.id, result: false, error },
+        { id_token: signedIdToken, client: nestedClient, login, result: false, error },
       );
     });
 
@@ -822,7 +822,7 @@ describe('ID Token Handler', () => {
       expect(loggerMock.debug).toHaveBeenLastCalledWith(
         '[IdTokenHandler] Completed checkIdTokenHint()',
         '38262405-94c5-4c0b-88cc-b73ade6f3aed',
-        { id_token: nestedIdToken, client_id: nestedClient.id, login_id: login.id, result: false, error },
+        { id_token: nestedIdToken, client: nestedClient, login, result: false, error },
       );
     });
 
@@ -843,7 +843,7 @@ describe('ID Token Handler', () => {
       expect(loggerMock.debug).toHaveBeenLastCalledWith(
         '[IdTokenHandler] Completed checkIdTokenHint()',
         '38262405-94c5-4c0b-88cc-b73ade6f3aed',
-        { id_token: signedIdToken, client_id: signedClient.id, login_id: login.id, result: false, error },
+        { id_token: signedIdToken, client: signedClient, login, result: false, error },
       );
     });
 
@@ -871,7 +871,7 @@ describe('ID Token Handler', () => {
       expect(loggerMock.debug).toHaveBeenLastCalledWith(
         '[IdTokenHandler] Completed checkIdTokenHint()',
         '38262405-94c5-4c0b-88cc-b73ade6f3aed',
-        { id_token: nestedIdToken, client_id: nestedClient.id, login_id: login.id, result: false, error },
+        { id_token: nestedIdToken, client: nestedClient, login, result: false, error },
       );
     });
 
@@ -899,7 +899,7 @@ describe('ID Token Handler', () => {
       expect(loggerMock.debug).toHaveBeenLastCalledWith(
         '[IdTokenHandler] Completed checkIdTokenHint()',
         '38262405-94c5-4c0b-88cc-b73ade6f3aed',
-        { id_token: signedIdToken, client_id: signedClient.id, login_id: login.id, result: false, error },
+        { id_token: signedIdToken, client: signedClient, login, result: false, error },
       );
     });
 
@@ -919,7 +919,7 @@ describe('ID Token Handler', () => {
       expect(loggerMock.debug).toHaveBeenLastCalledWith(
         '[IdTokenHandler] Completed checkIdTokenHint()',
         '492bfa48-4c2e-473d-9e74-8ec6982195d8',
-        { id_token: nestedIdToken, client_id: nestedClient.id, login_id: login.id, result: true },
+        { id_token: nestedIdToken, client: nestedClient, login, result: true },
       );
     });
 
@@ -939,7 +939,7 @@ describe('ID Token Handler', () => {
       expect(loggerMock.debug).toHaveBeenLastCalledWith(
         '[IdTokenHandler] Completed checkIdTokenHint()',
         '492bfa48-4c2e-473d-9e74-8ec6982195d8',
-        { id_token: signedIdToken, client_id: signedClient.id, login_id: login.id, result: true },
+        { id_token: signedIdToken, client: signedClient, login, result: true },
       );
     });
   });

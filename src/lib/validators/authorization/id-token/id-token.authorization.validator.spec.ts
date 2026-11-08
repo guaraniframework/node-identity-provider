@@ -171,7 +171,7 @@ describe('ID Token Authorization Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[IdTokenAuthorizationValidator] Missing required Scope "openid"',
         'a39eab70-3a5b-46f4-85ba-e0d15923b18c',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
     });
@@ -204,10 +204,7 @@ describe('ID Token Authorization Validator', () => {
         client,
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
-        id: 'session_id',
-        grant,
-      });
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), { id: 'session_id', grant });
 
       dataAccessMock.findClientById.mockResolvedValueOnce(client);
       dataAccessMock.findSessionById.mockResolvedValueOnce(session);

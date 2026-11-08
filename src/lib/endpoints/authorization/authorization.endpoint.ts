@@ -105,9 +105,18 @@ export class AuthorizationEndpoint extends Endpoint {
       context = await validator.validate(request);
     } catch (err: unknown) {
       const error = asIdentityProviderError(err);
-      const location = addParametersToUrl(new URL(this.settings.interactions.errorUrl.href), error.toJSON());
+      const location = addParametersToUrl(this.settings.interactions.errorUrl.href, error.toJSON());
 
-      return new HttpResponse().setStatus(error.status).setHeaders(error.headers).redirect(location);
+      const response = new HttpResponse().setStatus(error.status).setHeaders(error.headers).redirect(location);
+
+      this.logger.error(
+        `[${this.constructor.name}] Failed handle()`,
+        '942251bd-b3a6-4577-bb54-4f9bdf9a1a41',
+        { request, response },
+        error,
+      );
+
+      return response;
     }
 
     const { client, display, idTokenHint, maxAge, parameters, prompts, responseMode, responseType, state } = context;
@@ -202,7 +211,7 @@ export class AuthorizationEndpoint extends Endpoint {
         const shouldSave = grant.consent === null;
         grant.consent ??= await this.dataAccess.findConsentByClientAndUser(client, login.user);
 
-        if (shouldSave && grant.consent !== null) {
+        if (grant.consent instanceof Consent && shouldSave) {
           await this.dataAccess.saveGrant(grant);
         }
       });
@@ -268,10 +277,12 @@ export class AuthorizationEndpoint extends Endpoint {
 
       await this.dataAccess.removeGrant(context.session!.grant!);
 
-      this.logger.debug(`[${this.constructor.name}] Completed handle()`, 'a47f5be3-65c0-405e-b352-fc95ede23549', {
-        request,
-        response,
-      });
+      this.logger.error(
+        `[${this.constructor.name}] Failed handle()`,
+        'a47f5be3-65c0-405e-b352-fc95ede23549',
+        { request, response },
+        error,
+      );
 
       return response;
     }
@@ -368,7 +379,7 @@ export class AuthorizationEndpoint extends Endpoint {
       { grant, display },
     );
 
-    const parameters: NodeJS.Dict<string> = { login_challenge: grant!.loginChallenge };
+    const parameters: NodeJS.Dict<string> = { login_challenge: grant.loginChallenge };
     const response = display.createHttpResponse(this.settings.interactions.registrationUrl, parameters);
 
     this.logger.debug(
@@ -395,7 +406,7 @@ export class AuthorizationEndpoint extends Endpoint {
       { grant, display },
     );
 
-    const parameters: NodeJS.Dict<string> = { login_challenge: grant!.loginChallenge };
+    const parameters: NodeJS.Dict<string> = { login_challenge: grant.loginChallenge };
     const response = display.createHttpResponse(this.settings.interactions.accountSelectionUrl, parameters);
 
     this.logger.debug(
@@ -421,7 +432,7 @@ export class AuthorizationEndpoint extends Endpoint {
       { grant, display },
     );
 
-    const parameters: NodeJS.Dict<string> = { login_challenge: grant!.loginChallenge };
+    const parameters: NodeJS.Dict<string> = { login_challenge: grant.loginChallenge };
     const response = display.createHttpResponse(this.settings.interactions.loginUrl, parameters);
 
     this.logger.debug(
@@ -447,7 +458,7 @@ export class AuthorizationEndpoint extends Endpoint {
       { grant, display },
     );
 
-    const parameters: NodeJS.Dict<string> = { consent_challenge: grant!.consentChallenge };
+    const parameters: NodeJS.Dict<string> = { consent_challenge: grant.consentChallenge };
     const response = display.createHttpResponse(this.settings.interactions.consentUrl, parameters);
 
     this.logger.debug(

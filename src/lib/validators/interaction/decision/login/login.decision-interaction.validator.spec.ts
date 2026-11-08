@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer';
-import { stringify as stringifyQs } from 'querystring';
+import qs from 'querystring';
 import { URL } from 'url';
 
 import { getContainer } from '@guarani/di';
@@ -131,7 +131,7 @@ describe('Login Decision Interaction Validator', () => {
       removeNullishValues<LoginDecisionInteractionRequest>(Object.assign(parameters, data));
 
       return new HttpRequest({
-        body: Buffer.from(stringifyQs(parameters), 'utf8'),
+        body: Buffer.from(qs.stringify(parameters), 'utf8'),
         cookies: {},
         headers: { 'content-type': 'application/x-www-form-urlencoded' },
         method: HttpRequestMethod.POST,
@@ -159,7 +159,7 @@ describe('Login Decision Interaction Validator', () => {
         expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
           '[LoginDecisionInteractionValidator] Invalid parameter "login_challenge"',
           '256c4032-69d7-42b7-9531-6a6fb1665169',
-          { parameters, client_id: client.id },
+          { parameters, client },
           error,
         );
       },
@@ -178,7 +178,7 @@ describe('Login Decision Interaction Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[LoginDecisionInteractionValidator] Invalid Login Challenge',
         '29753f1d-034b-47dd-8b02-fbccaf22107b',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
     });
@@ -186,14 +186,8 @@ describe('Login Decision Interaction Validator', () => {
     it('should throw when the Client requests a Grant that was not issued to itself.', async () => {
       const request = requestFactory();
 
-      const anotherClient: Client = Object.assign<Client, Partial<Client>>(new Client(), {
-        id: 'another_client_id',
-      });
-
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
-        id: 'grant_id',
-        client: anotherClient,
-      });
+      const anotherClient: Client = Object.assign<Client, Partial<Client>>(new Client(), { id: 'another_client_id' });
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), { id: 'grant_id', client: anotherClient });
 
       dataAccessMock.findGrantByLoginChallenge.mockResolvedValueOnce(grant);
 
@@ -205,7 +199,7 @@ describe('Login Decision Interaction Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[LoginDecisionInteractionValidator] The Grant was not issued to this Client',
         '0825051f-6751-4f0a-871e-75def43520e3',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
     });
@@ -231,7 +225,7 @@ describe('Login Decision Interaction Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[LoginDecisionInteractionValidator] Expired Grant',
         '3824dacd-e50c-4739-9a92-0e95e5f1c437',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
     });
@@ -309,7 +303,7 @@ describe('Login Decision Interaction Validator', () => {
         expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
           '[LoginDecisionInteractionValidator] Invalid parameter "subject_id"',
           '6ca68f17-282c-49f0-ba8e-72b19e27791e',
-          { parameters, client_id: client.id },
+          { parameters, client },
           error,
         );
       },
@@ -339,7 +333,7 @@ describe('Login Decision Interaction Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[LoginDecisionInteractionValidator] Invalid Subject Identifier',
         '54ee3b7e-1e91-49df-a9d7-a2c5cb767e55',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
     });

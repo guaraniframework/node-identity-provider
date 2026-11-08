@@ -90,7 +90,7 @@ export class CreateDecisionInteractionValidator extends DecisionInteractionValid
   private async getGrant(parameters: CreateDecisionInteractionRequest, client: Client): Promise<Grant> {
     this.logger.debug(`[${this.constructor.name}] Called getGrant()`, '6b9a55cf-05ca-46a3-82db-ab07ee069c9d', {
       parameters,
-      client_id: client.id,
+      client,
     });
 
     if (!('login_challenge' in parameters) || !isNonEmptyString(parameters.login_challenge)) {
@@ -99,7 +99,7 @@ export class CreateDecisionInteractionValidator extends DecisionInteractionValid
       this.logger.error(
         `[${this.constructor.name}] Invalid parameter "login_challenge"`,
         '47818932-4e0e-4142-961f-f1057d9bef15',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -114,7 +114,7 @@ export class CreateDecisionInteractionValidator extends DecisionInteractionValid
       this.logger.error(
         `[${this.constructor.name}] Invalid Login Challenge`,
         '5ab65044-b4e6-4bf0-b5d4-d3770087dba2',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -127,7 +127,7 @@ export class CreateDecisionInteractionValidator extends DecisionInteractionValid
       this.logger.error(
         `[${this.constructor.name}] The Grant was not issued to this Client`,
         'c7e03e04-8801-48fa-9046-fd1602d5698d',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -142,7 +142,7 @@ export class CreateDecisionInteractionValidator extends DecisionInteractionValid
       this.logger.error(
         `[${this.constructor.name}] Expired Grant`,
         '35a38165-4c46-4c6a-81f7-b6d3100344ad',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -151,8 +151,8 @@ export class CreateDecisionInteractionValidator extends DecisionInteractionValid
 
     this.logger.debug(`[${this.constructor.name}] Completed getGrant()`, 'c1db5b5a-9b93-4f74-aa92-2d86873d58a0', {
       parameters,
-      client_id: client.id,
-      grant_id: grant.id,
+      client,
+      grant,
     });
 
     return grant;

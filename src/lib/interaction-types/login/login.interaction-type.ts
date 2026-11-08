@@ -62,7 +62,7 @@ export class LoginInteractionType extends InteractionType {
    * @param logger Logger of the Identity Provider.
    * @param dataAccess Data Access of the Identity Provider.
    * @param settings Settings of the Identity Provider.
-   * @param endpoints Endpoints of the Identity Provider.
+   * @param provider Identity Provider.
    */
   public constructor(
     private readonly logger: Logger,
@@ -115,7 +115,6 @@ export class LoginInteractionType extends InteractionType {
     const response: LoginContextInteractionResponse = {
       skip,
       request_url: url.href,
-      client_id: grant.client.id,
       context: removeNullishValues<LoginContextInteractionResponseContext>({
         prompts: grant.parameters.prompt?.split(' ') as Prompt[],
         display: grant.parameters.display as DisplayName,
@@ -165,7 +164,7 @@ export class LoginInteractionType extends InteractionType {
     }
 
     this.logger.debug(`[${this.constructor.name}] Completed handleDecision()`, '0980f8ca-571f-4d22-a36a-f16823284124', {
-      decision,
+      context,
       response,
     });
 
@@ -176,6 +175,7 @@ export class LoginInteractionType extends InteractionType {
    * Accepts the Authentication performed by the application and redirects the User-Agent to continue the Authorization Process.
    *
    * @param context Login Accept Decision Interaction Context.
+   * @throws {UnmetAuthenticationRequirementsError} Could not authenticate using the provided Authentication Context Class Reference.
    * @returns Login Decision Interaction Response.
    */
   private async acceptLogin(context: LoginAcceptDecisionInteractionContext): Promise<LoginDecisionInteractionResponse> {

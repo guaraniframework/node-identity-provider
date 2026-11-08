@@ -42,6 +42,7 @@ export class CodeAuthorizationValidator extends AuthorizationValidator<CodeAutho
    * @param responseTypes Response Types of the Identity Provider.
    * @param responseModes Response Modes of the Identity Provider.
    * @param displays Displays of the Identity Provider.
+   * @param pkces PKCEs of the Identity Provider.
    */
   public constructor(
     protected override readonly logger: Logger,
@@ -60,12 +61,7 @@ export class CodeAuthorizationValidator extends AuthorizationValidator<CodeAutho
    * Validates the Http Authorization Request and returns the actors of the Authorization Context.
    *
    * @param request Http Request.
-   * @throws {AccessDeniedError} The Client failed to obtain authorization.
-   * @throws {InvalidClientError} The Client failed to authenticate.
-   * @throws {InvalidRequestError} One of the provided parameters is invalid.
-   * @throws {InvalidScopeError} The Client requested an invalid or unsupported Scope.
-   * @throws {MethodNotAllowedError} The requested Http Request Method is not allowed.
-   * @throws {UnauthorizedClientError} The Client is not authorized to make this Request.
+   * @throws {IdentityProviderError} An error occurred when validating the Http Request.
    * @returns Authorization Context.
    */
   public override async validate(request: HttpRequest): Promise<CodeAuthorizationContext> {
@@ -175,7 +171,7 @@ export class CodeAuthorizationValidator extends AuthorizationValidator<CodeAutho
     this.logger.debug(
       `[${this.constructor.name}] Completed getCodeChallengeMethod()`,
       '5d1d4f02-13bb-4414-9a1c-f37cbdf98b2a',
-      { parameters, code_challenge_method: codeChallengeMethod },
+      { parameters, code_challenge_method: codeChallengeMethod.name },
     );
 
     return codeChallengeMethod;

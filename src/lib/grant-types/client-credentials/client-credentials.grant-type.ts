@@ -54,7 +54,7 @@ export class ClientCredentialsGrantType extends GrantType {
 
     const { client, scopes } = context;
 
-    const accessToken = await this.dataAccess.createAccessToken(scopes, client, null);
+    const accessToken = await this.dataAccess.createAccessToken(scopes, client, null, null, null);
     const response = createTokenResponse<ClientCredentialsTokenResponse>(accessToken);
 
     this.logger.debug(`[${this.constructor.name}] Completed handle()`, '44a96591-0413-43ca-8abe-7d36b129335e', {

@@ -37,6 +37,11 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
   public readonly name: GrantTypeName = 'urn:ietf:params:oauth:grant-type:jwt-bearer';
 
   /**
+   * Forbidden Scopes for the Grant Type of this Validator.
+   */
+  private readonly forbiddenScopes: string[] = ['openid', 'profile', 'email', 'phone', 'address', 'offline_access'];
+
+  /**
    * Instantiates a new JWT Bearer Token Validator.
    *
    * @param logger Logger of the Identity Provider.
@@ -46,6 +51,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
    * @param settings Settings of the Identity Provider.
    * @param grantTypes Grant Types of the Identity Provider.
    * @param clientAuthenticationMethods Token Endpoint Client Authentication Methods of the Identity Provider.
+   * @throws {TypeError} Missing implementation of a required Data Access method.
    */
   public constructor(
     protected override readonly logger: Logger,
@@ -79,6 +85,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
    * Validates the Http Request and returns the actors of the JWT Bearer Token Context.
    *
    * @param request Http Request.
+   * @throws {IdentityProviderError} An error occurred when validating the Http Request.
    * @returns JWT Bearer Token Context.
    */
   public override async validate(request: HttpRequest): Promise<JwtBearerTokenContext> {
@@ -109,6 +116,8 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
    * @param request Http Request.
    * @param parameters Parameters of the JWT Bearer Token Request.
    * @param client Client requesting authorization.
+   * @throws {InvalidGrantError} The provided Assertion is invalid.
+   * @throws {InvalidRequestError} The provided parameter "assertion" is invalid.
    * @returns User represented in the Assertion.
    */
   private async getSubjectFromAssertion(
@@ -119,7 +128,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
     this.logger.debug(
       `[${this.constructor.name}] Called getSubjectFromAssertion()`,
       'f8bcb301-0ce8-4d5f-abcc-66331f32ed7d',
-      { request, parameters, client_id: client.id },
+      { request, parameters, client },
     );
 
     if (!('assertion' in parameters) || !isNonEmptyString(parameters.assertion)) {
@@ -128,7 +137,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
       this.logger.error(
         `[${this.constructor.name}] Invalid parameter "assertion"`,
         'beb456cd-ce83-4b95-b595-4373f6d42695',
-        { request, parameters, client_id: client.id },
+        { request, parameters, client },
         error,
       );
 
@@ -182,7 +191,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
         this.logger.error(
           `[${this.constructor.name}] The Client tried to use the JSON Web Signature Algorithm "none"`,
           'c9353b6a-02c1-425c-bc71-b8765c4e1b3a',
-          { request, parameters, client_id: client.id },
+          { request, parameters, client },
           error,
         );
 
@@ -195,7 +204,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
         this.logger.error(
           `[${this.constructor.name}] Unsupported JSON Web Signature Algorithm "${header.alg}"`,
           'ed9ac8df-0bad-4f38-85c7-7bfbe3410d7e',
-          { request, parameters, client_id: client.id },
+          { request, parameters, client },
           error,
         );
 
@@ -217,7 +226,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
         this.logger.error(
           `[${this.constructor.name}] Could not find the User of the Assertion`,
           '5e0d0a94-11d3-4a91-9b3e-085511a77a07',
-          { request, parameters, client_id: client.id },
+          { request, parameters, client },
           error,
         );
 
@@ -227,7 +236,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
       this.logger.debug(
         `[${this.constructor.name}] Completed getSubjectFromAssertion()`,
         '0c1d3b8c-e9fb-4c59-8d40-feeb96a73545',
-        { request, parameters, client_id: client.id, user_id: user.id },
+        { request, parameters, client, user },
       );
 
       return user;
@@ -241,7 +250,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
       this.logger.error(
         `[${this.constructor.name}] Invalid JSON Web Token Assertion`,
         '07fe7cd3-1cae-4ac0-bb32-14574ae8ef59',
-        { request, parameters, client_id: client.id },
+        { request, parameters, client },
         error,
       );
 
@@ -255,12 +264,15 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
    *
    * @param parameters Parameters of the JWT Bearer Token Request.
    * @param client Client of the Request.
+   * @throws {AccessDeniedError} The Client is not allowed to request the provided Scope.
+   * @throws {InvalidRequestError} The provided parameter "scope" is invalid.
+   * @throws {InvalidScopeError} The Client requested an unsupported Scope.
    * @returns Scopes granted to the Client.
    */
   private async getScopes(parameters: JwtBearerTokenRequest, client: Client): Promise<Scope[]> {
     this.logger.debug(`[${this.constructor.name}] Called getScopes()`, '95fcf005-c370-4a9a-9a7b-82abe8a58d1c', {
       parameters,
-      client_id: client.id,
+      client,
     });
 
     if ('scope' in parameters && !isNonEmptyString(parameters.scope)) {
@@ -269,7 +281,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
       this.logger.error(
         `[${this.constructor.name}] Invalid parameter "scope"`,
         '1c4db530-a5ac-4587-93f7-ad9313812094',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -277,12 +289,26 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
     }
 
     const scopes = parameters.scope?.split(' ') ?? [];
+
+    if (scopes.some((scope) => this.forbiddenScopes.includes(scope))) {
+      const error = new InvalidRequestError('Cannot request an OpenID Connect Scope using this Grant Type.');
+
+      this.logger.error(
+        `[${this.constructor.name}] Cannot request an OpenID Connect Scope using this Grant Type`,
+        'c19a1ace-0ed9-4b5e-829c-704b9c3d2b4c',
+        { parameters, client },
+        error,
+      );
+
+      throw error;
+    }
+
     await this.scopeHandler.checkRequestedScopes(scopes);
     const allowedScopes = await this.scopeHandler.getAllowedScopes(client, scopes);
 
     this.logger.debug(`[${this.constructor.name}] Completed getScopes()`, '245ded41-ede5-411b-9c1a-402fe47f0cfc', {
       parameters,
-      client_id: client.id,
+      client,
       allowed_scopes: allowedScopes.map((scope) => scope.name),
     });
 
@@ -294,6 +320,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
    *
    * @param client Client of the Request.
    * @param header JSON Web Signature Header of the Assertion.
+   * @throws {InvalidClientError} Failed to obtain the Client's JWT Bearer Grant Sign JSON Web Key.
    * @returns JSON Web Key of the Client based on the JSON Web Signature Header.
    */
   private async getJwtBearerGrantClientSignJsonWebKey(
@@ -301,7 +328,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
     header: JsonWebSignatureHeaderParameters,
   ): Promise<JsonWebKey> {
     this.logger.debug(`[${this.constructor.name}] Called getClientKey()`, 'c98ecc74-6692-4f43-991c-089b45957e8e', {
-      client_id: client.id,
+      client,
       header,
     });
 
@@ -325,7 +352,7 @@ export class JwtBearerTokenValidator extends TokenValidator<JwtBearerTokenContex
     }
 
     this.logger.debug(`[${this.constructor.name}] Completed getClientKey()`, 'd2739d6e-daa9-46c8-a915-56509180febe', {
-      client_id: client.id,
+      client,
       header,
       jwk: jsonWebKey,
     });

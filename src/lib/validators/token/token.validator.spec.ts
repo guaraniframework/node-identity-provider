@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer';
-import { stringify as stringifyQs } from 'querystring';
+import qs from 'querystring';
 import { URL } from 'url';
 
 import { getContainer, Injectable, InjectAll } from '@guarani/di';
@@ -20,7 +20,6 @@ import { HttpRequest } from '../../http/request/http-request';
 import { HttpRequestMethod } from '../../http/request/http-request-method.enum';
 import { Logger } from '../../loggers/logger';
 import { TokenRequest } from '../../requests/token/token-request';
-import { addParametersToUrl } from '../../utils/add-parameters-to-url/add-parameters-to-url';
 import { TokenValidator } from './token.validator';
 
 jest.mock('../../client-authentication/client-authentication');
@@ -95,7 +94,7 @@ describe('Token Validator', () => {
       removeNullishValues<TokenRequest>(Object.assign(parameters, data));
 
       return new HttpRequest({
-        body: Buffer.from(stringifyQs(parameters), 'utf8'),
+        body: Buffer.from(qs.stringify(parameters), 'utf8'),
         cookies: {},
         headers: { 'content-type': 'application/x-www-form-urlencoded' },
         method: HttpRequestMethod.POST,
@@ -115,7 +114,7 @@ describe('Token Validator', () => {
           cookies: {},
           headers: {},
           method,
-          url: addParametersToUrl('https://provider.example.com/oidc/token', parameters),
+          url: new URL('https://provider.example.com/oidc/token'),
         });
 
         const error = new MethodNotAllowedError(
@@ -164,7 +163,7 @@ describe('Token Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[CustomTokenValidator] The Client is not allowed to request the Grant Type "authorization_code"',
         'dba5311f-567f-4934-bd2b-8ae387783cb7',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
     });

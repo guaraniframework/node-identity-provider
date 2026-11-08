@@ -77,7 +77,7 @@ export class CreateContextInteractionValidator extends ContextInteractionValidat
   private async getGrant(parameters: CreateContextInteractionRequest, client: Client): Promise<Grant> {
     this.logger.debug(`[${this.constructor.name}] Called getGrant()`, 'fe617fa3-1ad0-413e-8d1c-d436843d38ed', {
       parameters,
-      client_id: client.id,
+      client,
     });
 
     if (!('login_challenge' in parameters) || !isNonEmptyString(parameters.login_challenge)) {
@@ -86,7 +86,7 @@ export class CreateContextInteractionValidator extends ContextInteractionValidat
       this.logger.error(
         `[${this.constructor.name}] Invalid parameter "login_challenge"`,
         '48003fdf-53f8-43ea-aa9b-12ce30566454',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -101,7 +101,7 @@ export class CreateContextInteractionValidator extends ContextInteractionValidat
       this.logger.error(
         `[${this.constructor.name}] Invalid Login Challenge`,
         '809a7cdd-1aa9-4a00-90e9-6f47c6e0a0b6',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -114,7 +114,7 @@ export class CreateContextInteractionValidator extends ContextInteractionValidat
       this.logger.error(
         `[${this.constructor.name}] The Grant was not issued to this Client`,
         '2aa14a3a-4930-410c-8b2c-a21c780ac87b',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -129,7 +129,7 @@ export class CreateContextInteractionValidator extends ContextInteractionValidat
       this.logger.error(
         `[${this.constructor.name}] Expired Grant`,
         'f64083ca-59cc-499b-a03e-dd3e56209ce5',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -138,8 +138,8 @@ export class CreateContextInteractionValidator extends ContextInteractionValidat
 
     this.logger.debug(`[${this.constructor.name}] Completed getGrant()`, 'ddf47108-a14c-47da-bec2-6706a1ca679d', {
       parameters,
-      client_id: client.id,
-      grant_id: grant.id,
+      client,
+      grant,
     });
 
     return grant;

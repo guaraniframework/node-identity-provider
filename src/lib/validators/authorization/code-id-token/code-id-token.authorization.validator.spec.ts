@@ -185,7 +185,7 @@ describe('Code & ID Token Authorization Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[CodeIdTokenAuthorizationValidator] Missing required Scope "openid"',
         '0519720b-d7c3-4edb-9860-4b52dfe24bb9',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
     });
@@ -220,10 +220,7 @@ describe('Code & ID Token Authorization Validator', () => {
           client,
         });
 
-        const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
-          id: 'session_id',
-          grant,
-        });
+        const session: Session = Object.assign<Session, Partial<Session>>(new Session(), { id: 'session_id', grant });
 
         dataAccessMock.findClientById.mockResolvedValueOnce(client);
         dataAccessMock.findSessionById.mockResolvedValueOnce(session);
@@ -254,10 +251,7 @@ describe('Code & ID Token Authorization Validator', () => {
         client,
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
-        id: 'session_id',
-        grant,
-      });
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), { id: 'session_id', grant });
 
       dataAccessMock.findClientById.mockResolvedValueOnce(client);
       dataAccessMock.findSessionById.mockResolvedValueOnce(session);
@@ -287,10 +281,7 @@ describe('Code & ID Token Authorization Validator', () => {
         client,
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
-        id: 'session_id',
-        grant,
-      });
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), { id: 'session_id', grant });
 
       dataAccessMock.findClientById.mockResolvedValueOnce(client);
       dataAccessMock.findSessionById.mockResolvedValueOnce(session);
@@ -320,10 +311,7 @@ describe('Code & ID Token Authorization Validator', () => {
         client,
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
-        id: 'session_id',
-        grant,
-      });
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), { id: 'session_id', grant });
 
       dataAccessMock.findClientById.mockResolvedValueOnce(client);
       dataAccessMock.findSessionById.mockResolvedValueOnce(session);
@@ -362,10 +350,7 @@ describe('Code & ID Token Authorization Validator', () => {
         client,
       });
 
-      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), {
-        id: 'session_id',
-        grant,
-      });
+      const session: Session = Object.assign<Session, Partial<Session>>(new Session(), { id: 'session_id', grant });
 
       dataAccessMock.findClientById.mockResolvedValueOnce(client);
       dataAccessMock.findSessionById.mockResolvedValueOnce(session);

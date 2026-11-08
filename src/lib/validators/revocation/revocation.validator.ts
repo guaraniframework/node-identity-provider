@@ -62,10 +62,11 @@ export class RevocationValidator extends Validator<RevocationContext> {
   }
 
   /**
-   * Validates the Http Request and returns the actors of the Token Context.
+   * Validates the Http Request and returns the actors of the Revocation Context.
    *
    * @param request Http Request.
-   * @returns Token Context.
+   * @throws {IdentityProviderError} An error occurred when validating the Http Request.
+   * @returns Revocation Context.
    */
   public async validate(request: HttpRequest): Promise<RevocationContext> {
     this.logger.debug(`[${this.constructor.name}] Called validate()`, '172a3169-7a52-4247-ae51-d121c73359e7', {
@@ -104,6 +105,8 @@ export class RevocationValidator extends Validator<RevocationContext> {
    * Searches the application's storage for a Token that satisfies the Token Identifier provided by the Client.
    *
    * @param parameters Parameters of the Revocation Request.
+   * @throws {InvalidRequestError} One of the provided parameters is invalid.
+   * @throws {UnsupportedTokenTypeError} The provided Token Type Hint is unsupported.
    * @returns Resulting Token and its type.
    */
   private async findToken(parameters: RevocationRequest): Promise<AccessToken | RefreshToken | null> {

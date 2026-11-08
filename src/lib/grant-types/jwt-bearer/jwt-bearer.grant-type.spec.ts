@@ -56,16 +56,16 @@ describe('JWT Bearer Grant Type', () => {
     const user: User = Object.assign<User, Partial<User>>(new User(), { id: 'user_id' });
     const scopes: Scope[] = ['foo', 'bar'].map((name) => Object.assign<Scope, Partial<Scope>>(new Scope(), { name }));
 
+    const accessToken: AccessToken = Object.assign<AccessToken, Partial<AccessToken>>(new AccessToken(), {
+      id: 'access_token_id',
+      type: 'Bearer',
+      scopes,
+      expiresAt: new Date(Date.now() + 86400000),
+    });
+
+    const context: JwtBearerTokenContext = { parameters, grantType, client, user, scopes };
+
     it('should return a JWT Bearer Token Response.', async () => {
-      const context: JwtBearerTokenContext = { parameters, grantType, client, user, scopes };
-
-      const accessToken: AccessToken = Object.assign<AccessToken, Partial<AccessToken>>(new AccessToken(), {
-        id: 'access_token_id',
-        type: 'Bearer',
-        scopes,
-        expiresAt: new Date(Date.now() + 86400000),
-      });
-
       dataAccessMock.createAccessToken.mockResolvedValueOnce(accessToken);
 
       await expect(grantType.handle(context)).resolves.toStrictEqual<JwtBearerTokenResponse>({
@@ -75,7 +75,7 @@ describe('JWT Bearer Grant Type', () => {
         scope: 'foo bar',
       });
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, null, null);
     });
   });
 });

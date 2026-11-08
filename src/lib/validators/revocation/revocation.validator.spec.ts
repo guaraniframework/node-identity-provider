@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer';
-import { stringify as stringifyQs } from 'querystring';
+import qs from 'querystring';
 import { URL } from 'url';
 
 import { getContainer } from '@guarani/di';
@@ -23,7 +23,6 @@ import { HttpRequestMethod } from '../../http/request/http-request-method.enum';
 import { Logger } from '../../loggers/logger';
 import { RevocationRequest } from '../../requests/revocation/revocation-request';
 import { TokenTypeHint } from '../../types/token-type-hint.type';
-import { addParametersToUrl } from '../../utils/add-parameters-to-url/add-parameters-to-url';
 import { RevocationValidator } from './revocation.validator';
 
 jest.mock('../../client-authentication/client-authentication');
@@ -105,7 +104,7 @@ describe('Revocation Validation', () => {
       removeNullishValues<RevocationRequest>(Object.assign(parameters, data));
 
       return new HttpRequest({
-        body: Buffer.from(stringifyQs(parameters), 'utf8'),
+        body: Buffer.from(qs.stringify(parameters), 'utf8'),
         cookies: {},
         headers: { 'content-type': 'application/x-www-form-urlencoded' },
         method: HttpRequestMethod.POST,
@@ -125,7 +124,7 @@ describe('Revocation Validation', () => {
           cookies: {},
           headers: {},
           method,
-          url: addParametersToUrl('https://provider.example.com/oidc/revocation', parameters),
+          url: new URL('https://provider.example.com/oidc/revocation'),
         });
 
         const error = new MethodNotAllowedError(

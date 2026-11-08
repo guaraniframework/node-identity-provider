@@ -70,19 +70,18 @@ export class RefreshTokenGrantType extends GrantType {
 
     const {
       client,
-      refreshToken: { user },
+      refreshToken: { login, user },
       scopes,
     } = context;
 
-    // TODO: Add ID Token support.
     const [accessToken, refreshToken] = await this.dataAccess.atomic(async () => {
       let refreshToken = context.refreshToken;
-
-      const accessToken = await this.dataAccess.createAccessToken(scopes, client, user);
 
       if (this.settings.enableRefreshTokenRotation) {
         refreshToken = await this.dataAccess.rotateRefreshToken!(refreshToken);
       }
+
+      const accessToken = await this.dataAccess.createAccessToken(scopes, client, user, login, refreshToken);
 
       return [accessToken, refreshToken];
     });

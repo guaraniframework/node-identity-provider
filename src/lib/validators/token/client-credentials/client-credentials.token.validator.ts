@@ -27,6 +27,11 @@ export class ClientCredentialsTokenValidator extends TokenValidator<ClientCreden
   public readonly name: GrantTypeName = 'client_credentials';
 
   /**
+   * Forbidden Scopes for the Grant Type of this Validator.
+   */
+  private readonly forbiddenScopes: string[] = ['openid', 'profile', 'email', 'phone', 'address', 'offline_access'];
+
+  /**
    * Instantiates a new Client Credentials Token Validator.
    *
    * @param logger Logger of the Identity Provider.
@@ -50,6 +55,7 @@ export class ClientCredentialsTokenValidator extends TokenValidator<ClientCreden
    * Validates the Http Request and returns the actors of the Client Credentials Token Context.
    *
    * @param request Http Request.
+   * @throws {IdentityProviderError} An error occurred when validating the Http Request.
    * @returns Client Credentials Token Context.
    */
   public override async validate(request: HttpRequest): Promise<ClientCredentialsTokenContext> {
@@ -78,12 +84,15 @@ export class ClientCredentialsTokenValidator extends TokenValidator<ClientCreden
    *
    * @param parameters Parameters of the Client Credentials Token Request.
    * @param client Client of the Request.
+   * @throws {AccessDeniedError} The Client is not allowed to request the provided Scope.
+   * @throws {InvalidRequestError} The provided parameter "scope" is invalid.
+   * @throws {InvalidScopeError} The Client requested an unsupported Scope.
    * @returns Scopes granted to the Client.
    */
   private async getScopes(parameters: ClientCredentialsTokenRequest, client: Client): Promise<Scope[]> {
     this.logger.debug(`[${this.constructor.name}] Called getScopes()`, 'f1f26e92-8f62-46cc-a01c-74eaf17623cc', {
       parameters,
-      client_id: client.id,
+      client,
     });
 
     if ('scope' in parameters && !isNonEmptyString(parameters.scope)) {
@@ -92,7 +101,7 @@ export class ClientCredentialsTokenValidator extends TokenValidator<ClientCreden
       this.logger.error(
         `[${this.constructor.name}] Invalid parameter "scope"`,
         'b1a3f287-6d9e-4c3a-afca-8d0ad49a0a02',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -100,12 +109,26 @@ export class ClientCredentialsTokenValidator extends TokenValidator<ClientCreden
     }
 
     const scopes = parameters.scope?.split(' ') ?? [];
+
+    if (scopes.some((scope) => this.forbiddenScopes.includes(scope))) {
+      const error = new InvalidRequestError('Cannot request an OpenID Connect Scope using this Grant Type.');
+
+      this.logger.error(
+        `[${this.constructor.name}] Cannot request an OpenID Connect Scope using this Grant Type`,
+        'ee831a1e-7c87-40ad-a08e-359267640195',
+        { parameters, client },
+        error,
+      );
+
+      throw error;
+    }
+
     await this.scopeHandler.checkRequestedScopes(scopes);
     const allowedScopes = await this.scopeHandler.getAllowedScopes(client, scopes);
 
     this.logger.debug(`[${this.constructor.name}] Completed getScopes()`, 'e06ff4e9-166b-4c15-af6e-8bd90001cdda', {
       parameters,
-      client_id: client.id,
+      client,
       allowed_scopes: allowedScopes.map((scope) => scope.name),
     });
 

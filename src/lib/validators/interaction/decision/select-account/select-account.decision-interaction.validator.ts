@@ -92,7 +92,7 @@ export class SelectAccountDecisionInteractionValidator extends DecisionInteracti
   private async getGrant(parameters: SelectAccountDecisionInteractionRequest, client: Client): Promise<Grant> {
     this.logger.debug(`[${this.constructor.name}] Called getGrant()`, '48701142-9462-42f0-b0f0-f52783eceb25', {
       parameters,
-      client_id: client.id,
+      client,
     });
 
     if (!('login_challenge' in parameters) || !isNonEmptyString(parameters.login_challenge)) {
@@ -101,7 +101,7 @@ export class SelectAccountDecisionInteractionValidator extends DecisionInteracti
       this.logger.error(
         `[${this.constructor.name}] Invalid parameter "login_challenge"`,
         '2c588c79-2a0c-4792-894d-6a0aa77616fb',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -116,7 +116,7 @@ export class SelectAccountDecisionInteractionValidator extends DecisionInteracti
       this.logger.error(
         `[${this.constructor.name}] Invalid Login Challenge`,
         '5f2827db-0bab-4d40-8411-fc3b5d159cba',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -129,7 +129,7 @@ export class SelectAccountDecisionInteractionValidator extends DecisionInteracti
       this.logger.error(
         `[${this.constructor.name}] The Grant was not issued to this Client`,
         'c3eeb57e-2cfa-4fda-a221-a8078c14c5e7',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -144,7 +144,7 @@ export class SelectAccountDecisionInteractionValidator extends DecisionInteracti
       this.logger.error(
         `[${this.constructor.name}] Expired Grant`,
         '1106c4ca-796d-4779-a10b-f9296437c74e',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -153,8 +153,8 @@ export class SelectAccountDecisionInteractionValidator extends DecisionInteracti
 
     this.logger.debug(`[${this.constructor.name}] Completed getGrant()`, 'c19eead8-0e7e-47e5-803c-5f2c26290109', {
       parameters,
-      client_id: client.id,
-      grant_id: grant.id,
+      client,
+      grant,
     });
 
     return grant;
@@ -172,7 +172,7 @@ export class SelectAccountDecisionInteractionValidator extends DecisionInteracti
   private async getLogin(parameters: SelectAccountDecisionInteractionRequest, grant: Grant): Promise<Login> {
     this.logger.debug(`[${this.constructor.name}] Called getLogin()`, 'f4921ee4-9363-4e7f-8845-3c05dc715a1d', {
       parameters,
-      grant_id: grant.id,
+      grant,
     });
 
     if (!('login_id' in parameters) || !isNonEmptyString(parameters.login_id)) {
@@ -181,7 +181,7 @@ export class SelectAccountDecisionInteractionValidator extends DecisionInteracti
       this.logger.error(
         `[${this.constructor.name}] Invalid parameter "login_id"`,
         '8e880ded-283c-4e10-9b7f-bdd274530ae9',
-        { parameters, grant_id: grant.id },
+        { parameters, grant },
         error,
       );
 
@@ -196,7 +196,7 @@ export class SelectAccountDecisionInteractionValidator extends DecisionInteracti
       this.logger.error(
         `[${this.constructor.name}] Invalid Login Identifier`,
         '9be0a21e-aa0e-4d97-ac99-ef6cc696e4bc',
-        { parameters, grant_id: grant.id },
+        { parameters, grant },
         error,
       );
 
@@ -211,7 +211,7 @@ export class SelectAccountDecisionInteractionValidator extends DecisionInteracti
       this.logger.error(
         `[${this.constructor.name}] Expired Login`,
         'c90b253f-4b57-4d8d-817c-68daa89a3a23',
-        { parameters, login_id: login.id },
+        { parameters, login },
         error,
       );
 
@@ -220,8 +220,8 @@ export class SelectAccountDecisionInteractionValidator extends DecisionInteracti
 
     this.logger.debug(`[${this.constructor.name}] Completed getLogin()`, '0eb2c09b-94fd-4031-a8b4-58011799d5bc', {
       parameters,
-      grant_id: grant.id,
-      login_id: login.id,
+      grant,
+      login,
     });
 
     return login;

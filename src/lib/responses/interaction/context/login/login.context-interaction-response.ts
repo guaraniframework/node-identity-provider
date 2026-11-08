@@ -9,9 +9,4 @@ export interface LoginContextInteractionResponse extends ContextInteractionRespo
    * Indicates if the Application can skip displaying the Login Page.
    */
   readonly skip: boolean;
-
-  /**
-   * Identifier of the Client requesting authorization.
-   */
-  readonly client_id: string;
 }

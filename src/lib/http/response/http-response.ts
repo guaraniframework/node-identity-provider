@@ -16,50 +16,22 @@ export class HttpResponse {
   /**
    * Http Response Status.
    */
-  #status: HttpResponseStatus = HttpResponseStatus.OK;
+  public readonly status: HttpResponseStatus = HttpResponseStatus.OK;
 
   /**
    * Http Response Headers.
    */
-  #headers: OutgoingHttpHeaders = {};
+  public readonly headers: OutgoingHttpHeaders = {};
 
   /**
    * Http Response Cookies.
    */
-  #cookies: NodeJS.Dict<unknown> = {};
+  public readonly cookies: NodeJS.Dict<unknown> = {};
 
   /**
    * Http Response Encoded Body.
    */
-  #body: Buffer = Buffer.alloc(0);
-
-  /**
-   * Http Response Status.
-   */
-  public get status(): HttpResponseStatus {
-    return this.#status;
-  }
-
-  /**
-   * Http Response Headers.
-   */
-  public get headers(): OutgoingHttpHeaders {
-    return this.#headers;
-  }
-
-  /**
-   * Http Response Cookies.
-   */
-  public get cookies(): NodeJS.Dict<unknown> {
-    return this.#cookies;
-  }
-
-  /**
-   * Http Response Encoded Body.
-   */
-  public get body(): Buffer {
-    return this.#body;
-  }
+  public readonly body: Buffer = Buffer.alloc(0);
 
   /**
    * Sets the Status of the Http Response.
@@ -73,7 +45,7 @@ export class HttpResponse {
       throw new TypeError('The provided Http Response Status is invalid.');
     }
 
-    this.#status = status;
+    Reflect.set(this, 'status', status);
     return this;
   }
 
@@ -98,7 +70,7 @@ export class HttpResponse {
       throw new TypeError('The provided Http Response Header Value is invalid.');
     }
 
-    this.#headers[name] = value;
+    this.headers[name] = value;
     return this;
   }
 
@@ -131,7 +103,7 @@ export class HttpResponse {
       throw new TypeError('The provided Http Response Cookie Name is invalid.');
     }
 
-    this.#cookies[name] = value;
+    this.cookies[name] = value;
     return this;
   }
 
@@ -180,7 +152,7 @@ export class HttpResponse {
     }
 
     this.setHeader('content-type', 'application/json');
-    this.#body = Buffer.from(jsonStringify(data), 'utf8');
+    Reflect.set(this, 'body', Buffer.from(jsonStringify(data), 'utf8'));
 
     return this;
   }
@@ -198,7 +170,7 @@ export class HttpResponse {
     }
 
     this.setHeader('content-type', 'text/html; charset=UTF-8');
-    this.#body = Buffer.from(html, 'utf8');
+    Reflect.set(this, 'body', Buffer.from(html, 'utf8'));
 
     return this;
   }

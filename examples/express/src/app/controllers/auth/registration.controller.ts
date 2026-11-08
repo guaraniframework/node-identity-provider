@@ -2,7 +2,7 @@ import axios, { AxiosError } from 'axios';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { Request, Response } from 'express';
-import { stringify as stringifyQs } from 'querystring';
+import qs from 'querystring';
 import { URL } from 'url';
 
 import { getContainer } from '@guarani/di';
@@ -68,13 +68,13 @@ class Controller {
         };
 
         const url = new URL('https://localhost:4000/oidc/authorization');
-        url.search = stringifyQs(parameters);
+        url.search = qs.stringify(parameters);
 
         return response.redirect(303, url.href);
       }
 
       const url = new URL('https://localhost:4000/oidc/interaction');
-      url.search = stringifyQs({ interaction_type: 'create', client_id: client.id, login_challenge: loginChallenge });
+      url.search = qs.stringify({ interaction_type: 'create', client_id: client.id, login_challenge: loginChallenge });
 
       const { data } = await axios.get<CreateContextInteractionResponse>(url.href);
 
@@ -120,7 +120,7 @@ class Controller {
       ...userRegistrationDto,
     };
 
-    const requestBody = stringifyQs(requestParameters);
+    const requestBody = qs.stringify(requestParameters);
 
     try {
       const client = (await this.dataAccess.findClientById(request.signedCookies['client_id']))!;

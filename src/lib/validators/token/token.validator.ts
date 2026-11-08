@@ -54,6 +54,7 @@ export abstract class TokenValidator<TContext extends TokenContext = TokenContex
    * Validates the Http Request and returns the actors of the Token Context.
    *
    * @param request Http Request.
+   * @throws {IdentityProviderError} An error occurred when validating the Http Request.
    * @returns Token Context.
    */
   public async validate(request: HttpRequest): Promise<TContext> {
@@ -89,7 +90,7 @@ export abstract class TokenValidator<TContext extends TokenContext = TokenContex
   protected getGrantType(parameters: TokenRequest, client: Client): GrantType {
     this.logger.debug(`[${this.constructor.name}] Called getGrantType()`, '78e5a934-1a5a-4123-9cba-25397bc90ffe', {
       parameters,
-      client_id: client.id,
+      client,
     });
 
     const grantType = this.grantTypes.find((grantType) => grantType.name === parameters.grant_type)!;
@@ -102,7 +103,7 @@ export abstract class TokenValidator<TContext extends TokenContext = TokenContex
       this.logger.error(
         `[${this.constructor.name}] The Client is not allowed to request the Grant Type "${grantType.name}"`,
         'dba5311f-567f-4934-bd2b-8ae387783cb7',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -111,7 +112,7 @@ export abstract class TokenValidator<TContext extends TokenContext = TokenContex
 
     this.logger.debug(`[${this.constructor.name}] Completed getGrantType()`, '0e606452-8fd9-4ee4-82e7-7558254c0e08', {
       parameters,
-      client_id: client.id,
+      client,
       grant_type: grantType.name,
     });
 

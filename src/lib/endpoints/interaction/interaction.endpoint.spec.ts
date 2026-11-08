@@ -1,6 +1,6 @@
 import { Buffer } from 'buffer';
 import { OutgoingHttpHeaders } from 'http';
-import { stringify as stringifyQs } from 'querystring';
+import qs from 'querystring';
 import { URL } from 'url';
 
 import { getContainer } from '@guarani/di';
@@ -134,10 +134,17 @@ describe('Interaction Endpoint', () => {
 
         expect(response.body).toStrictEqual(Buffer.from(jsonStringify(error.toJSON()), 'utf8'));
 
-        expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
+        expect(loggerMock.error).toHaveBeenCalledWith(
           '[InteractionEndpoint] Invalid parameter "interaction_type"',
           'e86743b6-fb58-489f-b489-e8eedaeb2fd4',
           { parameters },
+          error,
+        );
+
+        expect(loggerMock.error).toHaveBeenCalledWith(
+          '[InteractionEndpoint] Failed handleContext()',
+          'f5f4197b-b044-4e94-bb22-a4317ddab443',
+          { request, response },
           error,
         );
       },
@@ -160,10 +167,17 @@ describe('Interaction Endpoint', () => {
 
       expect(response.body).toStrictEqual(Buffer.from(jsonStringify(error.toJSON()), 'utf8'));
 
-      expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
+      expect(loggerMock.error).toHaveBeenCalledWith(
         '[InteractionEndpoint] Unsupported Interaction Type "unknown"',
         '09e45b3f-5508-4cc9-a5c7-fe1c7734962c',
         { parameters },
+        error,
+      );
+
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        '[InteractionEndpoint] Failed handleContext()',
+        'f5f4197b-b044-4e94-bb22-a4317ddab443',
+        { request, response },
         error,
       );
     });
@@ -209,7 +223,7 @@ describe('Interaction Endpoint', () => {
       removeNullishValues(Object.assign(parameters, data));
 
       return new HttpRequest({
-        body: Buffer.from(stringifyQs(parameters), 'utf8'),
+        body: Buffer.from(qs.stringify(parameters), 'utf8'),
         cookies: {},
         headers: { 'content-type': 'application/x-www-form-urlencoded' },
         method: HttpRequestMethod.POST,
@@ -239,10 +253,17 @@ describe('Interaction Endpoint', () => {
 
         expect(response.body).toStrictEqual(Buffer.from(jsonStringify(error.toJSON()), 'utf8'));
 
-        expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
+        expect(loggerMock.error).toHaveBeenCalledWith(
           '[InteractionEndpoint] Invalid parameter "interaction_type"',
           'a65757af-c109-44f6-857e-2d05c9d51972',
           { parameters },
+          error,
+        );
+
+        expect(loggerMock.error).toHaveBeenCalledWith(
+          '[InteractionEndpoint] Failed handleDecision()',
+          '8892eb04-81be-4b84-a063-79c5d79fc591',
+          { request, response },
           error,
         );
       },
@@ -264,10 +285,17 @@ describe('Interaction Endpoint', () => {
 
       expect(response.body).toStrictEqual(Buffer.from(jsonStringify(error.toJSON()), 'utf8'));
 
-      expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
+      expect(loggerMock.error).toHaveBeenCalledWith(
         '[InteractionEndpoint] Unsupported Interaction Type "unknown"',
         '51403e7c-c28b-427f-a95f-d2a3708d6622',
         { parameters },
+        error,
+      );
+
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        '[InteractionEndpoint] Failed handleDecision()',
+        '8892eb04-81be-4b84-a063-79c5d79fc591',
+        { request, response },
         error,
       );
     });

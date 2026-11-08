@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer';
-import { stringify as stringifyQs } from 'querystring';
+import qs from 'querystring';
 import { URL } from 'url';
 
 import { getContainer } from '@guarani/di';
@@ -71,7 +71,7 @@ describe('Client Secret Post Client Authentication', () => {
       'should check if the Client Authentication Method has beed requested.',
       (body, expected) => {
         const request = new HttpRequest({
-          body: Buffer.from(stringifyQs(body), 'utf8'),
+          body: Buffer.from(qs.stringify(body), 'utf8'),
           cookies: {},
           headers: { 'content-type': 'application/x-www-form-urlencoded' },
           method: HttpRequestMethod.POST,
@@ -90,7 +90,7 @@ describe('Client Secret Post Client Authentication', () => {
       removeNullishValues<ClientSecretPostClientAuthenticationParameters>(Object.assign(parameters, data));
 
       return new HttpRequest({
-        body: Buffer.from(stringifyQs(parameters), 'utf8'),
+        body: Buffer.from(qs.stringify(parameters), 'utf8'),
         cookies: {},
         headers: { 'content-type': 'application/x-www-form-urlencoded' },
         method: HttpRequestMethod.POST,

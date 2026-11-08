@@ -44,6 +44,7 @@ export class CodeIdTokenAuthorizationValidator extends AuthorizationValidator<Co
    * @param responseTypes Response Types of the Identity Provider.
    * @param responseModes Response Modes of the Identity Provider.
    * @param displays Displays of the Identity Provider.
+   * @param pkces PKCEs of the Identity Provider.
    */
   public constructor(
     protected override readonly logger: Logger,
@@ -62,12 +63,7 @@ export class CodeIdTokenAuthorizationValidator extends AuthorizationValidator<Co
    * Validates the Http Authorization Request and returns the actors of the Authorization Context.
    *
    * @param request Http Request.
-   * @throws {AccessDeniedError} The Client failed to obtain authorization.
-   * @throws {InvalidClientError} The Client failed to authenticate.
-   * @throws {InvalidRequestError} One of the provided parameters is invalid.
-   * @throws {InvalidScopeError} The Client requested an invalid or unsupported Scope.
-   * @throws {MethodNotAllowedError} The requested Http Request Method is not allowed.
-   * @throws {UnauthorizedClientError} The Client is not authorized to make this Request.
+   * @throws {IdentityProviderError} An error occurred when validating the Http Request.
    * @returns Authorization Context.
    */
   public override async validate(request: HttpRequest): Promise<CodeIdTokenAuthorizationContext> {
@@ -109,7 +105,7 @@ export class CodeIdTokenAuthorizationValidator extends AuthorizationValidator<Co
   protected override async getScopes(parameters: CodeIdTokenAuthorizationRequest, client: Client): Promise<Scope[]> {
     this.logger.debug(`[${this.constructor.name}] Called getScopes()`, '48be36c3-5c45-4dfd-829b-b6e40217db1e', {
       parameters,
-      client_id: client.id,
+      client,
     });
 
     const scopes = await super.getScopes(parameters, client);
@@ -121,7 +117,7 @@ export class CodeIdTokenAuthorizationValidator extends AuthorizationValidator<Co
       this.logger.error(
         `[${this.constructor.name}] Missing required Scope "openid"`,
         '0519720b-d7c3-4edb-9860-4b52dfe24bb9',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -130,7 +126,7 @@ export class CodeIdTokenAuthorizationValidator extends AuthorizationValidator<Co
 
     this.logger.debug(`[${this.constructor.name}] Completed getScopes()`, '2bf2594b-8964-4ba5-9474-0cd3f92c9cc1', {
       parameters,
-      client_id: client.id,
+      client,
       allowed_scopes: allowedScopes,
     });
 
@@ -254,7 +250,7 @@ export class CodeIdTokenAuthorizationValidator extends AuthorizationValidator<Co
     this.logger.debug(
       `[${this.constructor.name}] Completed getCodeChallengeMethod()`,
       'fe9875ea-11c4-42c6-8b8d-18fa701b8dc8',
-      { parameters, code_challenge_method: codeChallengeMethod },
+      { parameters, code_challenge_method: codeChallengeMethod.name },
     );
 
     return codeChallengeMethod;

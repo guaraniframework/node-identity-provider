@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer';
-import { stringify as stringifyQs } from 'querystring';
+import qs from 'querystring';
 import { URL } from 'url';
 
 import { getContainer } from '@guarani/di';
@@ -27,7 +27,6 @@ import { HttpRequestMethod } from '../../../http/request/http-request-method.enu
 import { Logger } from '../../../loggers/logger';
 import { JwtBearerTokenRequest } from '../../../requests/token/jwt-bearer/jwt-bearer.token-request';
 import { Settings } from '../../../settings/settings';
-import { addParametersToUrl } from '../../../utils/add-parameters-to-url/add-parameters-to-url';
 import { TokenValidator } from '../token.validator';
 import { JwtBearerTokenValidator } from './jwt-bearer.token.validator';
 
@@ -224,6 +223,19 @@ describe('JWT Bearer Token Validator', () => {
     });
   });
 
+  describe('forbiddenScopes', () => {
+    it('should have ["openid", "profile", "email", "phone", "address", "offline_access"] as its value.', () => {
+      expect(validator['forbiddenScopes']).toStrictEqual<string[]>([
+        'openid',
+        'profile',
+        'email',
+        'phone',
+        'address',
+        'offline_access',
+      ]);
+    });
+  });
+
   describe('constructor', () => {
     it('should throw when not implementing the method DataAccess.getJwtBearerGrantUnwrapJsonWebKey().', () => {
       container.clear();
@@ -371,11 +383,11 @@ describe('JWT Bearer Token Validator', () => {
       removeNullishValues<JwtBearerTokenRequest>(Object.assign(parameters, data));
 
       return new HttpRequest({
-        body: Buffer.from(stringifyQs(parameters)),
+        body: Buffer.from(qs.stringify(parameters)),
         cookies: {},
         headers: { 'content-type': 'application/x-www-form-urlencoded' },
         method: HttpRequestMethod.POST,
-        url: addParametersToUrl('https://provider.example.com/oidc/token', parameters),
+        url: new URL('https://provider.example.com/oidc/token'),
       });
     };
 
@@ -402,7 +414,7 @@ describe('JWT Bearer Token Validator', () => {
         expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
           '[JwtBearerTokenValidator] Invalid parameter "assertion"',
           'beb456cd-ce83-4b95-b595-4373f6d42695',
-          { request, parameters, client_id: client.id },
+          { request, parameters, client },
           error,
         );
       },
@@ -420,7 +432,7 @@ describe('JWT Bearer Token Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[JwtBearerTokenValidator] Invalid JSON Web Token Assertion',
         '07fe7cd3-1cae-4ac0-bb32-14574ae8ef59',
-        { request, parameters, client_id: client.id },
+        { request, parameters, client },
         error,
       );
     });
@@ -442,7 +454,7 @@ describe('JWT Bearer Token Validator', () => {
         expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
           '[JwtBearerTokenValidator] The Client tried to use the JSON Web Signature Algorithm "none"',
           'c9353b6a-02c1-425c-bc71-b8765c4e1b3a',
-          { request, parameters, client_id: client.id },
+          { request, parameters, client },
           error,
         );
       },
@@ -466,7 +478,7 @@ describe('JWT Bearer Token Validator', () => {
         expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
           '[JwtBearerTokenValidator] Unsupported JSON Web Signature Algorithm "RS256"',
           'ed9ac8df-0bad-4f38-85c7-7bfbe3410d7e',
-          { request, parameters, client_id: client.id },
+          { request, parameters, client },
           error,
         );
       },
@@ -487,7 +499,7 @@ describe('JWT Bearer Token Validator', () => {
         expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
           '[JwtBearerTokenValidator] Could not find the User of the Assertion',
           '5e0d0a94-11d3-4a91-9b3e-085511a77a07',
-          { request, parameters, client_id: client.id },
+          { request, parameters, client },
           error,
         );
       },
@@ -510,7 +522,30 @@ describe('JWT Bearer Token Validator', () => {
         expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
           '[JwtBearerTokenValidator] Invalid parameter "scope"',
           '1c4db530-a5ac-4587-93f7-ad9313812094',
-          { parameters, client_id: client.id },
+          { parameters, client },
+          error,
+        );
+      },
+    );
+
+    it.each([hmacNestedAssertion, hmacSignedAssertion, ellipticCurveNestedAssertion, ellipticCurveSignedAssertion])(
+      'should throw when the provided parameter "scope" is forbidden.',
+      async (assertion) => {
+        const request = requestFactory({ assertion, scope: 'openid' });
+
+        clientAuthenticationHandlerMock.authenticate.mockResolvedValueOnce(client);
+        dataAccessMock.getJwtBearerGrantUnwrapJsonWebKey!.mockResolvedValueOnce(unwrapJsonWebKey);
+        dataAccessMock.findUserById.mockResolvedValueOnce(user);
+
+        const error = new InvalidRequestError('Cannot request an OpenID Connect Scope using this Grant Type.');
+        await expect(validator.validate(request)).rejects.toThrowWithMessage(InvalidRequestError, error.description);
+
+        expect(superValidateSpy).toHaveBeenCalledExactlyOnceWith(request);
+
+        expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
+          '[JwtBearerTokenValidator] Cannot request an OpenID Connect Scope using this Grant Type',
+          'c19a1ace-0ed9-4b5e-829c-704b9c3d2b4c',
+          { parameters, client },
           error,
         );
       },

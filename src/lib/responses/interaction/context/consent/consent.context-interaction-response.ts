@@ -19,9 +19,4 @@ export interface ConsentContextInteractionResponse extends ContextInteractionRes
    * Subject Identifier of the Authentication Process.
    */
   readonly subject_id: string;
-
-  /**
-   * Identifier of the Client requesting authorization.
-   */
-  readonly client_id: string;
 }

@@ -60,8 +60,8 @@ export class ConsentInteractionType extends InteractionType {
    * @param logger Logger of the Identity Provider.
    * @param dataAccess Data Access of the Identity Provider.
    * @param settings Settings of the Identity Provider.
+   * @param provider Identity Provider.
    * @param subjectTypes Subject Types of the Identity Provider.
-   * @param endpoints Endpoints of the Identity Provider.
    */
   public constructor(
     private readonly logger: Logger,
@@ -104,7 +104,6 @@ export class ConsentInteractionType extends InteractionType {
       requested_scopes: parameters.scope.split(' '),
       subject_id: subjectType.calculateSubjectIdentifier(session.activeLogin!.user, client),
       request_url: url.href,
-      client_id: client.id,
       context: removeNullishValues<ConsentContextInteractionResponseContext>({
         prompts: parameters.prompt?.split(' ') as Prompt[],
         display: parameters.display as DisplayName,
@@ -176,7 +175,7 @@ export class ConsentInteractionType extends InteractionType {
 
       if (
         grantedScopes.some((grantedScope) => grantedScope.name === 'offline_access') &&
-        !grant.parameters.response_type.includes('code')
+        grant.parameters.response_type !== 'code'
       ) {
         this.logger.debug(
           `[${this.constructor.name}] Removing Scope "offline_access" for Response Type "${grant.parameters.response_type}"`,

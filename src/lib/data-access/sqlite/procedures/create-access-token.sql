@@ -1,3 +1,15 @@
 INSERT INTO
-    access_tokens (id, client_id, user_id)
-VALUES ($id, $client_id, $user_id) RETURNING *;
+    access_tokens (
+        id,
+        client_id,
+        user_id,
+        login_id,
+        refresh_token_id
+    )
+VALUES (
+        $id,
+        $client_id,
+        $user_id,
+        $login_id,
+        $refresh_token_id
+    ) RETURNING *;

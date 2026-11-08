@@ -10,7 +10,7 @@ import { Logger } from '../loggers/logger';
  * Every Endpoint needs to have a Context containing the data resulting from the parsing of its Parameters,
  * and it also allows additional entities to be attached in order to proceed with the flow of the Endpoint.
  */
-export abstract class Validator<TContext extends NodeJS.Dict<any>> {
+export abstract class Validator<TContext> {
   /**
    * Name of the Endpoint that uses this Validator.
    */

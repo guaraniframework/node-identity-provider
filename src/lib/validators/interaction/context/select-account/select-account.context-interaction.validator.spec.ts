@@ -115,7 +115,7 @@ describe('Select Account Context Interaction Validator', () => {
         expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
           '[SelectAccountContextInteractionValidator] Invalid parameter "login_challenge"',
           '9b1dc0be-cdd1-425e-9836-f3337d985df8',
-          { parameters, client_id: client.id },
+          { parameters, client },
           error,
         );
       },
@@ -134,7 +134,7 @@ describe('Select Account Context Interaction Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[SelectAccountContextInteractionValidator] Invalid Login Challenge',
         'c62f89d1-b8f2-4e2e-b57d-67a8587bec9d',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
     });
@@ -142,14 +142,8 @@ describe('Select Account Context Interaction Validator', () => {
     it('should throw when the Client requests a Grant that was not issued to itself.', async () => {
       const request = requestFactory();
 
-      const anotherClient: Client = Object.assign<Client, Partial<Client>>(new Client(), {
-        id: 'another_client_id',
-      });
-
-      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), {
-        id: 'grant_id',
-        client: anotherClient,
-      });
+      const anotherClient: Client = Object.assign<Client, Partial<Client>>(new Client(), { id: 'another_client_id' });
+      const grant: Grant = Object.assign<Grant, Partial<Grant>>(new Grant(), { id: 'grant_id', client: anotherClient });
 
       dataAccessMock.findGrantByLoginChallenge.mockResolvedValueOnce(grant);
 
@@ -161,7 +155,7 @@ describe('Select Account Context Interaction Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[SelectAccountContextInteractionValidator] The Grant was not issued to this Client',
         '7c5b7f2e-e2db-46ce-9f81-988d5554c744',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
     });
@@ -187,7 +181,7 @@ describe('Select Account Context Interaction Validator', () => {
       expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
         '[SelectAccountContextInteractionValidator] Expired Grant',
         'e0c780a3-887b-43a8-a3a0-c1fbcb85116a',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
     });

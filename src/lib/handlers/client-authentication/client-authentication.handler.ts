@@ -23,8 +23,8 @@ export class ClientAuthenticationHandler {
    *
    * @param request Http Request.
    * @param clientAuthenticationMethods Client Authentication Methods of the Endpoint.
-   * @throws {InvalidRequestError} One of the provided parameters is invalid.
    * @throws {InvalidClientError} Failed to authenticate the Client.
+   * @throws {InvalidRequestError} One of the provided parameters is invalid.
    * @returns Authenticated Client.
    */
   public async authenticate(
@@ -72,7 +72,7 @@ export class ClientAuthenticationHandler {
     this.logger.debug(`[${this.constructor.name}] Completed authenticate()`, 'bd5470d3-7477-4fa5-a577-d939e8dd90da', {
       request,
       methods: methodsNames,
-      client_id: client.id,
+      client,
     });
 
     return client;

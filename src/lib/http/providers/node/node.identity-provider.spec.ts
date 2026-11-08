@@ -50,6 +50,12 @@ describe('Node Identity Provider', () => {
   });
 
   beforeEach(async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest.spyOn(console, 'info').mockImplementation(() => {});
+    jest.spyOn(console, 'debug').mockImplementation(() => {});
+    jest.spyOn(console, 'trace').mockImplementation(() => {});
+
     loggerErrorSpy = jest.spyOn(ConsoleLogger.prototype, 'error');
     loggerWarnSpy = jest.spyOn(ConsoleLogger.prototype, 'warn');
 
@@ -72,7 +78,7 @@ describe('Node Identity Provider', () => {
     await dataAccess.up();
     await dataAccess.seed();
 
-    server = createServer(provider.handle);
+    server = createServer(provider.handle());
     agent = request.agent(server);
   });
 
@@ -213,13 +219,14 @@ describe('Node Identity Provider', () => {
         .send('foo=bar');
 
       expect(response.status).toBe(HttpResponseStatus.Created);
-
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>(
-        expect.objectContaining({ 'content-type': 'application/json', pragma: 'no-store' }),
+        expect.objectContaining<OutgoingHttpHeaders>({ 'content-type': 'application/json', pragma: 'no-store' }),
       );
 
       expect(response.body).toStrictEqual<NodeJS.Dict<unknown>>({ message: 'Hello, World!' });
-      expect(agent.jar.getCookies(CookieAccessInfo.All)!).toStrictEqual(expect.arrayContaining([cookie]));
+      expect(agent.jar.getCookies(CookieAccessInfo.All)!).toStrictEqual<Cookie[]>(
+        expect.arrayContaining<Cookie>([cookie]),
+      );
     });
 
     it('should return the Response for the requested Endpoint in a production environment.', async () => {
@@ -246,13 +253,14 @@ describe('Node Identity Provider', () => {
         .send('foo=bar');
 
       expect(response.status).toBe(HttpResponseStatus.Created);
-
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>(
-        expect.objectContaining({ 'content-type': 'application/json', pragma: 'no-store' }),
+        expect.objectContaining<OutgoingHttpHeaders>({ 'content-type': 'application/json', pragma: 'no-store' }),
       );
 
       expect(response.body).toStrictEqual<NodeJS.Dict<unknown>>({ message: 'Hello, World!' });
-      expect(agent.jar.getCookies(CookieAccessInfo.All)!).toStrictEqual(expect.arrayContaining([cookie]));
+      expect(agent.jar.getCookies(CookieAccessInfo.All)!).toStrictEqual<Cookie[]>(
+        expect.arrayContaining<Cookie>([cookie]),
+      );
     });
   });
 });

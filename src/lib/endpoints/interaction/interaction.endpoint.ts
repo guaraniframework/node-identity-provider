@@ -102,10 +102,11 @@ export class InteractionEndpoint extends Endpoint {
         .setHeaders(this.headers)
         .json(removeNullishValues(error.toJSON()));
 
-      this.logger.debug(
-        `[${this.constructor.name}] Completed handleContext()`,
+      this.logger.error(
+        `[${this.constructor.name}] Failed handleContext()`,
         'f5f4197b-b044-4e94-bb22-a4317ddab443',
         { request, response },
+        error,
       );
 
       return response;
@@ -149,10 +150,11 @@ export class InteractionEndpoint extends Endpoint {
         .setHeaders(this.headers)
         .json(removeNullishValues(error.toJSON()));
 
-      this.logger.debug(
-        `[${this.constructor.name}] Completed handleDecision()`,
+      this.logger.error(
+        `[${this.constructor.name}] Failed handleDecision()`,
         '8892eb04-81be-4b84-a063-79c5d79fc591',
         { request, response },
+        error,
       );
 
       return response;
@@ -163,6 +165,8 @@ export class InteractionEndpoint extends Endpoint {
    * Retrieves the Context Interaction Request Validator based on the Interaction Type requested by the Client.
    *
    * @param parameters Parameters of the Context Interaction Request.
+   * @throws {InvalidRequestError} The provided parameter "interaction_type" is invalid.
+   * @throws {UnsupportedInteractionTypeError} The provided parameter "interaction_type" is unsupported.
    * @returns Context Interaction Request Validator.
    */
   private getContextValidator(parameters: ContextInteractionRequest): ContextInteractionValidator {
@@ -215,6 +219,8 @@ export class InteractionEndpoint extends Endpoint {
    * Retrieves the Decision Interaction Request Validator based on the Interaction Type requested by the Client.
    *
    * @param parameters Parameters of the Decision Interaction Request.
+   * @throws {InvalidRequestError} The provided parameter "interaction_type" is invalid.
+   * @throws {UnsupportedInteractionTypeError} The provided parameter "interaction_type" is unsupported.
    * @returns Decision Interaction Request Validator.
    */
   private getDecisionValidator(parameters: DecisionInteractionRequest): DecisionInteractionValidator {

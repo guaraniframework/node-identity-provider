@@ -79,7 +79,7 @@ export class SelectAccountContextInteractionValidator extends ContextInteraction
   private async getGrant(parameters: SelectAccountContextInteractionRequest, client: Client): Promise<Grant> {
     this.logger.debug(`[${this.constructor.name}] Called getGrant()`, 'b67f7e09-546b-4aed-a2bb-9e80babba436', {
       parameters,
-      client_id: client.id,
+      client,
     });
 
     if (!('login_challenge' in parameters) || !isNonEmptyString(parameters.login_challenge)) {
@@ -88,7 +88,7 @@ export class SelectAccountContextInteractionValidator extends ContextInteraction
       this.logger.error(
         `[${this.constructor.name}] Invalid parameter "login_challenge"`,
         '9b1dc0be-cdd1-425e-9836-f3337d985df8',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -103,7 +103,7 @@ export class SelectAccountContextInteractionValidator extends ContextInteraction
       this.logger.error(
         `[${this.constructor.name}] Invalid Login Challenge`,
         'c62f89d1-b8f2-4e2e-b57d-67a8587bec9d',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -116,7 +116,7 @@ export class SelectAccountContextInteractionValidator extends ContextInteraction
       this.logger.error(
         `[${this.constructor.name}] The Grant was not issued to this Client`,
         '7c5b7f2e-e2db-46ce-9f81-988d5554c744',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -131,7 +131,7 @@ export class SelectAccountContextInteractionValidator extends ContextInteraction
       this.logger.error(
         `[${this.constructor.name}] Expired Grant`,
         'e0c780a3-887b-43a8-a3a0-c1fbcb85116a',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -140,8 +140,8 @@ export class SelectAccountContextInteractionValidator extends ContextInteraction
 
     this.logger.debug(`[${this.constructor.name}] Completed getGrant()`, '78205e6c-a9ed-48a0-868e-a7e6d8f83d6d', {
       parameters,
-      client_id: client.id,
-      grant_id: grant.id,
+      client,
+      grant,
     });
 
     return grant;

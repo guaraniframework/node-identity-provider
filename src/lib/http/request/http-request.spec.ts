@@ -210,7 +210,7 @@ describe('Http Request', () => {
 
       expect(request.method).toBe<HttpRequestMethod>(method);
       expect(request.path).toBe('/path');
-      expect(request.query).toStrictEqual<ParsedUrlQuery>(expect.objectContaining({ foo: 'bar' }));
+      expect(request.query).toStrictEqual<ParsedUrlQuery>(expect.objectContaining<ParsedUrlQuery>({ foo: 'bar' }));
       expect(request.headers).toStrictEqual<IncomingHttpHeaders>({ 'header-name': 'header-value' });
       expect(request.cookies).toStrictEqual<NodeJS.Dict<unknown>>({ 'cookie-name': 'cookie-value' });
     });

@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer';
-import { stringify as stringifyQs } from 'querystring';
+import qs from 'querystring';
 import { URL } from 'url';
 
 import { getContainer } from '@guarani/di';
@@ -181,9 +181,10 @@ describe('Private Key JWT Client Authentication', () => {
   });
 
   describe('algorithms', () => {
-    it('should have ["ES256", "ES384", "ES512", "EdDSA", "PS256", "PS384", "PS512", "RS256", "RS384", "RS512"] as its value.', () => {
+    it('should have ["ES256", "ES256K", "ES384", "ES512", "EdDSA", "PS256", "PS384", "PS512", "RS256", "RS384", "RS512"] as its value.', () => {
       expect(clientAuthentication['algorithms']).toStrictEqual<Exclude<DigitalSignatureAlgorithm, 'none'>[]>([
         'ES256',
+        'ES256K',
         'ES384',
         'ES512',
         'EdDSA',
@@ -194,6 +195,39 @@ describe('Private Key JWT Client Authentication', () => {
         'RS384',
         'RS512',
       ]);
+    });
+  });
+
+  describe('constructor', () => {
+    it('should throw when missing a required JWT Bearer Client Assertion Algorithm.', () => {
+      container.clear();
+
+      const settingsMock = jest.mocked<Settings>(
+        Object.assign<Settings, Partial<Settings>>(Object.create(Settings.prototype), {
+          issuer: new URL('https://provider.example.com'),
+          clientAuthenticationSigningAlgorithms: ['HS256'],
+          clientAuthenticationEncryptionKeyWrapAlgorithms: ['RSA-OAEP'],
+          clientAuthenticationEncryptionContentEncryptionAlgorithms: ['A128GCM'],
+        }),
+      );
+
+      container.bind(Logger).toValue(loggerMock);
+      container.bind(DataAccess).toValue(dataAccessMock);
+      container.bind(Settings).toValue(settingsMock);
+      container.bind(PrivateKeyJwtClientAuthentication).toSelf().asSingleton();
+
+      const error = new TypeError(
+        'Missing a required JSON Web Signature Digital Signature Algorithm for JWT Bearer Client Assertion "private_key_jwt".',
+      );
+
+      expect(() => container.resolve(PrivateKeyJwtClientAuthentication)).toThrowWithMessage(TypeError, error.message);
+
+      expect(loggerMock.fatal).toHaveBeenCalledExactlyOnceWith(
+        '[PrivateKeyJwtClientAuthentication] Missing a required JSON Web Signature Digital Signature Algorithm for JWT Bearer Client Assertion "private_key_jwt"',
+        '8620ea0b-7794-4e82-8789-6fa74f1d74ae',
+        null,
+        error,
+      );
     });
   });
 
@@ -273,7 +307,7 @@ describe('Private Key JWT Client Authentication', () => {
       removeNullishValues<JwtBearerClientAssertionParameters>(Object.assign(parameters, data));
 
       return new HttpRequest({
-        body: Buffer.from(stringifyQs(parameters)),
+        body: Buffer.from(qs.stringify(parameters)),
         cookies: {},
         headers: { 'content-type': 'application/x-www-form-urlencoded' },
         method: HttpRequestMethod.POST,
@@ -305,7 +339,7 @@ describe('Private Key JWT Client Authentication', () => {
         expect(loggerMock.error).toHaveBeenCalledExactlyOnceWith(
           "[PrivateKeyJwtClientAuthentication] Failed to obtain the Client's Client Assertion Sign JSON Web Key",
           'cd722fbb-4708-427a-a588-c1f1f85feca0',
-          { client_id: rsaClient.id, header: { alg: 'RS256', kid: 'rsa-sign-key' } },
+          { client: rsaClient, header: { alg: 'RS256', kid: 'rsa-sign-key' } },
           error,
         );
       },

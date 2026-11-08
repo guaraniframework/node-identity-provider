@@ -1,6 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { Request, Response } from 'express';
-import { stringify as stringifyQs } from 'querystring';
+import qs from 'querystring';
 import { URL } from 'url';
 
 import { getContainer } from '@guarani/di';
@@ -56,13 +56,13 @@ class Controller {
         };
 
         const url = new URL('https://localhost:4000/oidc/authorization');
-        url.search = stringifyQs(parameters);
+        url.search = qs.stringify(parameters);
 
         return response.redirect(303, url.href);
       }
 
       const url = new URL('https://localhost:4000/oidc/interaction');
-      url.search = stringifyQs({ interaction_type: 'login', client_id: client.id, login_challenge: loginChallenge });
+      url.search = qs.stringify({ interaction_type: 'login', client_id: client.id, login_challenge: loginChallenge });
 
       const { data } = await axios.get<LoginContextInteractionResponse>(url.href);
 
@@ -128,7 +128,7 @@ class Controller {
       acr: 'urn:guarani:acr:1fa',
     };
 
-    const reqBody = stringifyQs(reqParameters);
+    const reqBody = qs.stringify(reqParameters);
 
     try {
       const client = (await this.dataAccess.findClientById(request.signedCookies['client_id']))!;

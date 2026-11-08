@@ -78,6 +78,7 @@ describe('Authorization Code Grant Type', () => {
     let authorizationCode: AuthorizationCode;
     let accessToken: AccessToken;
     let refreshToken: RefreshToken;
+    let context: AuthorizationCodeTokenContext;
 
     beforeEach(() => {
       parameters = {
@@ -116,16 +117,11 @@ describe('Authorization Code Grant Type', () => {
         type: 'Bearer',
         scopes,
         expiresAt: new Date(now + 86400000),
-        user,
       });
 
-      refreshToken = Object.assign<RefreshToken, Partial<RefreshToken>>(new RefreshToken(), {
-        id: 'refresh_token_id',
-      });
-    });
+      refreshToken = Object.assign<RefreshToken, Partial<RefreshToken>>(new RefreshToken(), { id: 'refresh_token_id' });
 
-    it('should return an Authorization Code Token Response with only an Access Token when the Identity Provider does not support Refresh Tokens and ID Tokens.', async () => {
-      const context: AuthorizationCodeTokenContext = {
+      context = {
         parameters,
         grantType,
         client,
@@ -133,7 +129,9 @@ describe('Authorization Code Grant Type', () => {
         redirectUri: new URL(parameters.redirect_uri),
         codeVerifier: parameters.code_verifier,
       };
+    });
 
+    it('should return an Authorization Code Token Response with only an Access Token when the Identity Provider does not support Refresh Tokens and ID Tokens.', async () => {
       Reflect.deleteProperty(dataAccessMock, 'createRefreshToken');
       Reflect.deleteProperty(grantType, 'idTokenHandler');
 
@@ -147,7 +145,7 @@ describe('Authorization Code Grant Type', () => {
         scope: 'openid foo bar',
       });
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, login, null);
       expect(dataAccessMock.revokeAuthorizationCode).toHaveBeenCalledExactlyOnceWith(authorizationCode);
 
       expect(dataAccessMock.createRefreshToken).toBeUndefined();
@@ -155,15 +153,6 @@ describe('Authorization Code Grant Type', () => {
     });
 
     it('should return an Authorization Code Token Response with only an Access Token when the Client does not support Refresh Tokens and the Identity Provider does not support ID Tokens.', async () => {
-      const context: AuthorizationCodeTokenContext = {
-        parameters,
-        grantType,
-        client,
-        authorizationCode,
-        redirectUri: new URL(parameters.redirect_uri),
-        codeVerifier: parameters.code_verifier,
-      };
-
       Reflect.deleteProperty(grantType, 'idTokenHandler');
       client.grantTypes.pop();
 
@@ -177,7 +166,7 @@ describe('Authorization Code Grant Type', () => {
         scope: 'openid foo bar',
       });
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, login, null);
       expect(dataAccessMock.revokeAuthorizationCode).toHaveBeenCalledExactlyOnceWith(authorizationCode);
 
       expect(dataAccessMock.createRefreshToken).not.toHaveBeenCalled();
@@ -185,15 +174,6 @@ describe('Authorization Code Grant Type', () => {
     });
 
     it('should return an Authorization Code Token Response with only an Access Token when the Identity Provider does not support Refresh Tokens and the Scope "openid" was not requested.', async () => {
-      const context: AuthorizationCodeTokenContext = {
-        parameters,
-        grantType,
-        client,
-        authorizationCode,
-        redirectUri: new URL(parameters.redirect_uri),
-        codeVerifier: parameters.code_verifier,
-      };
-
       Reflect.deleteProperty(dataAccessMock, 'createRefreshToken');
       scopes.shift();
 
@@ -207,7 +187,7 @@ describe('Authorization Code Grant Type', () => {
         scope: 'foo bar',
       });
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, login, null);
       expect(dataAccessMock.revokeAuthorizationCode).toHaveBeenCalledExactlyOnceWith(authorizationCode);
 
       expect(dataAccessMock.createRefreshToken).toBeUndefined();
@@ -215,15 +195,6 @@ describe('Authorization Code Grant Type', () => {
     });
 
     it('should return an Authorization Code Token Response with only an Access Token when the Client does not support Refresh Tokens and the Scope "openid" was not requested.', async () => {
-      const context: AuthorizationCodeTokenContext = {
-        parameters,
-        grantType,
-        client,
-        authorizationCode,
-        redirectUri: new URL(parameters.redirect_uri),
-        codeVerifier: parameters.code_verifier,
-      };
-
       scopes.shift();
       client.grantTypes.pop();
 
@@ -237,7 +208,7 @@ describe('Authorization Code Grant Type', () => {
         scope: 'foo bar',
       });
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, login, null);
       expect(dataAccessMock.revokeAuthorizationCode).toHaveBeenCalledExactlyOnceWith(authorizationCode);
 
       expect(dataAccessMock.createRefreshToken).not.toHaveBeenCalled();
@@ -245,15 +216,6 @@ describe('Authorization Code Grant Type', () => {
     });
 
     it('should return an Authorization Code Token Response without an ID Token when the Identity Provider does not support ID Tokens.', async () => {
-      const context: AuthorizationCodeTokenContext = {
-        parameters,
-        grantType,
-        client,
-        authorizationCode,
-        redirectUri: new URL(parameters.redirect_uri),
-        codeVerifier: parameters.code_verifier,
-      };
-
       Reflect.deleteProperty(grantType, 'idTokenHandler');
 
       dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
@@ -268,23 +230,21 @@ describe('Authorization Code Grant Type', () => {
         refresh_token: 'refresh_token_id',
       });
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user);
-      expect(dataAccessMock.createRefreshToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(
+        scopes,
+        client,
+        user,
+        login,
+        refreshToken,
+      );
+
+      expect(dataAccessMock.createRefreshToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, login);
       expect(dataAccessMock.revokeAuthorizationCode).toHaveBeenCalledExactlyOnceWith(authorizationCode);
 
       expect(idTokenHandlerMock.generateIdToken).not.toHaveBeenCalled();
     });
 
     it('should return an Authorization Code Token Response without an ID Token when the Scope "openid" was not requested.', async () => {
-      const context: AuthorizationCodeTokenContext = {
-        parameters,
-        grantType,
-        client,
-        authorizationCode,
-        redirectUri: new URL(parameters.redirect_uri),
-        codeVerifier: parameters.code_verifier,
-      };
-
       scopes.shift();
 
       dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
@@ -299,23 +259,21 @@ describe('Authorization Code Grant Type', () => {
         refresh_token: 'refresh_token_id',
       });
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user);
-      expect(dataAccessMock.createRefreshToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(
+        scopes,
+        client,
+        user,
+        login,
+        refreshToken,
+      );
+
+      expect(dataAccessMock.createRefreshToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, login);
       expect(dataAccessMock.revokeAuthorizationCode).toHaveBeenCalledExactlyOnceWith(authorizationCode);
 
       expect(idTokenHandlerMock.generateIdToken).not.toHaveBeenCalled();
     });
 
     it('should return an Authorization Code Token Response without a Refresh Token when the Identity Provider does not support Refresh Tokens.', async () => {
-      const context: AuthorizationCodeTokenContext = {
-        parameters,
-        grantType,
-        client,
-        authorizationCode,
-        redirectUri: new URL(parameters.redirect_uri),
-        codeVerifier: parameters.code_verifier,
-      };
-
       Reflect.deleteProperty(dataAccessMock, 'createRefreshToken');
 
       dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
@@ -330,7 +288,7 @@ describe('Authorization Code Grant Type', () => {
         id_token: 'id_token',
       });
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, login, null);
       expect(idTokenHandlerMock.generateIdToken).toHaveBeenCalledExactlyOnceWith(login, consent, {
         accessToken,
         authorizationCode,
@@ -344,15 +302,6 @@ describe('Authorization Code Grant Type', () => {
     });
 
     it('should return an Authorization Code Token Response without a Refresh Token when the Client does not support Refresh Tokens.', async () => {
-      const context: AuthorizationCodeTokenContext = {
-        parameters,
-        grantType,
-        client,
-        authorizationCode,
-        redirectUri: new URL(parameters.redirect_uri),
-        codeVerifier: parameters.code_verifier,
-      };
-
       Reflect.deleteProperty(authorizationCode.parameters, 'max_age');
       client.grantTypes.pop();
 
@@ -368,7 +317,7 @@ describe('Authorization Code Grant Type', () => {
         id_token: 'id_token',
       });
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, login, null);
       expect(idTokenHandlerMock.generateIdToken).toHaveBeenCalledExactlyOnceWith(login, consent, {
         accessToken,
         authorizationCode,
@@ -382,15 +331,6 @@ describe('Authorization Code Grant Type', () => {
     });
 
     it('should return a complete Authorization Code Token Response.', async () => {
-      const context: AuthorizationCodeTokenContext = {
-        parameters,
-        grantType,
-        client,
-        authorizationCode,
-        redirectUri: new URL(parameters.redirect_uri),
-        codeVerifier: parameters.code_verifier,
-      };
-
       Reflect.deleteProperty(authorizationCode.parameters, 'nonce');
 
       dataAccessMock.atomic.mockImplementationOnce(async (operations) => await operations());
@@ -407,8 +347,15 @@ describe('Authorization Code Grant Type', () => {
         id_token: 'id_token',
       });
 
-      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user);
-      expect(dataAccessMock.createRefreshToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user);
+      expect(dataAccessMock.createAccessToken).toHaveBeenCalledExactlyOnceWith(
+        scopes,
+        client,
+        user,
+        login,
+        refreshToken,
+      );
+
+      expect(dataAccessMock.createRefreshToken).toHaveBeenCalledExactlyOnceWith(scopes, client, user, login);
       expect(idTokenHandlerMock.generateIdToken).toHaveBeenCalledExactlyOnceWith(login, consent, {
         accessToken,
         authorizationCode,

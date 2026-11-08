@@ -144,36 +144,89 @@ describe('SQLite Data Access', () => {
       await dataAccess.seed();
     });
 
-    it('should create an Access Token without a User.', async () => {
+    it('should create an Access Token without a Login.', async () => {
       let accessToken!: AccessToken;
 
       const scopes = await dataAccess.getScopes();
       const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
 
       await expect(async () => {
-        accessToken = await dataAccess.createAccessToken(scopes, client, null);
+        accessToken = await dataAccess.createAccessToken(scopes, client, null, null, null);
       }).resolves.not.toThrow();
 
       expect(accessToken).toBeInstanceOf(AccessToken);
       expect(accessToken.scopes).toStrictEqual(scopes);
       expect(accessToken.client).toStrictEqual(client);
+      expect(accessToken.user).toBeNull();
+      expect(accessToken.login).toBeNull();
+      expect(accessToken.refreshToken).toBeNull();
     });
 
-    it('should create an Access Token with a User.', async () => {
+    it('should create an Access Token with a User and without a Login.', async () => {
       let accessToken!: AccessToken;
 
       const scopes = await dataAccess.getScopes();
       const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
-      const user: User = Object.assign<User, Partial<User>>(new User(), { id: '16907c32-687b-493c-85ba-f41f2c9d4daa' });
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
 
       await expect(async () => {
-        accessToken = await dataAccess.createAccessToken(scopes, client, user);
+        accessToken = await dataAccess.createAccessToken(scopes, client, user, null, null);
       }).resolves.not.toThrow();
 
       expect(accessToken).toBeInstanceOf(AccessToken);
       expect(accessToken.scopes).toStrictEqual(scopes);
       expect(accessToken.client).toStrictEqual(client);
       expect(accessToken.user).toStrictEqual(user);
+      expect(accessToken.login).toBeNull();
+      expect(accessToken.refreshToken).toBeNull();
+    });
+
+    it('should create an Access Token with a User, a Login and without a Refresh Token.', async () => {
+      let accessToken!: AccessToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+      const session = await dataAccess.createSession();
+      const login = await dataAccess.createLogin(user, client, session, [], null);
+
+      await expect(async () => {
+        accessToken = await dataAccess.createAccessToken(scopes, client, user, login, null);
+      }).resolves.not.toThrow();
+
+      expect(accessToken).toBeInstanceOf(AccessToken);
+      expect(accessToken.scopes).toStrictEqual(scopes);
+      expect(accessToken.client).toStrictEqual(client);
+      expect(accessToken.user).toStrictEqual(user);
+      expect(accessToken.login).toStrictEqual(login);
+      expect(accessToken.refreshToken).toBeNull();
+    });
+
+    it('should create an Access Token with a User, a Login and a Refresh Token.', async () => {
+      let accessToken!: AccessToken;
+      let refreshToken!: RefreshToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+      const session = await dataAccess.createSession();
+      const login = await dataAccess.createLogin(user, client, session, [], null);
+      refreshToken = await dataAccess.createRefreshToken(scopes, client, user, login);
+
+      await expect(async () => {
+        accessToken = await dataAccess.createAccessToken(scopes, client, user, login, refreshToken);
+      }).resolves.not.toThrow();
+
+      expect(accessToken).toBeInstanceOf(AccessToken);
+      expect(accessToken.scopes).toStrictEqual(scopes);
+      expect(accessToken.client).toStrictEqual(client);
+      expect(accessToken.user).toStrictEqual(user);
+      expect(accessToken.login).toStrictEqual(login);
+      expect(accessToken.refreshToken).toStrictEqual(refreshToken);
+
+      refreshToken = (await dataAccess.findRefreshTokenById(accessToken.refreshToken!.id))!;
+
+      expect(refreshToken.accessTokens.map((accessToken) => accessToken.id)).toStrictEqual<string[]>([accessToken.id]);
     });
   });
 
@@ -325,21 +378,25 @@ describe('SQLite Data Access', () => {
       await dataAccess.seed();
     });
 
-    it('should create an Refresh Token with a User.', async () => {
-      let accessToken!: RefreshToken;
+    it('should create a Refresh Token.', async () => {
+      let refreshToken!: RefreshToken;
 
       const scopes = await dataAccess.getScopes();
       const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
-      const user: User = Object.assign<User, Partial<User>>(new User(), { id: '16907c32-687b-493c-85ba-f41f2c9d4daa' });
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+      const session = await dataAccess.createSession();
+      const login = await dataAccess.createLogin(user, client, session, [], null);
 
       await expect(async () => {
-        accessToken = await dataAccess.createRefreshToken(scopes, client, user);
+        refreshToken = await dataAccess.createRefreshToken(scopes, client, user, login);
       }).resolves.not.toThrow();
 
-      expect(accessToken).toBeInstanceOf(RefreshToken);
-      expect(accessToken.scopes).toStrictEqual(scopes);
-      expect(accessToken.client).toStrictEqual(client);
-      expect(accessToken.user).toStrictEqual(user);
+      expect(refreshToken).toBeInstanceOf(RefreshToken);
+      expect(refreshToken.scopes).toStrictEqual(scopes);
+      expect(refreshToken.client).toStrictEqual(client);
+      expect(refreshToken.user).toStrictEqual(user);
+      expect(refreshToken.login).toStrictEqual(login);
+      expect(refreshToken.accessTokens).toBeEmpty();
     });
   });
 
@@ -439,7 +496,7 @@ describe('SQLite Data Access', () => {
       const scopes = await dataAccess.getScopes();
       const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
 
-      const { id: accessTokenId } = await dataAccess.createAccessToken(scopes, client, null);
+      const { id: accessTokenId } = await dataAccess.createAccessToken(scopes, client, null, null, null);
 
       await expect(async () => {
         accessToken = (await dataAccess.findAccessTokenById(accessTokenId))!;
@@ -449,16 +506,18 @@ describe('SQLite Data Access', () => {
       expect(accessToken.id).toBe(accessTokenId);
       expect(accessToken.client!.id).toBe(client.id);
       expect(accessToken.user).toBeNull();
+      expect(accessToken.login).toBeNull();
+      expect(accessToken.refreshToken).toBeNull();
     });
 
-    it('should return the Access Token of the provided Identifier with a User.', async () => {
+    it('should return the Access Token of the provided Identifier without a Login.', async () => {
       let accessToken!: AccessToken;
 
       const scopes = await dataAccess.getScopes();
       const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
       const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
 
-      const { id: accessTokenId } = await dataAccess.createAccessToken(scopes, client, user);
+      const { id: accessTokenId } = await dataAccess.createAccessToken(scopes, client, user, null, null);
 
       await expect(async () => {
         accessToken = (await dataAccess.findAccessTokenById(accessTokenId))!;
@@ -468,6 +527,55 @@ describe('SQLite Data Access', () => {
       expect(accessToken.id).toBe(accessTokenId);
       expect(accessToken.client!.id).toBe(client.id);
       expect(accessToken.user!.id).toBe(user.id);
+      expect(accessToken.login).toBeNull();
+      expect(accessToken.refreshToken).toBeNull();
+    });
+
+    it('should return the Access Token of the provided Identifier with a Login.', async () => {
+      let accessToken!: AccessToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+      const session = await dataAccess.createSession();
+      const login = await dataAccess.createLogin(user, client, session, [], null);
+
+      const { id: accessTokenId } = await dataAccess.createAccessToken(scopes, client, user, login, null);
+
+      await expect(async () => {
+        accessToken = (await dataAccess.findAccessTokenById(accessTokenId))!;
+      }).resolves.not.toThrow();
+
+      expect(accessToken).toBeInstanceOf(AccessToken);
+      expect(accessToken.id).toBe(accessTokenId);
+      expect(accessToken.client!.id).toBe(client.id);
+      expect(accessToken.user!.id).toBe(user.id);
+      expect(accessToken.login!.id).toBe(login.id);
+      expect(accessToken.refreshToken).toBeNull();
+    });
+
+    it('should return the Access Token of the provided Identifier with a Refresh Token.', async () => {
+      let accessToken!: AccessToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+      const session = await dataAccess.createSession();
+      const login = await dataAccess.createLogin(user, client, session, [], null);
+      const refreshToken = await dataAccess.createRefreshToken(scopes, client, user, login);
+
+      const { id: accessTokenId } = await dataAccess.createAccessToken(scopes, client, user, login, refreshToken);
+
+      await expect(async () => {
+        accessToken = (await dataAccess.findAccessTokenById(accessTokenId))!;
+      }).resolves.not.toThrow();
+
+      expect(accessToken).toBeInstanceOf(AccessToken);
+      expect(accessToken.id).toBe(accessTokenId);
+      expect(accessToken.client!.id).toBe(client.id);
+      expect(accessToken.user!.id).toBe(user.id);
+      expect(accessToken.login!.id).toBe(login.id);
+      expect(accessToken.refreshToken!.id).toBe(refreshToken.id);
     });
   });
 
@@ -816,14 +924,14 @@ describe('SQLite Data Access', () => {
       await expect(dataAccess.findRefreshTokenById('00000000-0000-0000-0000-000000000000')).resolves.toBeNull();
     });
 
-    it('should return the Refresh Token of the provided Identifier.', async () => {
+    it('should return the Refresh Token of the provided Identifier without a Login and Access Tokens.', async () => {
       let refreshToken!: RefreshToken;
 
       const scopes = await dataAccess.getScopes();
       const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
       const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
 
-      const { id: refreshTokenId } = await dataAccess.createRefreshToken(scopes, client, user);
+      const { id: refreshTokenId } = await dataAccess.createRefreshToken(scopes, client, user, null);
 
       await expect(async () => {
         refreshToken = (await dataAccess.findRefreshTokenById(refreshTokenId))!;
@@ -833,6 +941,93 @@ describe('SQLite Data Access', () => {
       expect(refreshToken.id).toBe(refreshTokenId);
       expect(refreshToken.client.id).toBe(client.id);
       expect(refreshToken.user.id).toBe(user.id);
+      expect(refreshToken.login).toBeNull();
+      expect(refreshToken.accessTokens).toBeEmpty();
+    });
+
+    it('should return the Refresh Token of the provided Identifier with a Login and without Access Tokens.', async () => {
+      let refreshToken!: RefreshToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+      const session = await dataAccess.createSession();
+      const login = await dataAccess.createLogin(user, client, session, [], null);
+
+      const { id: refreshTokenId } = await dataAccess.createRefreshToken(scopes, client, user, login);
+
+      await expect(async () => {
+        refreshToken = (await dataAccess.findRefreshTokenById(refreshTokenId))!;
+      }).resolves.not.toThrow();
+
+      expect(refreshToken).toBeInstanceOf(RefreshToken);
+      expect(refreshToken.id).toBe(refreshTokenId);
+      expect(refreshToken.client.id).toBe(client.id);
+      expect(refreshToken.user.id).toBe(user.id);
+      expect(refreshToken.login!.id).toBe(login.id);
+      expect(refreshToken.accessTokens).toBeEmpty();
+    });
+
+    it('should return the Refresh Token of the provided Identifier without a Login and with Access Tokens.', async () => {
+      let refreshToken!: RefreshToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+
+      refreshToken = await dataAccess.createRefreshToken(scopes, client, user, null);
+      const refreshTokenId = refreshToken.id;
+
+      expect(refreshToken.accessTokens).toBeEmpty();
+
+      const accessToken1 = await dataAccess.createAccessToken(scopes, client, user, null, refreshToken);
+      const accessToken2 = await dataAccess.createAccessToken(scopes, client, user, null, refreshToken);
+
+      await expect(async () => {
+        refreshToken = (await dataAccess.findRefreshTokenById(refreshTokenId))!;
+      }).resolves.not.toThrow();
+
+      expect(refreshToken).toBeInstanceOf(RefreshToken);
+      expect(refreshToken.id).toBe(refreshTokenId);
+      expect(refreshToken.client.id).toBe(client.id);
+      expect(refreshToken.user.id).toBe(user.id);
+      expect(refreshToken.login).toBeNull();
+      expect(refreshToken.accessTokens.map((accessToken) => accessToken.id)).toStrictEqual<string[]>([
+        accessToken1.id,
+        accessToken2.id,
+      ]);
+    });
+
+    it('should return the Refresh Token of the provided Identifier with a Login and Access Tokens.', async () => {
+      let refreshToken!: RefreshToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+      const session = await dataAccess.createSession();
+      const login = await dataAccess.createLogin(user, client, session, [], null);
+
+      refreshToken = await dataAccess.createRefreshToken(scopes, client, user, login);
+      const refreshTokenId = refreshToken.id;
+
+      expect(refreshToken.accessTokens).toBeEmpty();
+
+      const accessToken1 = await dataAccess.createAccessToken(scopes, client, user, login, refreshToken);
+      const accessToken2 = await dataAccess.createAccessToken(scopes, client, user, login, refreshToken);
+
+      await expect(async () => {
+        refreshToken = (await dataAccess.findRefreshTokenById(refreshTokenId))!;
+      }).resolves.not.toThrow();
+
+      expect(refreshToken).toBeInstanceOf(RefreshToken);
+      expect(refreshToken.id).toBe(refreshTokenId);
+      expect(refreshToken.client.id).toBe(client.id);
+      expect(refreshToken.user.id).toBe(user.id);
+      expect(refreshToken.login!.id).toBe(login.id);
+      expect(refreshToken.accessTokens.map((accessToken) => accessToken.id)).toStrictEqual<string[]>([
+        accessToken1.id,
+        accessToken2.id,
+      ]);
     });
   });
 
@@ -1127,7 +1322,7 @@ describe('SQLite Data Access', () => {
         return { on: jest.fn(), end: jest.fn() } as unknown as ClientRequest;
       });
 
-      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const client = (await dataAccess.findClientById('922e0d5e-08ba-4b0d-8068-fde37f2c3604'))!;
 
       const error = new InvalidClientError('Failed to obtain a valid JSON Web Key from the Client.');
 
@@ -1151,7 +1346,7 @@ describe('SQLite Data Access', () => {
         return { on: jest.fn(), end: jest.fn() } as unknown as ClientRequest;
       });
 
-      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const client = (await dataAccess.findClientById('922e0d5e-08ba-4b0d-8068-fde37f2c3604'))!;
 
       await expect(async () => {
         jsonWebKey = await dataAccess.getClientWrapJsonWebKey!(client);
@@ -1439,20 +1634,76 @@ describe('SQLite Data Access', () => {
       await dataAccess.seed();
     });
 
-    it('should revoke the provided Access Token.', async () => {
+    it('should revoke the provided Access Token without a User.', async () => {
       let accessToken!: AccessToken;
 
       const scopes = await dataAccess.getScopes();
       const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
-      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
 
-      accessToken = await dataAccess.createAccessToken(scopes, client, user);
+      accessToken = await dataAccess.createAccessToken(scopes, client, null, null, null);
       expect(accessToken.revokedAt).toBeNull();
 
       await expect(dataAccess.revokeAccessToken(accessToken)).resolves.not.toThrow();
 
       accessToken = (await dataAccess.findAccessTokenById(accessToken.id))!;
       expect(accessToken.revokedAt).toBeDate();
+    });
+
+    it('should revoke the provided Access Token without a Login.', async () => {
+      let accessToken!: AccessToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+
+      accessToken = await dataAccess.createAccessToken(scopes, client, user, null, null);
+      expect(accessToken.revokedAt).toBeNull();
+
+      await expect(dataAccess.revokeAccessToken(accessToken)).resolves.not.toThrow();
+
+      accessToken = (await dataAccess.findAccessTokenById(accessToken.id))!;
+      expect(accessToken.revokedAt).toBeDate();
+    });
+
+    it('should revoke the provided Access Token without a Refresh Token.', async () => {
+      let accessToken!: AccessToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+      const session = await dataAccess.createSession();
+      const login = await dataAccess.createLogin(user, client, session, [], null);
+
+      accessToken = await dataAccess.createAccessToken(scopes, client, user, login, null);
+      expect(accessToken.revokedAt).toBeNull();
+
+      await expect(dataAccess.revokeAccessToken(accessToken)).resolves.not.toThrow();
+
+      accessToken = (await dataAccess.findAccessTokenById(accessToken.id))!;
+      expect(accessToken.revokedAt).toBeDate();
+    });
+
+    it('should revoke the provided Access Token with a Refresh Token.', async () => {
+      let accessToken!: AccessToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+      const session = await dataAccess.createSession();
+      const login = await dataAccess.createLogin(user, client, session, [], null);
+      const refreshToken = await dataAccess.createRefreshToken(scopes, client, user, login);
+
+      accessToken = await dataAccess.createAccessToken(scopes, client, user, login, refreshToken);
+      expect(accessToken.revokedAt).toBeNull();
+
+      await expect(dataAccess.revokeAccessToken(accessToken)).resolves.not.toThrow();
+
+      accessToken = (await dataAccess.findAccessTokenById(accessToken.id))!;
+      expect(accessToken.revokedAt).toBeDate();
+
+      await expect(dataAccess.findRefreshTokenById(refreshToken.id)).resolves.toStrictEqual<RefreshToken>(
+        expect.objectContaining<Partial<RefreshToken>>({ id: refreshToken.id }),
+      );
     });
   });
 
@@ -1500,14 +1751,48 @@ describe('SQLite Data Access', () => {
       const scopes = await dataAccess.getScopes();
       const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
       const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+      const session = await dataAccess.createSession();
+      const login = await dataAccess.createLogin(user, client, session, [], null);
 
-      refreshToken = await dataAccess.createRefreshToken(scopes, client, user);
+      refreshToken = await dataAccess.createRefreshToken(scopes, client, user, login);
       expect(refreshToken.revokedAt).toBeNull();
 
       await expect(dataAccess.revokeRefreshToken(refreshToken)).resolves.not.toThrow();
 
       refreshToken = (await dataAccess.findRefreshTokenById(refreshToken.id))!;
       expect(refreshToken.revokedAt).toBeDate();
+    });
+
+    it('should revoke the provided Refresh Token and its associated Access Tokens.', async () => {
+      let refreshToken!: RefreshToken;
+      let accessToken1: AccessToken;
+      let accessToken2: AccessToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+      const session = await dataAccess.createSession();
+      const login = await dataAccess.createLogin(user, client, session, [], null);
+
+      refreshToken = await dataAccess.createRefreshToken(scopes, client, user, login);
+      expect(refreshToken.revokedAt).toBeNull();
+
+      accessToken1 = await dataAccess.createAccessToken(scopes, client, user, login, refreshToken);
+      accessToken2 = await dataAccess.createAccessToken(scopes, client, user, login, refreshToken);
+
+      expect(accessToken1.revokedAt).toBeNull();
+      expect(accessToken2.revokedAt).toBeNull();
+
+      await expect(dataAccess.revokeRefreshToken(refreshToken)).resolves.not.toThrow();
+
+      refreshToken = (await dataAccess.findRefreshTokenById(refreshToken.id))!;
+      expect(refreshToken.revokedAt).toBeDate();
+
+      accessToken1 = (await dataAccess.findAccessTokenById(accessToken1.id))!;
+      accessToken2 = (await dataAccess.findAccessTokenById(accessToken2.id))!;
+
+      expect(accessToken1.revokedAt).toBeDate();
+      expect(accessToken2.revokedAt).toBeDate();
     });
   });
 
@@ -1517,15 +1802,16 @@ describe('SQLite Data Access', () => {
       await dataAccess.seed();
     });
 
-    it('should rotate the old Refresh Token.', async () => {
+    it('should rotate the old Refresh Token without a Login.', async () => {
       let newRefreshToken!: RefreshToken;
 
       const scopes = await dataAccess.getScopes();
       const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
       const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
 
-      const oldRefreshToken = await dataAccess.createRefreshToken(scopes, client, user);
+      const oldRefreshToken = await dataAccess.createRefreshToken(scopes, client, user, null);
 
+      // Needed because sometimes it thinks it's the same transaction somehow.
       await setTimeout(1000);
 
       await expect(async () => {
@@ -1541,12 +1827,147 @@ describe('SQLite Data Access', () => {
       expect(newRefreshToken.validAfter.getTime()).toBe(newRefreshToken.validAfter.getTime());
       expect(newRefreshToken.client.id).toBe(oldRefreshToken.client.id);
       expect(newRefreshToken.user.id).toBe(oldRefreshToken.user.id);
+      expect(newRefreshToken.login).toBeNull();
 
       await expect(async () => {
         return (await dataAccess.findRefreshTokenById(oldRefreshToken.id))!.revokedAt;
       }).resolves.toBeDate();
 
       expect(newRefreshToken.revokedAt).toBeNull();
+    });
+
+    it('should rotate the old Refresh Token with a Login.', async () => {
+      let newRefreshToken!: RefreshToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+      const session = await dataAccess.createSession();
+      const login = await dataAccess.createLogin(user, client, session, [], null);
+
+      const oldRefreshToken = await dataAccess.createRefreshToken(scopes, client, user, login);
+
+      // Needed because sometimes it thinks it's the same transaction somehow.
+      await setTimeout(1000);
+
+      await expect(async () => {
+        newRefreshToken = await dataAccess.rotateRefreshToken(oldRefreshToken);
+      }).resolves.not.toThrow();
+
+      expect(newRefreshToken).toBeInstanceOf(RefreshToken);
+
+      expect(newRefreshToken.id).not.toBe(oldRefreshToken.id);
+      expect(newRefreshToken.scopes).toStrictEqual<Scope[]>(expect.arrayContaining<Scope>(oldRefreshToken.scopes));
+      expect(newRefreshToken.createdAt.getTime()).toBeGreaterThan(oldRefreshToken.createdAt.getTime());
+      expect(newRefreshToken.expiresAt.getTime()).toBe(oldRefreshToken.expiresAt.getTime());
+      expect(newRefreshToken.validAfter.getTime()).toBe(newRefreshToken.validAfter.getTime());
+      expect(newRefreshToken.client.id).toBe(oldRefreshToken.client.id);
+      expect(newRefreshToken.user.id).toBe(oldRefreshToken.user.id);
+      expect(newRefreshToken.login!.id).toBe(oldRefreshToken.login!.id);
+
+      await expect(async () => {
+        return (await dataAccess.findRefreshTokenById(oldRefreshToken.id))!.revokedAt;
+      }).resolves.toBeDate();
+
+      expect(newRefreshToken.revokedAt).toBeNull();
+    });
+
+    it('should rotate the old Refresh Token and update its associated Access Tokens without a Login.', async () => {
+      let newRefreshToken!: RefreshToken;
+      let accessToken1!: AccessToken;
+      let accessToken2!: AccessToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+
+      const oldRefreshToken = await dataAccess.createRefreshToken(scopes, client, user, null);
+
+      accessToken1 = await dataAccess.createAccessToken(scopes, client, user, null, oldRefreshToken);
+      accessToken2 = await dataAccess.createAccessToken(scopes, client, user, null, oldRefreshToken);
+
+      expect(accessToken1.refreshToken!.id).toBe(oldRefreshToken.id);
+      expect(accessToken2.refreshToken!.id).toBe(oldRefreshToken.id);
+
+      // Needed because sometimes it thinks it's the same transaction somehow.
+      await setTimeout(1000);
+
+      await expect(async () => {
+        newRefreshToken = await dataAccess.rotateRefreshToken(oldRefreshToken);
+      }).resolves.not.toThrow();
+
+      expect(newRefreshToken).toBeInstanceOf(RefreshToken);
+
+      expect(newRefreshToken.id).not.toBe(oldRefreshToken.id);
+      expect(newRefreshToken.scopes).toStrictEqual<Scope[]>(expect.arrayContaining<Scope>(oldRefreshToken.scopes));
+      expect(newRefreshToken.createdAt.getTime()).toBeGreaterThan(oldRefreshToken.createdAt.getTime());
+      expect(newRefreshToken.expiresAt.getTime()).toBe(oldRefreshToken.expiresAt.getTime());
+      expect(newRefreshToken.validAfter.getTime()).toBe(newRefreshToken.validAfter.getTime());
+      expect(newRefreshToken.client.id).toBe(oldRefreshToken.client.id);
+      expect(newRefreshToken.user.id).toBe(oldRefreshToken.user.id);
+      expect(newRefreshToken.login).toBeNull();
+
+      await expect(async () => {
+        return (await dataAccess.findRefreshTokenById(oldRefreshToken.id))!.revokedAt;
+      }).resolves.toBeDate();
+
+      expect(newRefreshToken.revokedAt).toBeNull();
+
+      accessToken1 = (await dataAccess.findAccessTokenById(accessToken1.id))!;
+      accessToken2 = (await dataAccess.findAccessTokenById(accessToken2.id))!;
+
+      expect(accessToken1.refreshToken!.id).toBe(newRefreshToken.id);
+      expect(accessToken2.refreshToken!.id).toBe(newRefreshToken.id);
+    });
+
+    it('should rotate the old Refresh Token and update its associated Access Tokens with a Login.', async () => {
+      let newRefreshToken!: RefreshToken;
+      let accessToken1!: AccessToken;
+      let accessToken2!: AccessToken;
+
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+      const session = await dataAccess.createSession();
+      const login = await dataAccess.createLogin(user, client, session, [], null);
+
+      const oldRefreshToken = await dataAccess.createRefreshToken(scopes, client, user, login);
+
+      accessToken1 = await dataAccess.createAccessToken(scopes, client, user, login, oldRefreshToken);
+      accessToken2 = await dataAccess.createAccessToken(scopes, client, user, login, oldRefreshToken);
+
+      expect(accessToken1.refreshToken!.id).toBe(oldRefreshToken.id);
+      expect(accessToken2.refreshToken!.id).toBe(oldRefreshToken.id);
+
+      // Needed because sometimes it thinks it's the same transaction somehow.
+      await setTimeout(1000);
+
+      await expect(async () => {
+        newRefreshToken = await dataAccess.rotateRefreshToken(oldRefreshToken);
+      }).resolves.not.toThrow();
+
+      expect(newRefreshToken).toBeInstanceOf(RefreshToken);
+
+      expect(newRefreshToken.id).not.toBe(oldRefreshToken.id);
+      expect(newRefreshToken.scopes).toStrictEqual<Scope[]>(expect.arrayContaining<Scope>(oldRefreshToken.scopes));
+      expect(newRefreshToken.createdAt.getTime()).toBeGreaterThan(oldRefreshToken.createdAt.getTime());
+      expect(newRefreshToken.expiresAt.getTime()).toBe(oldRefreshToken.expiresAt.getTime());
+      expect(newRefreshToken.validAfter.getTime()).toBe(newRefreshToken.validAfter.getTime());
+      expect(newRefreshToken.client.id).toBe(oldRefreshToken.client.id);
+      expect(newRefreshToken.user.id).toBe(oldRefreshToken.user.id);
+      expect(newRefreshToken.login!.id).toBe(oldRefreshToken.login!.id);
+
+      await expect(async () => {
+        return (await dataAccess.findRefreshTokenById(oldRefreshToken.id))!.revokedAt;
+      }).resolves.toBeDate();
+
+      expect(newRefreshToken.revokedAt).toBeNull();
+
+      accessToken1 = (await dataAccess.findAccessTokenById(accessToken1.id))!;
+      accessToken2 = (await dataAccess.findAccessTokenById(accessToken2.id))!;
+
+      expect(accessToken1.refreshToken!.id).toBe(newRefreshToken.id);
+      expect(accessToken2.refreshToken!.id).toBe(newRefreshToken.id);
     });
   });
 
@@ -1765,15 +2186,15 @@ describe('SQLite Data Access', () => {
       expect(databaseExecSpy).toHaveBeenCalledWith(file('0004-create-table-clients.sql'));
       expect(databaseExecSpy).toHaveBeenCalledWith(file('0005-create-table-client-secrets.sql'));
       expect(databaseExecSpy).toHaveBeenCalledWith(file('0006-create-table-client-scopes.sql'));
-      expect(databaseExecSpy).toHaveBeenCalledWith(file('0007-create-table-access-tokens.sql'));
-      expect(databaseExecSpy).toHaveBeenCalledWith(file('0008-create-table-access-token-scopes.sql'));
-      expect(databaseExecSpy).toHaveBeenCalledWith(file('0009-create-table-sessions.sql'));
-      expect(databaseExecSpy).toHaveBeenCalledWith(file('0010-create-table-logins.sql'));
-      expect(databaseExecSpy).toHaveBeenCalledWith(file('0011-create-table-logins-clients.sql'));
-      expect(databaseExecSpy).toHaveBeenCalledWith(file('0012-create-table-consents.sql'));
-      expect(databaseExecSpy).toHaveBeenCalledWith(file('0013-create-table-consent-scopes.sql'));
-      expect(databaseExecSpy).toHaveBeenCalledWith(file('0014-create-table-grants.sql'));
-      expect(databaseExecSpy).toHaveBeenCalledWith(file('0015-create-table-authorization-codes.sql'));
+      expect(databaseExecSpy).toHaveBeenCalledWith(file('0007-create-table-sessions.sql'));
+      expect(databaseExecSpy).toHaveBeenCalledWith(file('0008-create-table-logins.sql'));
+      expect(databaseExecSpy).toHaveBeenCalledWith(file('0009-create-table-logins-clients.sql'));
+      expect(databaseExecSpy).toHaveBeenCalledWith(file('0010-create-table-consents.sql'));
+      expect(databaseExecSpy).toHaveBeenCalledWith(file('0011-create-table-consent-scopes.sql'));
+      expect(databaseExecSpy).toHaveBeenCalledWith(file('0012-create-table-grants.sql'));
+      expect(databaseExecSpy).toHaveBeenCalledWith(file('0013-create-table-authorization-codes.sql'));
+      expect(databaseExecSpy).toHaveBeenCalledWith(file('0014-create-table-access-tokens.sql'));
+      expect(databaseExecSpy).toHaveBeenCalledWith(file('0015-create-table-access-token-scopes.sql'));
       expect(databaseExecSpy).toHaveBeenCalledWith(file('0016-create-table-refresh-tokens.sql'));
       expect(databaseExecSpy).toHaveBeenCalledWith(file('0017-create-table-refresh-token-scopes.sql'));
 
@@ -1789,8 +2210,6 @@ describe('SQLite Data Access', () => {
         'clients',
         'client_secrets',
         'client_scopes',
-        'access_tokens',
-        'access_token_scopes',
         'sessions',
         'logins',
         'logins_clients',
@@ -1798,6 +2217,8 @@ describe('SQLite Data Access', () => {
         'consent_scopes',
         'grants',
         'authorization_codes',
+        'access_tokens',
+        'access_token_scopes',
         'refresh_tokens',
         'refresh_token_scopes',
       ]);
@@ -1814,15 +2235,15 @@ describe('SQLite Data Access', () => {
 
       expect(databaseExecSpy).toHaveBeenCalledWith(file('0017-drop-table-refresh-token-scopes.sql'));
       expect(databaseExecSpy).toHaveBeenCalledWith(file('0016-drop-table-refresh-tokens.sql'));
-      expect(databaseExecSpy).toHaveBeenCalledWith(file('0015-drop-table-authorization-codes.sql'));
-      expect(databaseExecSpy).toHaveBeenCalledWith(file('0014-drop-table-grants.sql'));
-      expect(databaseExecSpy).toHaveBeenCalledWith(file('0013-drop-table-consent-scopes.sql'));
-      expect(databaseExecSpy).toHaveBeenCalledWith(file('0012-drop-table-consents.sql'));
-      expect(databaseExecSpy).toHaveBeenCalledWith(file('0011-drop-table-logins-clients.sql'));
-      expect(databaseExecSpy).toHaveBeenCalledWith(file('0010-drop-table-logins.sql'));
-      expect(databaseExecSpy).toHaveBeenCalledWith(file('0009-drop-table-sessions.sql'));
-      expect(databaseExecSpy).toHaveBeenCalledWith(file('0008-drop-table-access-token-scopes.sql'));
-      expect(databaseExecSpy).toHaveBeenCalledWith(file('0007-drop-table-access-tokens.sql'));
+      expect(databaseExecSpy).toHaveBeenCalledWith(file('0015-drop-table-access-token-scopes.sql'));
+      expect(databaseExecSpy).toHaveBeenCalledWith(file('0014-drop-table-access-tokens.sql'));
+      expect(databaseExecSpy).toHaveBeenCalledWith(file('0013-drop-table-authorization-codes.sql'));
+      expect(databaseExecSpy).toHaveBeenCalledWith(file('0012-drop-table-grants.sql'));
+      expect(databaseExecSpy).toHaveBeenCalledWith(file('0011-drop-table-consent-scopes.sql'));
+      expect(databaseExecSpy).toHaveBeenCalledWith(file('0010-drop-table-consents.sql'));
+      expect(databaseExecSpy).toHaveBeenCalledWith(file('0009-drop-table-logins-clients.sql'));
+      expect(databaseExecSpy).toHaveBeenCalledWith(file('0008-drop-table-logins.sql'));
+      expect(databaseExecSpy).toHaveBeenCalledWith(file('0007-drop-table-sessions.sql'));
       expect(databaseExecSpy).toHaveBeenCalledWith(file('0006-drop-table-client-scopes.sql'));
       expect(databaseExecSpy).toHaveBeenCalledWith(file('0005-drop-table-client-secrets.sql'));
       expect(databaseExecSpy).toHaveBeenCalledWith(file('0004-drop-table-clients.sql'));
@@ -2017,15 +2438,15 @@ describe('SQLite Data Access', () => {
             logo_uri: 'https://client.example.com/logo.png',
             policy_uri: 'https://client.example.com/policy',
             tos_uri: 'https://client.example.com/terms-of-service',
-            jwks_uri: 'https://client.example.com/jwks',
-            jwks: null,
+            jwks_uri: null,
+            jwks: '{"keys":[{"kty":"RSA","n":"rQz2v9DuDwtJdfgns-XjDCDjgZfQCqEkvQPUqNuYmK-LwbtqGe5m2rkUvsyCOrbXyrSVO2JXQRuRy5H3cJaOO-OrMMcoXSk-e129O5SsjfNqvsOStWl-8IAGNFMVl-EajrbgAic6Kwu0A_fzvZbhaA5JDnRIEBORvXuYzI1zjXpLxAqSynQtK7K-azo6Ssop4qTDlcpOiAoN92JsYfoMTbPXU7N9LwPmieamruoD32O_shmSW6o9DN_5s2nnSsd7EZMKpqLm9-QbDj0l9evaBZ7ZiaumfKazvdiJo0q_KwhvUIIhVkAiTouShBMJOvxHDc6DKDxIzVMZ61l4aYW6gw","e":"AQAB","d":"PxQ3qYnuDNvPZkoTptbIYXZnl6iP9B_zNVb9IKQTRqzOo8q-DT_CjD3k2vvPCLn3hPM4ZpIdPiVfirXlXUv0As6laz1dcEAFf5CW1u4FzCSLp4fApZIT7HSuTkpu15L9TEJK-13zLReyAbRTS6uA9J4ocTVfw0Ru3oP8GawCD_KHBCJUvpltKJM4tC74EFGLrGcU19JoBtHWsvZpvVB6uPiT_hBp10Uiefk4QGbUAzty2DbUL18yCIoUO6dJi-cTUIHLRrgbp8RcBD8KjjhYUiN-AiXMNLP4NEcKXo9n4carQd7okLugG2FtbdnWFLZywRSjNxDP7eZwgKvLUtICAQ","p":"6T-ldk8IYvps8PY3EeX1VP5BI1a2eC8ulmH9C88SPAUw0wv9RNB-qVSWmrVUo5jxJsAqvt8vGg4BzZKDfGGElLPulFG8Wx3bYZdvQiLwGZJy1poQN00cInvvGRQYkGbEtO6Bx24IC3lw0KUEt6TjH8i9ogZ1gvmXi0UC8Ihl54M","q":"ve4jlTOAqulqkSRNG5s4bacNVhSVwHOQRsi0QHtOWJl9uSnG6sbB6schtReAmoRqJviJoOSNjbXr2UYD-Ijqb2CT1_uvEHoiZyKxI_KAOw9PM7WaL_ya698Kk_sUJqyIbfAr-6anuMwmlw6XHLIjD5eLZ9aPF161HMnkKtAlcQE","dp":"nxbGKHenZLsh6whEb3TFbH8utofCVR75S6DyE0fdTArOTmRzDqiWe7AyOLtNS3hZovCXNzDK056SJEC2ZfOtli9Tnt5Q9mTa6Sl8vUNPOGHm6fCS9uUlN3AImLZYOsWdjTrQUdH-srTV-blUCl3wfBFTJlv5cqgCcP9VDfI6bzk","dq":"pbJXOrhW3USL4xoPZzEwtoER4nJM_zwSt54rm0G35RXrmBm5X2ONE90sLAfX-3XgAiW8NDCQyfvXSZOKrU4NcKOJ99isLyzOTLn4XosWke_WQh-B57FyGqtYWCeoueC1mWv5gy8ujcsVM53X-YHzkou8ZBfMeC_4w6fitfMnZwE","qi":"OG2CedZpN6zaQ0Kxrj-fj_YB70iF9EV_snR0nEJ7UOTNomnux0QQMTDOjIx71H9r8SoBkU_RyzWOU2rQyRIYMv2nOcnWFqHH5qSNjjGYsMaHKRsP006UEonGxZuHdVsF8WYxsbIt8sjBLlESXDCHun3R44Cp7S6Pt-tYZPYARyo","alg":"RS256","use":"sig","kid":"24ee80ab-06b8-4934-8fd6-928277d0a777"},{"kty":"RSA","n":"sPbChsJMPMZIa0FEyRywhMww65f8oXdB8AwHy_YDvPJ-mKiaEruXFe17fQpiOQD-BNkwuk_-iQxMKTsEVi6AwO1v99dE18GHoGEBVGu-0nAScaGRGxRSqjBdo_qccnH2onBz43Zku22Y3KJnjPXoGLhGpYnNnffymqzsb0Ry6jsJPYN-3MP90LYcHLe4BoWvPay7fVL1UPK1QQCV_joua8K_FVle5qfFpFVBGaZA1re-Qy7xWk5h4y9DwIBkKbJiMJSsFQGyems-mGV6jNcKecti4XuOGcw5AJXMdQKWek_d3zOYXzI_TGZDLn9RKQQ6Z0bwjPQaEYRdQ1fio3Nmpw","e":"AQAB","d":"GTWN0JStN5snhd_uZJfprYFJFsa3_mh2xDNyiOOq9Ke20RhzmmeOxljmVpG8HFK_3QDzqBbtM6jE0LrPi1dkkBdC9BN-gx3WrEolXlla_a9pcTaK7Uif3g61yD5TOxpxAAL0_1pGT0z1kbiw96uwPJVDuyE-YVqI_O_VXqRpmmRBro1VQsAKYHalWQVR7jLT_Id-0D_bC2sXrPqpLgjURgW41UjZJTRz1I6xsjKAJU4sEoig3NUg8-_aGS8vm9CQ4wMhspcuUYPIqd40w-QQqN9L2FBu63R_Flx1r9f0olI4y6XS1ktAx6yvTZ02rCiR7rpNSC-QXLYIeceVOd51wQ","p":"6V5_3DjA58plfytj1dAz2ZloCq3fp1mm-GQhe098yl-vpdOPi3Jagt2SXVfm9Ckmhb-K097c-MMu8jOIJd10w6mVVbuQhKiFDBVgwUpaphyrCswiKc-m-cPjmEGtZ9UgO1_AVHjZfcsdYau56ZTPphToA-XFa7uaYWUtDp55ycs","q":"wh_5OHcdtUU-r2DpaQaWN38ZmnEo2WSXVYobQs62TszXrpAOT6s1ins67kMO3Xb9xOOYLSB2E_tYVpFSYYiPwKZ51Wy44v9AE91tnjhfT5ulltUtUfnDjzovkfibedNIxsBroQRzw2YnIGfidnVLqkcRKLDrwmZpEugJgwiaaxU","dp":"4cql6TwcIOhp9XXU3X3ZfPL5gEOkvnV2oKO45WcN9XxJJSehnikhO7cHszqmYZwjAotF1iKuKB4pIPwNAZ3YKKu-qjmU5VVrjTpt5_Z56HiaYRMLBus7wjLu1VTOY0UJL4lAPDrFK_nGzsZpVX--vRFDPuokbk0QXKWYx6k7aqs","dq":"cpcpKFm4Ia70Z9ZPMf3_YlcWqAIwWNN2ObpCiVc4ap-kmZjTudeYzVwc11SiS7zX5AdtZwYIbZcq-D7kYEqagOBEfuWk5epCyvckpAcmy_lW8Ah6ri8_byarugEE1g8QoLIpVm0oYKnGYuyv07k9pxA4Ysq9AI4vbEeohb7oWFk","qi":"xm6UShKAoz0drmZQP5LhuoRjGO8x9Z0qd-0JPCyRb9NAEPTGCyF3eh0Fv1Np6kryQ3AgYH1xrGvBKnoLbR_Hf_mji2E98Rj1evXzASve8B3G4VauvfxBMp7J0yuWnhUgp45yDP2xM2biYMAmSnDKfqcn-eYScIy15qNmRffO_Jw","alg":"RSA-OAEP","use":"enc","kid":"d2e9019d-0043-48e0-bc02-98c781e88798"}]}',
             sector_identifier_uri: 'https://client.example.com/sector-identifier',
             subject_type: 'pairwise',
-            id_token_signed_response_alg: 'ES256',
+            id_token_signed_response_alg: 'RS256',
             id_token_encrypted_response_alg: 'RSA-OAEP',
             id_token_encrypted_response_enc: 'A128GCM',
-            authentication_signing_alg: 'ES256',
-            jwt_bearer_grant_signing_alg: 'ES256',
+            authentication_signing_alg: 'RS256',
+            jwt_bearer_grant_signing_alg: 'RS256',
             default_max_age: 7776000,
             require_auth_time: 1,
             default_acr_values: '["urn:guarani:acr:2fa"]',
@@ -2048,8 +2469,8 @@ describe('SQLite Data Access', () => {
             logo_uri: null,
             policy_uri: null,
             tos_uri: null,
-            jwks_uri: null,
-            jwks: '{"keys":[{"kty":"EC","crv":"P-256","x":"4c_cS6IT6jaVQeobt_6BDCTmzBaBOTmmiSCpjd5a6Og","y":"mnrPnCFTDkGdEwilabaqM7DzwlAFgetZTmP9ycHPxF8","kid":"ec-key"}]}',
+            jwks_uri: 'https://client.example.org/jwks',
+            jwks: null,
             sector_identifier_uri: null,
             subject_type: 'public',
             id_token_signed_response_alg: null,

@@ -9,7 +9,7 @@ import { SQLiteDataAccess } from '../src/lib/data-access/sqlite/sqlite.data-acce
 import { NodeIdentityProvider } from '../src/lib/http/providers/node/node.identity-provider';
 import { HttpResponseStatus } from '../src/lib/http/response/http-response-status.enum';
 import { DiscoveryResponse } from '../src/lib/responses/discovery/discovery-response';
-import { createTestProvider } from './support/create-test-provider';
+import { createTestProvider } from './__fixtures__/create-test-provider';
 
 describe('Discovery Endpoint', () => {
   let server: http.Server;
@@ -24,7 +24,7 @@ describe('Discovery Endpoint', () => {
 
     dataAccess = container.resolve(DataAccess) as SQLiteDataAccess;
 
-    server = http.createServer(provider.handle);
+    server = http.createServer(provider.handle());
     agent = request.agent(server);
   });
 
@@ -55,20 +55,36 @@ describe('Discovery Endpoint', () => {
         'baz',
         'qux',
       ],
-      response_types_supported: ['code', 'id_token'],
-      response_modes_supported: ['fragment', 'query'],
+      response_types_supported: [
+        'code',
+        'code id_token',
+        'code id_token token',
+        'code token',
+        'id_token',
+        'id_token token',
+        'none',
+        'token',
+      ],
+      response_modes_supported: ['form_post', 'fragment', 'query'],
       interaction_types_supported: ['consent', 'create', 'login', 'select_account'],
-      grant_types_supported: ['authorization_code'],
+      grant_types_supported: [
+        'authorization_code',
+        'client_credentials',
+        'password',
+        'refresh_token',
+        'urn:ietf:params:oauth:grant-type:jwt-bearer',
+      ],
       acr_values_supported: ['urn:guarani:acr:1fa', 'urn:guarani:acr:2fa'],
       subject_types_supported: ['pairwise', 'public'],
-      id_token_signing_alg_values_supported: ['ES256'],
+      id_token_signing_alg_values_supported: ['RS256'],
       id_token_encryption_alg_values_supported: ['RSA-OAEP'],
       id_token_encryption_enc_values_supported: ['A128GCM'],
+      jwt_bearer_grant_signing_alg_values_supported: ['RS256'],
       token_endpoint_auth_methods_supported: ['client_secret_basic'],
       prompt_values_supported: ['consent', 'create', 'login', 'none', 'select_account'],
-      display_values_supported: ['page'],
+      display_values_supported: ['page', 'popup', 'touch', 'wap'],
       ui_locales_supported: ['en-US'],
-      code_challenge_methods_supported: ['S256'],
+      code_challenge_methods_supported: ['S256', 'plain'],
       authorization_response_iss_parameter_supported: false,
       interaction_endpoint_auth_methods_supported: ['client_secret_basic'],
       revocation_endpoint_auth_methods_supported: ['client_secret_basic'],

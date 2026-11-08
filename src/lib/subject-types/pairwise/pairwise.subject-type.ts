@@ -1,3 +1,4 @@
+import { Buffer } from 'buffer';
 import { createCipheriv, createDecipheriv } from 'crypto';
 
 import { Injectable } from '@guarani/di';
@@ -43,7 +44,7 @@ export class PairwiseSubjectType extends SubjectType {
     this.logger.debug(
       `[${this.constructor.name}] Called calculateSubjectIdentifier()`,
       '0f4c68d1-b202-40fd-9ee1-3c44e1cfba30',
-      { user_id: user.id, client_id: client.id },
+      { user, client },
     );
 
     const sectorIdentifier = client.sectorIdentifierUri!.hostname;
@@ -59,7 +60,7 @@ export class PairwiseSubjectType extends SubjectType {
     this.logger.debug(
       `[${this.constructor.name}] Completed calculateSubjectIdentifier()`,
       'a0889250-265a-4504-a8f8-9dff59c219fa',
-      { user_id: user.id, client_id: client.id, subject_identifier: subjectIdentifier },
+      { user, client, subject_identifier: subjectIdentifier },
     );
 
     return subjectIdentifier;
@@ -76,7 +77,7 @@ export class PairwiseSubjectType extends SubjectType {
     this.logger.debug(
       `[${this.constructor.name}] Called retrieveSubjectIdentifier()`,
       '5fa7e625-2928-4911-8d40-288181f7a6c9',
-      { subject_identifier: subjectIdentifier, client_id: client.id },
+      { subject_identifier: subjectIdentifier, client },
     );
 
     const sectorIdentifier = client.sectorIdentifierUri!.hostname;
@@ -92,7 +93,7 @@ export class PairwiseSubjectType extends SubjectType {
     this.logger.debug(
       `[${this.constructor.name}] Completed retrieveSubjectIdentifier()`,
       'ea2ac149-3316-421b-b962-e9813c19e596',
-      { subject_identifier: subjectIdentifier, client_id: client.id, local_subject_identifier: localSubjectIdentifier },
+      { subject_identifier: subjectIdentifier, client, local_subject_identifier: localSubjectIdentifier },
     );
 
     return localSubjectIdentifier;

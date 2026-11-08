@@ -30,6 +30,11 @@ export class PasswordTokenValidator extends TokenValidator<PasswordTokenContext>
   public readonly name: GrantTypeName = 'password';
 
   /**
+   * Forbidden Scopes for the Grant Type of this Validator.
+   */
+  private readonly forbiddenScopes: string[] = ['openid', 'profile', 'email', 'phone', 'address', 'offline_access'];
+
+  /**
    * Instantiates a new Resource Owner Password Credentials Token Validator.
    *
    * @param logger Logger of the Identity Provider.
@@ -38,6 +43,7 @@ export class PasswordTokenValidator extends TokenValidator<PasswordTokenContext>
    * @param scopeHandler Scope Handler of the Identity Provider.
    * @param grantTypes Grant Types of the Identity Provider.
    * @param clientAuthenticationMethods Token Endpoint Client Authentication Methods of the Identity Provider.
+   * @throws {TypeError} Missing implementation of a required Data Access method.
    */
   public constructor(
     protected override readonly logger: Logger,
@@ -70,6 +76,7 @@ export class PasswordTokenValidator extends TokenValidator<PasswordTokenContext>
    * Validates the Http Request and returns the actors of the Resource Owner Password Credentials Token Context.
    *
    * @param request Http Request.
+   * @throws {IdentityProviderError} An error occurred when validating the Http Request.
    * @returns Resource Owner Password Credentials Token Context.
    */
   public override async validate(request: HttpRequest): Promise<PasswordTokenContext> {
@@ -98,6 +105,8 @@ export class PasswordTokenValidator extends TokenValidator<PasswordTokenContext>
    * Searches a User from the application's storage based on the provided username and password.
    *
    * @param parameters Parameters of the Resource Owner Password Credentials Token Request.
+   * @throws {InvalidGrantError} Failed to retrieve a User based on the provided parameters.
+   * @throws {InvalidRequestError} One of the provided parameters is invalid.
    * @returns User that matches the provided Credentials.
    */
   private async getUser(parameters: PasswordTokenRequest): Promise<User> {
@@ -148,7 +157,7 @@ export class PasswordTokenValidator extends TokenValidator<PasswordTokenContext>
 
     this.logger.debug(`[${this.constructor.name}] Completed getUser()`, '96a191cc-ba61-4a7c-964d-79a0da63953f', {
       parameters,
-      user_id: user.id,
+      user,
     });
 
     return user;
@@ -160,12 +169,15 @@ export class PasswordTokenValidator extends TokenValidator<PasswordTokenContext>
    *
    * @param parameters Parameters of the Resource Owner Password Credentials Token Request.
    * @param client Client of the Request.
+   * @throws {AccessDeniedError} The Client is not allowed to request the provided Scope.
+   * @throws {InvalidRequestError} The provided parameter "scope" is invalid.
+   * @throws {InvalidScopeError} The Client requested an unsupported Scope.
    * @returns Scopes granted to the Client.
    */
   private async getScopes(parameters: PasswordTokenRequest, client: Client): Promise<Scope[]> {
     this.logger.debug(`[${this.constructor.name}] Called getScopes()`, '75a3ea4e-12a0-42f9-aa66-695acce470dd', {
       parameters,
-      client_id: client.id,
+      client,
     });
 
     if ('scope' in parameters && !isNonEmptyString(parameters.scope)) {
@@ -174,7 +186,7 @@ export class PasswordTokenValidator extends TokenValidator<PasswordTokenContext>
       this.logger.error(
         `[${this.constructor.name}] Invalid parameter "scope"`,
         'd9fa30eb-68a0-452e-820a-e09c12ca1985',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -182,12 +194,26 @@ export class PasswordTokenValidator extends TokenValidator<PasswordTokenContext>
     }
 
     const scopes = parameters.scope?.split(' ') ?? [];
+
+    if (scopes.some((scope) => this.forbiddenScopes.includes(scope))) {
+      const error = new InvalidRequestError('Cannot request an OpenID Connect Scope using this Grant Type.');
+
+      this.logger.error(
+        `[${this.constructor.name}] Cannot request an OpenID Connect Scope using this Grant Type`,
+        'c41be21b-1c2d-4190-bf57-4fdc9bed832a',
+        { parameters, client },
+        error,
+      );
+
+      throw error;
+    }
+
     await this.scopeHandler.checkRequestedScopes(scopes);
     const allowedScopes = await this.scopeHandler.getAllowedScopes(client, scopes);
 
     this.logger.debug(`[${this.constructor.name}] Completed getScopes()`, 'ebf9c3c0-de48-4931-8f73-5b748280c064', {
       parameters,
-      client_id: client.id,
+      client,
       allowed_scopes: allowedScopes.map((scope) => scope.name),
     });
 

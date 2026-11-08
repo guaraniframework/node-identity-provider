@@ -45,7 +45,7 @@ describe('Touch Display', () => {
       });
 
       expect(response.status).toBe(HttpResponseStatus.SeeOther);
-      expect(response.cookies).toStrictEqual<NodeJS.Dict<unknown>>({});
+      expect(response.cookies).toBeEmptyObject();
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({
         location: 'https://example.com/?var1=string&var2=123&var3=true',
       });
@@ -61,7 +61,7 @@ describe('Touch Display', () => {
       });
 
       expect(response.status).toBe(HttpResponseStatus.SeeOther);
-      expect(response.cookies).toStrictEqual<NodeJS.Dict<unknown>>({});
+      expect(response.cookies).toBeEmptyObject();
       expect(response.headers).toStrictEqual<OutgoingHttpHeaders>({
         location: 'https://example.com/?tenant=tenant_id&var1=string&var2=123&var3=true',
       });

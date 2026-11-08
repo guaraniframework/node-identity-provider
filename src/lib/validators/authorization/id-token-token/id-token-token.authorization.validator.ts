@@ -69,7 +69,7 @@ export class IdTokenTokenAuthorizationValidator extends AuthorizationValidator<I
   protected override async getScopes(parameters: IdTokenTokenAuthorizationRequest, client: Client): Promise<Scope[]> {
     this.logger.debug(`[${this.constructor.name}] Called getScopes()`, '519764a2-03fa-4e97-8fd8-67111449da39', {
       parameters,
-      client_id: client.id,
+      client,
     });
 
     const scopes = await super.getScopes(parameters, client);
@@ -81,7 +81,7 @@ export class IdTokenTokenAuthorizationValidator extends AuthorizationValidator<I
       this.logger.error(
         `[${this.constructor.name}] Missing required Scope "openid"`,
         'decd0878-ba7e-4bb3-a44a-b400d00a85ad',
-        { parameters, client_id: client.id },
+        { parameters, client },
         error,
       );
 
@@ -90,7 +90,7 @@ export class IdTokenTokenAuthorizationValidator extends AuthorizationValidator<I
 
     this.logger.debug(`[${this.constructor.name}] Completed getScopes()`, '341a70eb-6e9e-4f11-8e30-e0c8249897c2', {
       parameters,
-      client_id: client.id,
+      client,
       allowed_scopes: allowedScopes,
     });
 

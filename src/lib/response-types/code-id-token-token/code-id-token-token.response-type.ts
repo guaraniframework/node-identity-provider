@@ -49,7 +49,7 @@ export class CodeIdTokenTokenResponseType extends ResponseType {
   }
 
   /**
-   * Creates and returns an Authorization Code, ID Token and Access Token Response to the Client.
+   * Creates and returns an Authorization Code & ID Token & Access Token Response to the Client.
    *
    * @param context Authorization Context.
    * @returns Authorization Response.
@@ -72,7 +72,7 @@ export class CodeIdTokenTokenResponseType extends ResponseType {
         nonce: nonce ?? undefined!,
       });
 
-      const accessToken = await this.dataAccess.createAccessToken(scopes, client, user);
+      const accessToken = await this.dataAccess.createAccessToken(scopes, client, user, login, null);
       const authorizationCode = await this.dataAccess.createAuthorizationCode(parameters, login, consent);
       const idToken = await this.idTokenHandler.generateIdToken(login, consent, {
         accessToken,

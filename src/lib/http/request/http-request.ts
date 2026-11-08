@@ -45,7 +45,7 @@ export class HttpRequest {
   /**
    * Http Request Body.
    */
-  readonly #body: Buffer;
+  private readonly body: Buffer;
 
   /**
    * Instantiates a new Http Request.
@@ -61,22 +61,22 @@ export class HttpRequest {
     this.query = qs.parse(parameters.url.search.substring(1));
     this.headers = parameters.headers;
     this.cookies = parameters.cookies;
-    this.#body = parameters.body;
+    this.body = parameters.body;
   }
 
   /**
-   * Returns the Http Request Body if the Content-Type is application/x-www-form-urlencoded.
+   * Returns the Http Request Body if the Content-Type is **application/x-www-form-urlencoded**.
    *
    * @throws {UnsupportedMediaTypeError} The Content-Type of the Http Request Body is invalid.
    * @returns Http Request Body.
    */
   public form<T extends NodeJS.Dict<string | string[]>>(): T {
     this.expectContentType('application/x-www-form-urlencoded');
-    return qs.parse(this.#body.toString('utf8')) as T;
+    return qs.parse(this.body.toString('utf8')) as T;
   }
 
   /**
-   * Returns the Http Request Body if the Content-Type is application/json.
+   * Returns the Http Request Body if the Content-Type is **application/json**.
    *
    * @throws {InvalidRequestError} The provided Http Request Body is invalid.
    * @throws {UnsupportedMediaTypeError} The Content-Type of the Http Request Body is invalid.
@@ -146,7 +146,7 @@ export class HttpRequest {
    */
   private parseJsonEncodedBody<T extends NodeJS.Dict<unknown>>(): T {
     try {
-      return jsonParse(this.#body.toString('utf8'));
+      return jsonParse(this.body.toString('utf8'));
     } catch (err: unknown) {
       throw new InvalidRequestError('The provided Http Request Body is invalid.', { cause: err, fatal: true });
     }

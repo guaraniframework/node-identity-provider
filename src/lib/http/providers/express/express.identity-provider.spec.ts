@@ -43,6 +43,12 @@ describe('Express Identity Provider', () => {
   });
 
   beforeEach(async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest.spyOn(console, 'info').mockImplementation(() => {});
+    jest.spyOn(console, 'debug').mockImplementation(() => {});
+    jest.spyOn(console, 'trace').mockImplementation(() => {});
+
     database = new DatabaseSync(':memory:');
     jsonWebKeySet = new JsonWebKeySet([]);
 
