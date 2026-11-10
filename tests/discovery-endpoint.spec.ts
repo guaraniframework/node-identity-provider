@@ -88,6 +88,7 @@ describe('Discovery Endpoint', () => {
       authorization_response_iss_parameter_supported: false,
       interaction_endpoint_auth_methods_supported: ['client_secret_basic'],
       revocation_endpoint_auth_methods_supported: ['client_secret_basic'],
+      introspection_endpoint_auth_methods_supported: ['client_secret_basic'],
     });
   });
 });

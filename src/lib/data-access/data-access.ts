@@ -12,6 +12,7 @@ import { Scope } from '../entities/scope';
 import { Session } from '../entities/session';
 import { User } from '../entities/user';
 import { AuthorizationRequest } from '../requests/authorization/authorization-request';
+import { IntrospectionResponse } from '../responses/introspection/introspection-response';
 
 /**
  * The Data Access is used for the operations of the Identity Provider that need to interact with external systems.
@@ -277,6 +278,14 @@ export abstract class DataAccess {
    * @returns Active Sign JSON Web Key of the Identity Provider.
    */
   public abstract getSignJsonWebKey?(): Promise<JsonWebKey>;
+
+  /**
+   * Returns the metadata of the provided Access Token or Refresh Token.
+   *
+   * @param token Access Token or Refresh Token to be introspected.
+   * @returns Metadata about the provided Access Token or Refresh Token.
+   */
+  public abstract getTokenMetadata?(token: AccessToken | RefreshToken): Promise<Partial<IntrospectionResponse>>;
 
   /**
    * Gets the active Unwrap JSON Web Key of the Identity Provider.

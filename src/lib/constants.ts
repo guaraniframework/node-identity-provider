@@ -9,6 +9,11 @@ export const CONTAINER: symbol = Symbol('CONTAINER');
 export const INTERACTION_CLIENT_AUTHENTICATION: symbol = Symbol('INTERACTION_CLIENT_AUTHENTICATION');
 
 /**
+ * Token that represents the Client Authentication Methods of the Introspection Endpoint.
+ */
+export const INTROSPECTION_CLIENT_AUTHENTICATION: symbol = Symbol('INTROSPECTION_CLIENT_AUTHENTICATION');
+
+/**
  * Token that represents the Client Authentication Methods of the Revocation Endpoint.
  */
 export const REVOCATION_CLIENT_AUTHENTICATION: symbol = Symbol('REVOCATION_CLIENT_AUTHENTICATION');

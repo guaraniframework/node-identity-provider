@@ -9,6 +9,7 @@ import { ClientAuthentication } from '../../client-authentication/client-authent
 import {
   CONTAINER,
   INTERACTION_CLIENT_AUTHENTICATION,
+  INTROSPECTION_CLIENT_AUTHENTICATION,
   REVOCATION_CLIENT_AUTHENTICATION,
   TOKEN_CLIENT_AUTHENTICATION,
 } from '../../constants';
@@ -126,6 +127,12 @@ describe('Discovery Endpoint', () => {
           ),
           jest.mocked<Endpoint>(
             Object.assign<Endpoint, Partial<Endpoint>>(Reflect.construct(Endpoint, []), {
+              name: 'introspection',
+              path: '/oidc/introspection',
+            }),
+          ),
+          jest.mocked<Endpoint>(
+            Object.assign<Endpoint, Partial<Endpoint>>(Reflect.construct(Endpoint, []), {
               name: 'revocation',
               path: '/oidc/revocation',
             }),
@@ -154,6 +161,7 @@ describe('Discovery Endpoint', () => {
       container.bind<ClientAuthentication>(TOKEN_CLIENT_AUTHENTICATION).toValue(clientAuthenticationMethodMock);
       container.bind<ClientAuthentication>(INTERACTION_CLIENT_AUTHENTICATION).toValue(clientAuthenticationMethodMock);
       container.bind<ClientAuthentication>(REVOCATION_CLIENT_AUTHENTICATION).toValue(clientAuthenticationMethodMock);
+      container.bind<ClientAuthentication>(INTROSPECTION_CLIENT_AUTHENTICATION).toValue(clientAuthenticationMethodMock);
     });
 
     container.bind(Display).toValue(displayMock);
@@ -304,6 +312,10 @@ describe('Discovery Endpoint', () => {
         revocation_endpoint_auth_signing_alg_values_supported: ['ES256'],
         revocation_endpoint_auth_encryption_alg_values_supported: ['RSA-OAEP'],
         revocation_endpoint_auth_encryption_enc_values_supported: ['A128GCM'],
+        introspection_endpoint_auth_methods_supported: ['client_secret_basic', 'private_key_jwt'],
+        introspection_endpoint_auth_signing_alg_values_supported: ['ES256'],
+        introspection_endpoint_auth_encryption_alg_values_supported: ['RSA-OAEP'],
+        introspection_endpoint_auth_encryption_enc_values_supported: ['A128GCM'],
       };
 
       dataAccessMock.getScopes.mockResolvedValueOnce(

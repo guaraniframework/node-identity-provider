@@ -13,8 +13,6 @@ import { SQLiteDataAccess } from '../../../data-access/sqlite/sqlite.data-access
 import { InvalidClientError } from '../../../errors/invalid-client/invalid-client.error';
 import { InvalidRequestError } from '../../../errors/invalid-request/invalid-request.error';
 import { IdentityProviderFactory } from '../../../factory/identity-provider.factory';
-import { ConsoleLogger } from '../../../loggers/console/console.logger';
-import { LoggerLevel } from '../../../loggers/logger-level.enum';
 import { Settings } from '../../../settings/settings';
 import { addParametersToUrl } from '../../../utils/add-parameters-to-url/add-parameters-to-url';
 import { HttpResponseStatus } from '../../response/http-response-status.enum';
@@ -56,7 +54,7 @@ describe('Express Identity Provider', () => {
       .addAuthorizationEndpoint()
       .addDiscoveryEndpoint()
       .addInteractionEndpoint()
-      .addLogger(new ConsoleLogger(LoggerLevel.ERROR))
+      .addIntrospectionEndpoint()
       .addRevocationEndpoint()
       .addSettings(settings)
       .addTokenEndpoint()
@@ -107,6 +105,15 @@ describe('Express Identity Provider', () => {
       const response = await agent.get('/oidc/interaction');
 
       expect(response.status).toBe(HttpResponseStatus.BadRequest);
+      expect(response.body).toStrictEqual(error.toJSON());
+    });
+
+    it('should have an Introspection Endpoint.', async () => {
+      const error = new InvalidClientError('No Client Authentication Method detected.');
+
+      const response = await agent.post('/oidc/introspection').set('Content-Type', 'application/x-www-form-urlencoded');
+
+      expect(response.status).toBe(HttpResponseStatus.Unauthorized);
       expect(response.body).toStrictEqual(error.toJSON());
     });
 
