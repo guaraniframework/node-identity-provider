@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer';
-import { createHash, randomBytes, randomUUIDv7 } from 'crypto';
+import { createHash, randomBytes, randomUUID, randomUUIDv7 } from 'crypto';
 import fs from 'fs';
 import { DatabaseSync, SQLOutputValue } from 'node:sqlite';
 import path from 'path';
@@ -34,6 +34,7 @@ import { InteractionTypeName } from '../../interaction-types/interaction-type-na
 import { Logger } from '../../loggers/logger';
 import { AuthorizationRequest } from '../../requests/authorization/authorization-request';
 import { ResponseTypeName } from '../../response-types/response-type-name.type';
+import { IntrospectionResponse } from '../../responses/introspection/introspection-response';
 import { SubjectTypeName } from '../../subject-types/subject-type-name.type';
 import { AccessTokenType } from '../../types/access-token-type.type';
 import { ApplicationType } from '../../types/application-type.type';
@@ -611,6 +612,19 @@ export class SQLiteDataAccess extends DataAccess {
    */
   public async getSignJsonWebKey?(): Promise<JsonWebKey> {
     return this.jsonWebKeySet.get((jsonWebKey) => jsonWebKey.use === 'sig');
+  }
+
+  /**
+   * Returns the metadata of the provided Access Token or Refresh Token.
+   *
+   * @param token Access Token or Refresh Token to be introspected.
+   * @returns Metadata about the provided Access Token or Refresh Token.
+   */
+  public async getTokenMetadata(token: AccessToken | RefreshToken): Promise<Partial<IntrospectionResponse>> {
+    return removeNullishValues<Partial<IntrospectionResponse>>({
+      username: token.user?.preferredUsername ?? undefined!,
+      jti: randomUUID(),
+    });
   }
 
   /**

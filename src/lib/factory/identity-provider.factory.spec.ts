@@ -12,6 +12,7 @@ import { AuthorizationEndpoint } from '../endpoints/authorization/authorization.
 import { DiscoveryEndpoint } from '../endpoints/discovery/discovery.endpoint';
 import { Endpoint } from '../endpoints/endpoint';
 import { InteractionEndpoint } from '../endpoints/interaction/interaction.endpoint';
+import { IntrospectionEndpoint } from '../endpoints/introspection/introspection.endpoint';
 import { RevocationEndpoint } from '../endpoints/revocation/revocation.endpoint';
 import { TokenEndpoint } from '../endpoints/token/token.endpoint';
 import { ClientAuthenticationHandler } from '../handlers/client-authentication/client-authentication.handler';
@@ -273,10 +274,52 @@ describe('Identity Provider Factory', () => {
     });
   });
 
+  describe('addIntrospectionEndpoint()', () => {
+    it('should add the Introspection Endpoint with the default options to the Identity Provider Factory.', () => {
+      factory['container'].bind(Settings).toValue(Settings.prototype);
+      factory['container'].bind(JsonWebKeySet).toValue(JsonWebKeySet.prototype);
+      factory['container'].bind(DatabaseSync).toValue(DatabaseSync.prototype);
+      factory['container'].bind(SubjectType).toValue(SubjectType.prototype);
+
+      expect(() => factory.addIntrospectionEndpoint()).not.toThrow();
+      expect(factory['container'].resolve(Endpoint)).toBeInstanceOf(IntrospectionEndpoint);
+    });
+
+    it('should add the Introspection Endpoint with the provided options to the Identity Provider Factory.', () => {
+      factory['container'].bind(Settings).toValue(Settings.prototype);
+      factory['container'].bind(JsonWebKeySet).toValue(JsonWebKeySet.prototype);
+      factory['container'].bind(DatabaseSync).toValue(DatabaseSync.prototype);
+      factory['container'].bind(SubjectType).toValue(SubjectType.prototype);
+
+      expect(() => factory.addIntrospectionEndpoint((options) => options.build())).not.toThrow();
+      expect(factory['container'].resolve(Endpoint)).toBeInstanceOf(IntrospectionEndpoint);
+    });
+  });
+
   describe('addLogger()', () => {
     it.each(loggerEntries)('should add the provided Logger to the Identity Provider Factory.', (logger) => {
       expect(() => factory.addLogger(logger)).not.toThrow();
       expect(factory['container'].resolve(Logger)).toBeInstanceOf(Logger);
+    });
+  });
+
+  describe('addRevocationEndpoint()', () => {
+    it('should add the Revocation Endpoint with the default options to the Identity Provider Factory.', () => {
+      factory['container'].bind(Settings).toValue(Settings.prototype);
+      factory['container'].bind(JsonWebKeySet).toValue(JsonWebKeySet.prototype);
+      factory['container'].bind(DatabaseSync).toValue(DatabaseSync.prototype);
+
+      expect(() => factory.addRevocationEndpoint()).not.toThrow();
+      expect(factory['container'].resolve(Endpoint)).toBeInstanceOf(RevocationEndpoint);
+    });
+
+    it('should add the Revocation Endpoint with the provided options to the Identity Provider Factory.', () => {
+      factory['container'].bind(Settings).toValue(Settings.prototype);
+      factory['container'].bind(JsonWebKeySet).toValue(JsonWebKeySet.prototype);
+      factory['container'].bind(DatabaseSync).toValue(DatabaseSync.prototype);
+
+      expect(() => factory.addRevocationEndpoint((options) => options.build())).not.toThrow();
+      expect(factory['container'].resolve(Endpoint)).toBeInstanceOf(RevocationEndpoint);
     });
   });
 
@@ -311,28 +354,6 @@ describe('Identity Provider Factory', () => {
       expect(factory['container'].resolveAll(SubjectType)).toStrictEqual<SubjectType[]>([
         expect.any(PublicSubjectType),
       ]);
-    });
-  });
-
-  describe('addRevocationEndpoint()', () => {
-    it('should add the Revocation Endpoint with the default options to the Identity Provider Factory.', () => {
-      factory['container'].bind(Settings).toValue(Settings.prototype);
-      factory['container'].bind(JsonWebKeySet).toValue(JsonWebKeySet.prototype);
-      factory['container'].bind(DatabaseSync).toValue(DatabaseSync.prototype);
-      factory['container'].bind(PKCE).toValue(PKCE.prototype);
-
-      expect(() => factory.addRevocationEndpoint()).not.toThrow();
-      expect(factory['container'].resolve(Endpoint)).toBeInstanceOf(RevocationEndpoint);
-    });
-
-    it('should add the Revocation Endpoint with the provided options to the Identity Provider Factory.', () => {
-      factory['container'].bind(Settings).toValue(Settings.prototype);
-      factory['container'].bind(JsonWebKeySet).toValue(JsonWebKeySet.prototype);
-      factory['container'].bind(DatabaseSync).toValue(DatabaseSync.prototype);
-      factory['container'].bind(PKCE).toValue(PKCE.prototype);
-
-      expect(() => factory.addRevocationEndpoint((options) => options.build())).not.toThrow();
-      expect(factory['container'].resolve(Endpoint)).toBeInstanceOf(RevocationEndpoint);
     });
   });
 
@@ -390,7 +411,6 @@ describe('Identity Provider Factory', () => {
       factory
         .addAuthorizationEndpoint()
         .addInteractionEndpoint()
-        .addRevocationEndpoint()
         .addTokenEndpoint()
         .addSettings(settings)
         .add(DatabaseSync, Object.create(DatabaseSync.prototype))
@@ -412,7 +432,6 @@ describe('Identity Provider Factory', () => {
       factory
         .addAuthorizationEndpoint()
         .addInteractionEndpoint()
-        .addRevocationEndpoint()
         .addTokenEndpoint()
         .addSettings(settings)
         .add(DatabaseSync, Object.create(DatabaseSync.prototype))
@@ -436,7 +455,6 @@ describe('Identity Provider Factory', () => {
           options.useResponseTypes(['code', 'id_token', 'id_token token']).useResponseModes(['query']).build();
         })
         .addInteractionEndpoint()
-        .addRevocationEndpoint()
         .addTokenEndpoint()
         .addSettings(settings)
         .add(DatabaseSync, Object.create(DatabaseSync.prototype))
@@ -459,7 +477,9 @@ describe('Identity Provider Factory', () => {
 
       factory
         .addAuthorizationEndpoint()
+        .addDiscoveryEndpoint()
         .addInteractionEndpoint()
+        .addIntrospectionEndpoint()
         .addRevocationEndpoint()
         .addTokenEndpoint()
         .addSettings(settings)
@@ -472,7 +492,9 @@ describe('Identity Provider Factory', () => {
 
       expect(provider['endpoints']).toStrictEqual<Endpoint[]>([
         expect.any(AuthorizationEndpoint),
+        expect.any(DiscoveryEndpoint),
         expect.any(InteractionEndpoint),
+        expect.any(IntrospectionEndpoint),
         expect.any(RevocationEndpoint),
         expect.any(TokenEndpoint),
       ]);
@@ -494,7 +516,9 @@ describe('Identity Provider Factory', () => {
             .useResponseTypes(['code', 'id_token', 'id_token token'])
             .build();
         })
+        .addDiscoveryEndpoint()
         .addInteractionEndpoint()
+        .addIntrospectionEndpoint()
         .addRevocationEndpoint()
         .addTokenEndpoint()
         .addSettings(settings)
@@ -508,7 +532,9 @@ describe('Identity Provider Factory', () => {
 
       expect(provider['endpoints']).toStrictEqual<Endpoint[]>([
         expect.any(AuthorizationEndpoint),
+        expect.any(DiscoveryEndpoint),
         expect.any(InteractionEndpoint),
+        expect.any(IntrospectionEndpoint),
         expect.any(RevocationEndpoint),
         expect.any(TokenEndpoint),
       ]);

@@ -24,6 +24,7 @@ export {
   DEFAULT_MINIMUM_MAX_AGE,
   DEFAULT_SESSION_COOKIE,
   INTERACTION_CLIENT_AUTHENTICATION,
+  INTROSPECTION_CLIENT_AUTHENTICATION,
   REVOCATION_CLIENT_AUTHENTICATION,
   TOKEN_CLIENT_AUTHENTICATION,
 } from './lib/constants';
@@ -51,6 +52,7 @@ export { type LoginAcceptDecisionInteractionContext } from './lib/context/intera
 export { type LoginDenyDecisionInteractionContext } from './lib/context/interaction/decision/login/login-deny.decision-interaction-context';
 export { type SelectAccountDecisionInteractionContext } from './lib/context/interaction/decision/select-account/select-account.decision-interaction-context';
 export { type InteractionContext } from './lib/context/interaction/interaction-context';
+export { type IntrospectionContext } from './lib/context/introspection/introspection-context';
 export { type RevocationContext } from './lib/context/revocation/revocation-context';
 export { type AuthorizationCodeTokenContext } from './lib/context/token/authorization-code/authorization-code.token-context';
 export { type ClientCredentialsTokenContext } from './lib/context/token/client-credentials/client-credentials.token-context';
@@ -70,6 +72,7 @@ export { AuthorizationEndpoint } from './lib/endpoints/authorization/authorizati
 export { DiscoveryEndpoint } from './lib/endpoints/discovery/discovery.endpoint';
 export { Endpoint } from './lib/endpoints/endpoint';
 export { type EndpointName } from './lib/endpoints/endpoint-name.type';
+export { IntrospectionEndpoint } from './lib/endpoints/introspection/introspection.endpoint';
 export { RevocationEndpoint } from './lib/endpoints/revocation/revocation.endpoint';
 export { TokenEndpoint } from './lib/endpoints/token/token.endpoint';
 export { AccessToken } from './lib/entities/access-token';
@@ -164,6 +167,7 @@ export { type LoginAcceptDecisionInteractionRequest } from './lib/requests/inter
 export { type LoginDenyDecisionInteractionRequest } from './lib/requests/interaction/decision/login/login-deny.decision-interaction-request';
 export { type SelectAccountDecisionInteractionRequest } from './lib/requests/interaction/decision/select-account/select-account.decision-interaction-request';
 export { type InteractionRequest } from './lib/requests/interaction/interaction-request';
+export { type IntrospectionRequest } from './lib/requests/introspection/introspection-request';
 export { type RevocationRequest } from './lib/requests/revocation/revocation-request';
 export { type AuthorizationCodeTokenRequest } from './lib/requests/token/authorization-code/authorization-code.token-request';
 export { type ClientCredentialsTokenRequest } from './lib/requests/token/client-credentials/client-credentials.token-request';
@@ -213,6 +217,7 @@ export { type DecisionInteractionResponse } from './lib/responses/interaction/de
 export { type LoginDecisionInteractionResponse } from './lib/responses/interaction/decision/login/login.decision-interaction-response';
 export { type SelectAccountDecisionInteractionResponse } from './lib/responses/interaction/decision/select-account/select-account.decision-interaction-response';
 export { type InteractionResponse } from './lib/responses/interaction/interaction-response';
+export { type IntrospectionResponse } from './lib/responses/introspection/introspection-response';
 export { type AuthorizationCodeTokenResponse } from './lib/responses/token/authorization-code/authorization-code.token-response';
 export { type ClientCredentialsTokenResponse } from './lib/responses/token/client-credentials/client-credentials.token-response';
 export { type JwtBearerTokenResponse } from './lib/responses/token/jwt-bearer/jwt-bearer.token-response';
@@ -251,6 +256,7 @@ export { DecisionInteractionValidator } from './lib/validators/interaction/decis
 export { LoginDecisionInteractionValidator } from './lib/validators/interaction/decision/login/login.decision-interaction.validator';
 export { SelectAccountDecisionInteractionValidator } from './lib/validators/interaction/decision/select-account/select-account.decision-interaction.validator';
 export { InteractionValidator } from './lib/validators/interaction/interaction.validator';
+export { IntrospectionValidator } from './lib/validators/introspection/introspection.validator';
 export { RevocationValidator } from './lib/validators/revocation/revocation.validator';
 export { AuthorizationCodeTokenValidator } from './lib/validators/token/authorization-code/authorization-code.token.validator';
 export { ClientCredentialsTokenValidator } from './lib/validators/token/client-credentials/client-credentials.token.validator';

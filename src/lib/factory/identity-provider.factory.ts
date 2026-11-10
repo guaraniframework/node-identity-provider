@@ -16,6 +16,7 @@ import { DiscoveryEndpoint } from '../endpoints/discovery/discovery.endpoint';
 import { Endpoint } from '../endpoints/endpoint';
 import { ENDPOINT_REGISTRY } from '../endpoints/endpoint.registry';
 import { InteractionEndpoint } from '../endpoints/interaction/interaction.endpoint';
+import { IntrospectionEndpoint } from '../endpoints/introspection/introspection.endpoint';
 import { RevocationEndpoint } from '../endpoints/revocation/revocation.endpoint';
 import { TokenEndpoint } from '../endpoints/token/token.endpoint';
 import { ClientAuthenticationHandler } from '../handlers/client-authentication/client-authentication.handler';
@@ -39,6 +40,7 @@ import { SUBJECT_TYPE_REGISTRY } from '../subject-types/subject-type.registry';
 import { SubjectTypeName } from '../subject-types/subject-type-name.type';
 import { AuthorizationEndpointOptions } from './options/authorization-endpoint/authorization-endpoint.options';
 import { InteractionEndpointOptions } from './options/interaction-endpoint/interaction-endpoint.options';
+import { IntrospectionEndpointOptions } from './options/introspection-endpoint/introspection-endpoint.options';
 import { RevocationEndpointOptions } from './options/revocation-endpoint/revocation-endpoint.options';
 import { TokenEndpointOptions } from './options/token-endpoint/token-endpoint.options';
 import { IdentityProviderFactoryEntry } from './identity-provider-factory.entry';
@@ -136,6 +138,30 @@ export class IdentityProviderFactory {
   }
 
   /**
+   * Adds the Introspection Endpoint to the Identity Provider.
+   *
+   * @param callback Callback function used to configure the Introspection Endpoint.
+   * @throws {TypeError} Failed to add the Introspection Endpoint.
+   * @returns Identity Provider Factory.
+   */
+  public addIntrospectionEndpoint(callback?: (options: IntrospectionEndpointOptions) => void): IdentityProviderFactory {
+    const options = new IntrospectionEndpointOptions(this.container);
+
+    if (typeof callback === 'function') {
+      callback(options);
+    }
+
+    if (
+      !this.container.has(Endpoint) ||
+      !(this.container.getAll(Endpoint) as Constructor<Endpoint>[]).includes(IntrospectionEndpoint)
+    ) {
+      options.build();
+    }
+
+    return this;
+  }
+
+  /**
    * Adds the provided Logger to the Identity Provider.
    *
    * @param logger Logger to be added.
@@ -145,6 +171,30 @@ export class IdentityProviderFactory {
   public addLogger(logger: IdentityProviderFactoryEntry<Logger>): IdentityProviderFactory {
     this.container.delete(Logger);
     this.addContainerEntry(Logger, logger);
+    return this;
+  }
+
+  /**
+   * Adds the Revocation Endpoint to the Identity Provider.
+   *
+   * @param callback Callback function used to configure the Revocation Endpoint.
+   * @throws {TypeError} Failed to add the Revocation Endpoint.
+   * @returns Identity Provider Factory.
+   */
+  public addRevocationEndpoint(callback?: (options: RevocationEndpointOptions) => void): IdentityProviderFactory {
+    const options = new RevocationEndpointOptions(this.container);
+
+    if (typeof callback === 'function') {
+      callback(options);
+    }
+
+    if (
+      !this.container.has(Endpoint) ||
+      !(this.container.getAll(Endpoint) as Constructor<Endpoint>[]).includes(RevocationEndpoint)
+    ) {
+      options.build();
+    }
+
     return this;
   }
 
@@ -186,30 +236,6 @@ export class IdentityProviderFactory {
     subjectTypes.forEach((subjectType) => {
       this.container.bind(SubjectType).toClass(SUBJECT_TYPE_REGISTRY[subjectType]).asSingleton();
     });
-
-    return this;
-  }
-
-  /**
-   * Adds the Revocation Endpoint to the Identity Provider.
-   *
-   * @param callback Callback function used to configure the Revocation Endpoint.
-   * @throws {TypeError} Failed to add the Revocation Endpoint.
-   * @returns Identity Provider Factory.
-   */
-  public addRevocationEndpoint(callback?: (options: RevocationEndpointOptions) => void): IdentityProviderFactory {
-    const options = new RevocationEndpointOptions(this.container);
-
-    if (typeof callback === 'function') {
-      callback(options);
-    }
-
-    if (
-      !this.container.has(Endpoint) ||
-      !(this.container.getAll(Endpoint) as Constructor<Endpoint>[]).includes(RevocationEndpoint)
-    ) {
-      options.build();
-    }
 
     return this;
   }

@@ -102,6 +102,9 @@ export async function createTestProvider(): Promise<NodeIdentityProvider> {
     .addInteractionEndpoint((options) => {
       options.useClientAuthenticationMethods(['client_secret_basic']);
     })
+    .addIntrospectionEndpoint((options) => {
+      options.useClientAuthenticationMethods(['client_secret_basic']);
+    })
     .addLogger(new ConsoleLogger(LoggerLevel.ERROR))
     .addRevocationEndpoint((options) => {
       options.useClientAuthenticationMethods(['client_secret_basic']);

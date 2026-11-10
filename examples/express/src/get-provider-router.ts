@@ -69,16 +69,16 @@ export async function getProviderRouter(): Promise<Router> {
           'id_token token',
           'none',
           'token',
-        ])
-        .build();
+        ]);
     })
     .addDataAccess(CustomDataAccess)
     .addDiscoveryEndpoint()
     .addInteractionEndpoint((options) => {
-      options.useClientAuthenticationMethods(clientAuthenticationMethods).build();
+      options.useClientAuthenticationMethods(clientAuthenticationMethods);
     })
+    .addIntrospectionEndpoint((options) => options.useClientAuthenticationMethods(clientAuthenticationMethods))
     .addLogger(new ConsoleLogger(LoggerLevel.DEBUG))
-    .addRevocationEndpoint()
+    .addRevocationEndpoint((options) => options.useClientAuthenticationMethods(clientAuthenticationMethods))
     .addSettings(settings)
     .addSubjectTypes(['pairwise', 'public'])
     .addTokenEndpoint((options) => {
@@ -90,8 +90,7 @@ export async function getProviderRouter(): Promise<Router> {
           'password',
           'refresh_token',
           'urn:ietf:params:oauth:grant-type:jwt-bearer',
-        ])
-        .build();
+        ]);
     })
     .add(DatabaseSync, new DatabaseSync(process.env['SQLITE_PATH']!))
     .add(JsonWebKeySet, jsonWebKeySet)

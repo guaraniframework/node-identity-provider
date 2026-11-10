@@ -1,4 +1,4 @@
-import { OutgoingHttpHeaders } from 'node:http2';
+import { OutgoingHttpHeaders } from 'http';
 
 import { Injectable } from '@guarani/di';
 import { removeNullishValues } from '@guarani/primitives';

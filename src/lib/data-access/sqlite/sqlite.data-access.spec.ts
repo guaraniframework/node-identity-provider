@@ -30,6 +30,7 @@ import { Logger } from '../../loggers/logger';
 import { PKCE } from '../../pkces/pkce';
 import { AuthorizationRequest } from '../../requests/authorization/authorization-request';
 import { CodeAuthorizationRequest } from '../../requests/authorization/code/code.authorization-request';
+import { IntrospectionResponse } from '../../responses/introspection/introspection-response';
 import { SQLiteDataAccess } from './sqlite.data-access';
 
 jest.mock('../../loggers/logger');
@@ -1426,6 +1427,67 @@ describe('SQLite Data Access', () => {
 
     it('should return the Sign JSON Web Key of the Identity Provider.', async () => {
       await expect(dataAccess.getSignJsonWebKey!()).resolves.toBe(jsonWebKeySet.keys[0]!);
+    });
+  });
+
+  describe('introspectToken()', () => {
+    beforeEach(async () => {
+      await dataAccess.up();
+      await dataAccess.seed();
+    });
+
+    it('should return the metadata of a Refresh Token where the User does not have a preferred username.', async () => {
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+
+      user.preferredUsername = null;
+
+      const refreshToken = await dataAccess.createRefreshToken(scopes, client, user, null);
+
+      await expect(dataAccess.getTokenMetadata(refreshToken)).resolves.toStrictEqual<Partial<IntrospectionResponse>>({
+        jti: expect.toBeString(),
+      });
+    });
+
+    it('should return the metadata of a Refresh Token where the User has a preferred username.', async () => {
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+
+      const refreshToken = await dataAccess.createRefreshToken(scopes, client, user, null);
+
+      await expect(dataAccess.getTokenMetadata(refreshToken)).resolves.toStrictEqual<Partial<IntrospectionResponse>>({
+        username: user.preferredUsername!,
+        jti: expect.toBeString(),
+      });
+    });
+
+    it('should return the metadata of an Access Token where the User does not have a preferred username.', async () => {
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+
+      user.preferredUsername = null;
+
+      const accessToken = await dataAccess.createAccessToken(scopes, client, user, null, null);
+
+      await expect(dataAccess.getTokenMetadata(accessToken)).resolves.toStrictEqual<Partial<IntrospectionResponse>>({
+        jti: expect.toBeString(),
+      });
+    });
+
+    it('should return the metadata of an Access Token where the User has a preferred username.', async () => {
+      const scopes = await dataAccess.getScopes();
+      const client = (await dataAccess.findClientById('b1eeace9-2b0c-468e-a444-733befc3b35d'))!;
+      const user = (await dataAccess.findUserById('16907c32-687b-493c-85ba-f41f2c9d4daa'))!;
+
+      const accessToken = await dataAccess.createAccessToken(scopes, client, user, null, null);
+
+      await expect(dataAccess.getTokenMetadata(accessToken)).resolves.toStrictEqual<Partial<IntrospectionResponse>>({
+        username: user.preferredUsername!,
+        jti: expect.toBeString(),
+      });
     });
   });
 
